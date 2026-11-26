@@ -17,7 +17,7 @@ Voraussetzung: Hookmark Pro (eigene Skripte gibt es nur dort) und Finder-Ersatz 
 3. Bei **Get Address** als Sprache **JavaScript** wählen und einfügen:
 
 ```javascript
-const app = Application("com.example.FinderErsatz");
+const app = Application("/Applications/Finder-Ersatz.app");
 const paths = app.selectedPaths();
 const path = paths.length > 0 ? paths[0] : app.currentFolder();
 path ? $.NSURL.fileURLWithPath(path).absoluteString.js : "";
