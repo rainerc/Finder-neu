@@ -5,7 +5,13 @@ Kern des MVP: **Zwei-Fenster-Ansicht** (Dual Pane).
 
 ## Starten
 
-**Schnell (ohne Xcode-Projekt):**
+**Empfohlen – als echte App (Berechtigungen funktionieren zuverlässig):**
+```sh
+./scripts/build-app.sh
+```
+Baut `build/Finder-Ersatz.app`, signiert sie mit deinem Apple-Development-Zertifikat und startet sie. Die App kannst du auch nach `/Programme` kopieren.
+
+**Nur zum schnellen Testen** (ohne Bundle – macOS-Berechtigungen, z. B. für Netzwerkvolumes, greifen hier nicht zuverlässig):
 ```sh
 cd FinderErsatz
 swift run

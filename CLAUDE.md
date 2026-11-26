@@ -5,7 +5,7 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 
 ## Technik
 - Swift 6, SwiftUI (+ AppKit wo nötig), `@Observable`-Modelle auf `@MainActor`
-- Bau: `swift run` (Swift Package) oder `xcodegen && open FinderErsatz.xcodeproj` für eine signierte .app
+- Bau: **`./scripts/build-app.sh`** (signierte .app in `build/`, empfohlen – TCC-Berechtigungen wie Netzwerkvolumes funktionieren nur mit echtem Bundle), `swift run` nur für schnelle Tests, oder `xcodegen && open FinderErsatz.xcodeproj` für eine signierte .app
 - Keine App-Sandbox (Dateimanager braucht Vollzugriff); Verteilung später per Developer ID + Notarisierung
 - Keine externen Abhängigkeiten ohne Rücksprache
 - Linux-Sessions können nicht kompilieren: Änderungen sorgfältig gegen die macOS-26-SDK-APIs prüfen und Rainer bitten, lokal zu bauen
