@@ -81,9 +81,20 @@ enum FileTransfer {
         var total: Int64 = 0
         if let enumerator = FileManager.default.enumerator(at: url, includingPropertiesForKeys: keys) {
             for case let child as URL in enumerator {
+                if Task.isCancelled { break }   // z. B. Auswahl gewechselt
                 total += Int64((try? child.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
             }
         }
         return total
+    }
+
+    /// Ordnergröße im Hintergrund. Wird die aufrufende Aufgabe abgebrochen (Auswahl gewechselt, Ansicht geschlossen),
+    /// bricht auch die Berechnung ab – sonst liefen beim Durchblättern viele Ordner-Scans gleichzeitig weiter.
+    /// Auf Netzlaufwerken nur mit `allowNetwork`, weil das dort sehr lange dauert und die Verbindung ausbremst.
+    static func folderSize(of url: URL, allowNetwork: Bool = false) async -> Int64? {
+        if !allowNetwork, (try? url.resourceValues(forKeys: [.volumeIsLocalKey]).volumeIsLocal) == false { return nil }
+        let task = Task.detached(priority: .utility) { FileTransfer.size(of: url) }
+        let result = await withTaskCancellationHandler { await task.value } onCancel: { task.cancel() }
+        return Task.isCancelled ? nil : result
     }
 }

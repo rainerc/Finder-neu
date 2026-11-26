@@ -29,6 +29,7 @@ private struct InspectorContent: View {
     let selectionCount: Int
 
     @State private var folderSize: Int64?
+    @State private var folderSizeSkipped = false
     @State private var metadata: [SpotlightMetadata.Entry] = []
 
     var body: some View {
@@ -78,13 +79,14 @@ private struct InspectorContent: View {
         .task {
             metadata = SpotlightMetadata.entries(for: item.url)
             guard item.isBrowsableFolder else { return }
-            let url = item.url
-            folderSize = await Task.detached(priority: .utility) { FileTransfer.size(of: url) }.value
+            folderSize = await FileTransfer.folderSize(of: item.url)
+            folderSizeSkipped = folderSize == nil && !Task.isCancelled
         }
     }
 
     private var sizeText: String {
         guard item.isBrowsableFolder else { return item.size.formatted(.byteCount(style: .file)) }
+        if folderSizeSkipped { return "– (Netzlaufwerk, siehe ⌘I)" }
         guard let folderSize else { return "Wird berechnet …" }
         return folderSize.formatted(.byteCount(style: .file))
     }
@@ -186,6 +188,7 @@ private struct PanePreviewContent: View {
     let selectionCount: Int
     @State private var metadata: [SpotlightMetadata.Entry] = []
     @State private var folderSize: Int64?
+    @State private var folderSizeSkipped = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -228,13 +231,14 @@ private struct PanePreviewContent: View {
         .task {
             metadata = SpotlightMetadata.entries(for: item.url)
             guard item.isBrowsableFolder else { return }
-            let url = item.url
-            folderSize = await Task.detached(priority: .utility) { FileTransfer.size(of: url) }.value
+            folderSize = await FileTransfer.folderSize(of: item.url)
+            folderSizeSkipped = folderSize == nil && !Task.isCancelled
         }
     }
 
     private var sizeText: String {
         guard item.isBrowsableFolder else { return item.size.formatted(.byteCount(style: .file)) }
+        if folderSizeSkipped { return "– (Netzlaufwerk, siehe ⌘I)" }
         return folderSize.map { $0.formatted(.byteCount(style: .file)) } ?? "Wird berechnet …"
     }
 }

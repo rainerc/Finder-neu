@@ -84,7 +84,7 @@ struct InfoSheet: View {
         .task {
             guard item.isDirectory else { return }
             let url = item.url
-            folderSize = await Task.detached { FileTransfer.size(of: url) }.value
+            folderSize = await FileTransfer.folderSize(of: url, allowNetwork: true)
         }
     }
 
