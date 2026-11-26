@@ -101,12 +101,13 @@ final class PaneState: Identifiable {
         let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? NSError
         let isPermission = nsError.code == NSFileReadNoPermissionError
             || (underlying?.domain == NSPOSIXErrorDomain && [Int(EPERM), Int(EACCES)].contains(underlying?.code ?? 0))
-        guard isPermission else { return error.localizedDescription }
+        let code = "(\(nsError.domain) \(nsError.code)" + (underlying.map { ", \($0.domain) \($0.code)" } ?? "") + ")"
+        guard isPermission else { return "\(error.localizedDescription) \(code)" }
         let isNetwork = (try? url.resourceValues(forKeys: [.volumeIsLocalKey]).volumeIsLocal) == false
         if isNetwork {
-            return "macOS hat den Zugriff auf Netzwerkvolumes nicht erlaubt. Systemeinstellungen → Datenschutz & Sicherheit → Dateien und Ordner → bei Finder-Ersatz (bzw. Terminal, wenn per „swift run“ gestartet) „Netzwerkvolumes“ einschalten – oder „Festplattenvollzugriff“ erteilen. Danach die App neu starten."
+            return "macOS hat den Zugriff auf Netzwerkvolumes nicht erlaubt. Systemeinstellungen → Datenschutz & Sicherheit → Dateien und Ordner → bei Finder-Ersatz (bzw. Terminal, wenn per „swift run“ gestartet) „Netzwerkvolumes“ einschalten – oder „Festplattenvollzugriff“ erteilen. Danach die App neu starten. \(code)"
         }
-        return "Keine Berechtigung. Ggf. unter Systemeinstellungen → Datenschutz & Sicherheit → Festplattenvollzugriff erlauben und die App neu starten."
+        return "Keine Berechtigung. Ggf. unter Systemeinstellungen → Datenschutz & Sicherheit → Festplattenvollzugriff erlauben und die App neu starten. \(code)"
     }
 
     // MARK: Live-Aktualisierung
