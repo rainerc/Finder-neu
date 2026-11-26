@@ -33,6 +33,13 @@ pb "Add :LSMinimumSystemVersion string 26.0"
 pb "Add :LSApplicationCategoryType string public.app-category.productivity"
 pb "Add :NSHighResolutionCapable bool true"
 
+# AppleScript-Wörterbuch prüfen (für Hookmark)
+if sdef "$APP" >/dev/null 2>&1; then
+  echo "✓ AppleScript-Wörterbuch OK"
+else
+  echo "⚠︎ AppleScript-Wörterbuch fehlerhaft:"; sdef "$APP" 2>&1 | head -5 || true
+fi
+
 # Mit dem eigenen Apple-Development-Zertifikat signieren (stabile Identität →
 # macOS merkt sich erteilte Berechtigungen auch nach einem Neubau).
 IDENTITY="$(security find-identity -v -p codesigning | grep -m1 -E 'Apple Development|Developer ID Application' | sed -E 's/.*"(.*)"/\1/' || true)"
@@ -62,6 +69,10 @@ if [[ $INSTALL == 1 ]]; then
   TARGET="/Applications/Finder-Ersatz.app"
   rm -rf "$TARGET"
   cp -R "$APP" "$TARGET"
+  # Launch Services neu informieren (Name, AppleScript-Wörterbuch), Build-Kopie abmelden
+  LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+  "$LSREGISTER" -u "$PWD/$APP" >/dev/null 2>&1 || true
+  "$LSREGISTER" -f "$TARGET" >/dev/null 2>&1 || true
   echo "✓ Installiert: $TARGET"
 fi
 echo "✓ Fertig"
