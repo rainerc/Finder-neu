@@ -61,6 +61,10 @@ final class AppSettings {
     var activeColorHex: String { didSet { defaults.set(activeColorHex, forKey: "activeColorHex") } }
     /// Farbe für Ordnernamen (Hex, leer = Standard).
     var folderColorHex: String { didSet { defaults.set(folderColorHex, forKey: "folderColorHex") } }
+    /// Leertaste auf Ordnern: Quick Look (z. B. XRay, langsam bei großen Ordnern) statt eigener schneller Vorschau.
+    var folderPreviewUsesQuickLook: Bool {
+        didSet { defaults.set(folderPreviewUsesQuickLook, forKey: "folderPreviewUsesQuickLook") }
+    }
     /// Ordnergrößen in den Listen im Hintergrund berechnen (nur lokale Laufwerke).
     var calculateFolderSizes: Bool {
         didSet {
@@ -81,6 +85,7 @@ final class AppSettings {
         activeColorHex = defaults.string(forKey: "activeColorHex") ?? ""
         folderColorHex = defaults.string(forKey: "folderColorHex") ?? ""
         calculateFolderSizes = defaults.bool(forKey: Self.calculateFolderSizesKey)
+        folderPreviewUsesQuickLook = defaults.bool(forKey: "folderPreviewUsesQuickLook")
         if let data = defaults.data(forKey: "customShortcuts"),
            let stored = try? JSONDecoder().decode([String: Shortcut?].self, from: data) {
             for (key, value) in stored {

@@ -214,9 +214,21 @@ final class BrowserState {
         }
     }
 
-    func toggleQuickLook() {
-        QuickLookController.shared.toggle(activePane.selectedItems.map(\.url))
+    /// Leertaste: bei genau einem Ordner die eigene, schnelle Ordnervorschau (XRay & Co. durchsuchen den ganzen Baum
+    /// und brauchen bei großen Ordnern sehr lange), sonst Quick Look. `forceSystemPreview` (⌥-Leertaste) = immer Quick Look.
+    func toggleQuickLook(forceSystemPreview: Bool = false) {
+        if folderPreviewURL != nil { folderPreviewURL = nil; return }
+        let selected = activePane.selectedItems
+        if !forceSystemPreview, !settings.folderPreviewUsesQuickLook, !QuickLookController.shared.isVisible,
+           selected.count == 1, selected[0].isBrowsableFolder {
+            folderPreviewURL = selected[0].url
+            return
+        }
+        QuickLookController.shared.toggle(selected.map(\.url))
     }
+
+    /// Eigene Ordnervorschau (Leertaste auf Ordner).
+    var folderPreviewURL: URL?
 
     func openTerminal() {
         let folder = activePane.selectedItems.first(where: \.isBrowsableFolder)?.url ?? activePane.currentURL

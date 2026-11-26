@@ -129,8 +129,9 @@ struct PaneView: View {
                 browser.toggleActivePane()
                 return .handled
             }
-            .onKeyPress(.space) {
-                browser.toggleQuickLook()   // Leertaste = Schnellansicht
+            // Leertaste = Schnellansicht; ⌥-Leertaste (ergibt „\u{a0}“) = immer Quick Look, auch bei Ordnern (XRay)
+            .onKeyPress(keys: [.space, KeyEquivalent("\u{a0}")]) { press in
+                browser.toggleQuickLook(forceSystemPreview: press.modifiers.contains(.option) || press.characters == "\u{a0}")
                 return .handled
             }
             .onKeyPress(.return) {

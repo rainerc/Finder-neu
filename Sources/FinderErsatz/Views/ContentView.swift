@@ -96,6 +96,13 @@ struct ContentView: View {
             let more = request.conflictNames.count > 5 ? " und \(request.conflictNames.count - 5) weitere" : ""
             Text("Im Ziel gibt es bereits \(names)\(more). Ersetzte Objekte kommen in den Papierkorb.")
         }
+        .sheet(isPresented: Binding(get: { browser.folderPreviewURL != nil },
+                                    set: { if !$0 { browser.folderPreviewURL = nil } })) {
+            if let url = browser.folderPreviewURL {
+                FolderPreviewSheet(url: url)
+                    .environment(browser)
+            }
+        }
         .sheet(item: $browser.batchRenameRequest) { request in
             BatchRenameSheet(request: request)
                 .environment(browser)

@@ -37,7 +37,7 @@ Beim ersten Start fragt macOS, ob die App auf das lokale Netzwerk zugreifen darf
 |---|---|
 | Zwei Fenster nebeneinander, aktives Fenster farbig markiert | Klick, `⇥` oder `⌥⇥` zum Wechseln |
 | Tabs pro Fenster | `⌘T` neu, `⌘W` schließen (der letzte Tab bleibt offen), `⌃⇥` / `⌃⇧⇥` wechseln, Kontextmenü „In neuem Tab öffnen“ |
-| Schnellansicht (Quick Look, nutzt installierte Erweiterungen wie XRay) | Leertaste oder `F3` |
+| Schnellansicht (Quick Look, nutzt installierte Erweiterungen wie XRay); bei Ordnern eigene schnelle Inhaltsvorschau, XRay per `⌥`-Leertaste oder Einstellung | Leertaste oder `F3` |
 | Suche ab aktuellem Ordner: Name enthält / Platzhalter (`*.jpg; *.png`) / Regex / Spotlight, Groß-/Kleinschreibung, Inhaltssuche mit Kodierung | `⌘F`, Lupe im Fensterkopf |
 | Ansichten Liste, Kurz (mehrspaltig), Miniaturen (Vorschaubilder), Spalten (wie Finder, ←/→ wechselt die Spalte), Galerie | `⌘1` … `⌘5` oder Umschalter im Fensterkopf |
 | Seitenleiste: Zuletzt benutzt (`⇧⌘F`), Tags (alle Dateien je Farb-Tag), intelligente Ordner (Suche sichern per Knopf in der Suchleiste) | Klick zeigt die Treffer im aktiven Fenster, „Zurück zum Ordner“ in der Statuszeile |
