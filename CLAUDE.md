@@ -35,6 +35,7 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 - v0.4 Netzwerk-Abschnitt in der Seitenleiste (eingehängte Freigaben, `volumeIsLocal == false`), Trennen, Mit Server verbinden (⌘K, öffnet smb://… über NSWorkspace)
 - v0.5 Server im lokalen Netz in „Netzwerk“ (Bonjour), Klick → NetFS-Mount → Freigabe öffnet im aktiven Fenster; ⌘K nutzt ebenfalls NetFS. `Support/Info.plist` (Local-Network-Berechtigung, NSBonjourServices) wird per Linker in die `swift run`-Binary eingebettet und von XcodeGen genutzt
 - v0.6 Paket 2: Suche (⌘F), ZIP/Archive (packen, entpacken, als Ordner öffnen), Ansichten Liste/Kurz/Miniaturen (⌘1–3), Einstellungen (⌘,) mit eigenen Tastenkürzeln, Schriftgröße, Hell/Dunkel, Farben. Noch nicht auf dem Mac gebaut
+- v0.7 AppleScript-Schnittstelle (`Support/FinderErsatz.sdef`: `selected paths`, `current folder`, per `delegateHandlesKey` im AppDelegate) für Hookmark ⌃H; Einrichtung in `docs/HOOKMARK.md`
 - v0.1 baut auf Rainers Mac (macOS 26) ohne Fehler mit `swift run`
 
 ## Nächste Schritte

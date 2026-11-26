@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary title="Finder-Ersatz" xmlns:xi="http://www.w3.org/2003/XInclude">
+    <xi:include href="file:///System/Library/ScriptingDefinitions/CocoaStandard.sdef" xpointer="xpointer(/dictionary/suite)"/>
+
+    <suite name="Finder-Ersatz Suite" code="FErs" description="Zugriff auf Auswahl und Ordner (z. B. für Hookmark).">
+        <class-extension extends="application" description="Finder-Ersatz">
+            <property name="selected paths" code="FEsp" access="r" description="POSIX-Pfade der ausgewählten Objekte im aktiven Fenster.">
+                <type type="text" list="yes"/>
+                <cocoa key="selectedPaths"/>
+            </property>
+            <property name="current folder" code="FEcf" type="text" access="r" description="POSIX-Pfad des Ordners im aktiven Fenster.">
+                <cocoa key="currentFolderPath"/>
+            </property>
+        </class-extension>
+    </suite>
+</dictionary>

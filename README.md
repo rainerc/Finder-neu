@@ -40,6 +40,7 @@ Beim ersten Start fragt macOS, ob die App auf das lokale Netzwerk zugreifen darf
 | Ansichten Liste, Kurz (mehrspaltig), Miniaturen (Vorschaubilder) | `⌘1` / `⌘2` / `⌘3` oder Umschalter im Fensterkopf |
 | Als ZIP komprimieren; entpacken (zip, tar.gz, tar.bz2, tar.xz, 7z, rar …) hierher oder ins andere Fenster | Kontextmenü, Menü „Ablage-Aktionen“ |
 | Archiv wie Ordner öffnen (entpackte Kopie) | Doppelklick auf Archiv |
+| Hookmark (⌃H) auf Dateien und Ordnern – Einrichtung siehe `docs/HOOKMARK.md` | `⌃H` |
 | Einstellungen: eigene Tastenkürzel, Schriftgröße, Hell/Dunkel, Farben | `⌘,` |
 | Ordner aktualisieren sich automatisch | – |
 | Terminal im aktuellen Ordner | `⌥⌘T` oder Kontextmenü |

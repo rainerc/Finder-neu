@@ -18,6 +18,10 @@
 	<string>Finder-Ersatz zeigt und bearbeitet Dateien in deinem Dokumente-Ordner.</string>
 	<key>NSDownloadsFolderUsageDescription</key>
 	<string>Finder-Ersatz zeigt und bearbeitet Dateien in deinem Downloads-Ordner.</string>
+	<key>NSAppleScriptEnabled</key>
+	<true/>
+	<key>OSAScriptingDefinition</key>
+	<string>FinderErsatz.sdef</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_smb._tcp</string>

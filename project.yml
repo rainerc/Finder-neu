@@ -8,7 +8,10 @@ targets:
   FinderErsatz:
     type: application
     platform: macOS
-    sources: [Sources/FinderErsatz]
+    sources:
+      - Sources/FinderErsatz
+      - path: Support/FinderErsatz.sdef
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.FinderErsatz

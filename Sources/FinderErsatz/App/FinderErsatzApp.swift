@@ -28,6 +28,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 
+    // MARK: AppleScript (für Hookmark: „selected paths“, „current folder“)
+
+    func application(_ sender: NSApplication, delegateHandlesKey key: String) -> Bool {
+        key == "selectedPaths" || key == "currentFolderPath"
+    }
+
+    @objc var selectedPaths: [String] {
+        browser?.activePane.selectedItems.map(\.url.path) ?? []
+    }
+
+    @objc var currentFolderPath: String {
+        browser?.activePane.currentURL.path ?? ""
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         // Temporär entpackte Archive aufräumen.
         try? FileManager.default.removeItem(at: ArchiveService.browseRoot)
