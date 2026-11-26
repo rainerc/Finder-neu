@@ -60,6 +60,10 @@ final class BrowserState {
     /// Informationsfenster (⌘I)
     var infoItem: FileItem?
 
+    /// Kurze Rückmeldung in der Aktionsleiste, z. B. „Pfad kopiert“.
+    private(set) var flashMessage: String?
+    @ObservationIgnored private var flashToken = UUID()
+
     /// Schnellansicht (Quick Look)
     var previewURL: URL?
     var previewItems: [URL] = []
@@ -365,6 +369,18 @@ final class BrowserState {
         let text = (paths.isEmpty ? [activePane.currentURL.path] : paths).joined(separator: "\n")
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
+        flash(paths.count > 1 ? "\(paths.count) Pfade kopiert" : "Pfad kopiert: \(text)")
+    }
+
+    /// Kurze Rückmeldung in der Aktionsleiste (verschwindet nach 2,5 s).
+    func flash(_ message: String) {
+        flashMessage = message
+        let token = UUID()
+        flashToken = token
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(2.5))
+            if self?.flashToken == token { self?.flashMessage = nil }
+        }
     }
 
     func selectAll() {

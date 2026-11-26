@@ -346,7 +346,10 @@ struct PaneView: View {
             if !folderURLs.isEmpty {
                 Button("Zu Favoriten hinzufügen") { browser.favorites.add(folderURLs) }
             }
-            Button("Pfad kopieren") { copyPaths(ids) }
+            Button("Pfad kopieren") {
+                activate(pane, ids)
+                browser.copyPathsToPasteboard()
+            }
             Button("Terminal hier öffnen") {
                 activate(pane, ids)
                 browser.openTerminal()
@@ -410,12 +413,6 @@ struct PaneView: View {
         } else {
             items.filter { !$0.isBrowsableFolder }.forEach { browser.open($0, in: pane) }
         }
-    }
-
-    private func copyPaths(_ ids: Set<FileItem.ID>) {
-        let text = ids.map(\.path).sorted().joined(separator: "\n")
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(text, forType: .string)
     }
 }
 

@@ -128,8 +128,15 @@ struct ActionBar: View {
             Button("⇧⌘N Neuer Ordner") { browser.newFolder() }
             Button("⌘⌫ Papierkorb") { browser.trashSelection() }
             Spacer()
-            Text("⇥ Fenster wechseln · ⌃⇥ Tab wechseln")
-                .foregroundStyle(.secondary)
+            if let message = browser.flashMessage {
+                Label(message, systemImage: "checkmark.circle.fill")
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .foregroundStyle(.green)
+            } else {
+                Text("⇥ Fenster wechseln · ⌃⇥ Tab wechseln")
+                    .foregroundStyle(.secondary)
+            }
         }
         .buttonStyle(.bordered)
         .controlSize(.small)

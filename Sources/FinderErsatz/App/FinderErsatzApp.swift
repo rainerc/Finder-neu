@@ -11,11 +11,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // schließt nur den aktiven Tab; beim letzten Tab passiert nichts (Beenden mit ⌘Q).
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-            guard flags == .command, event.charactersIgnoringModifiers?.lowercased() == "w" else { return event }
             let handled = MainActor.assumeIsolated { () -> Bool in
                 guard let browser = self?.browser, NSApp.keyWindow?.attachedSheet == nil else { return false }
-                if !browser.closeTab() { NSSound.beep() }
-                return true
+                if flags == .command, event.charactersIgnoringModifiers?.lowercased() == "w" {
+                    if !browser.closeTab() { NSSound.beep() }
+                    return true
+                }
+                // Kürzel mit ⌥ (z. B. ⌥⌘C „Pfad kopieren“) erkennt das SwiftUI-Menü auf deutscher Tastatur
+                // nicht zuverlässig (⌥C ergibt „ç“) – daher hier anhand der Taste ohne Modifier prüfen.
+                if flags.contains(.option), let pressed = Shortcut(event: event),
+                   pressed == browser.settings.shortcut(for: .copyPath) {
+                    browser.copyPathsToPasteboard()
+                    return true
+                }
+                return false
             }
             return handled ? nil : event
         }
