@@ -7,7 +7,7 @@ import Quartz
 /// Der Controller hängt sich in die Responder-Kette des Hauptfensters, damit das Panel ihn als Steuerung findet.
 /// Pfeiltasten im Panel werden ans Hauptfenster weitergereicht (Auswahl wandert mit, wie im Finder).
 @MainActor
-final class QuickLookController: NSResponder, @preconcurrency QLPreviewPanelDataSource, @preconcurrency QLPreviewPanelDelegate {
+final class QuickLookController: NSResponder, @preconcurrency QLPreviewPanelDataSource, QLPreviewPanelDelegate {
     static let shared = QuickLookController()
 
     /// Wird nur auf dem Main-Thread geändert; das Panel liest es ebenfalls auf dem Main-Thread.
@@ -63,7 +63,6 @@ final class QuickLookController: NSResponder, @preconcurrency QLPreviewPanelData
     nonisolated override func acceptsPreviewPanelControl(_ panel: QLPreviewPanel!) -> Bool { true }
 
     nonisolated override func beginPreviewPanelControl(_ panel: QLPreviewPanel!) {
-        nonisolated(unsafe) let panel = panel
         MainActor.assumeIsolated {
             panel?.dataSource = self
             panel?.delegate = self
@@ -71,7 +70,6 @@ final class QuickLookController: NSResponder, @preconcurrency QLPreviewPanelData
     }
 
     nonisolated override func endPreviewPanelControl(_ panel: QLPreviewPanel!) {
-        nonisolated(unsafe) let panel = panel
         MainActor.assumeIsolated {
             panel?.dataSource = nil
             panel?.delegate = nil
