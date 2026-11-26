@@ -35,6 +35,8 @@ final class PaneState: Identifiable {
     }
     private(set) var showHidden = false
     private(set) var errorMessage: String?
+    /// Fehler kommt vom macOS-Datenschutz (nicht vom Dateisystem) – dann Knopf zu den Systemeinstellungen zeigen.
+    private(set) var errorIsPermission = false
     var viewMode: ViewMode = .list
 
     // Suche
@@ -126,16 +128,25 @@ final class PaneState: Identifiable {
             let loaded = try FileService.contents(of: currentURL, includeHidden: showHidden)
             items = loaded
             errorMessage = nil
+            errorIsPermission = false
             applySort()
             selection.formIntersection(Set(items.map(\.id)))
         } catch {
             items = []
             errorMessage = Self.describe(error, for: currentURL)
+            errorIsPermission = Self.isPermissionError(error)
         }
         watchCurrentFolder()
     }
 
     /// Bei fehlender Berechtigung auf Netzlaufwerken erklären, wo man sie in macOS erteilt.
+    private static func isPermissionError(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? NSError
+        return nsError.code == NSFileReadNoPermissionError
+            || (underlying?.domain == NSPOSIXErrorDomain && underlying?.code == Int(EPERM))
+    }
+
     private static func describe(_ error: Error, for url: URL) -> String {
         let nsError = error as NSError
         let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? NSError
@@ -145,7 +156,7 @@ final class PaneState: Identifiable {
         guard isPermission else { return "\(error.localizedDescription) \(code)" }
         let isNetwork = (try? url.resourceValues(forKeys: [.volumeIsLocalKey]).volumeIsLocal) == false
         if isNetwork {
-            return "macOS hat den Zugriff auf Netzwerkvolumes nicht erlaubt. Systemeinstellungen → Datenschutz & Sicherheit → Dateien und Ordner → bei Finder-Ersatz (bzw. Terminal, wenn per „swift run“ gestartet) „Netzwerkvolumes“ einschalten – oder „Festplattenvollzugriff“ erteilen. Danach die App neu starten. \(code)"
+            return "macOS hat Finder-Ersatz den Zugriff auf Netzwerkvolumes nicht erlaubt. Am dauerhaftesten: Finder-Ersatz unter „Festplattenvollzugriff“ einschalten (gilt für alle Laufwerke und bleibt auch nach Neubauten erhalten). Danach die App neu starten. \(code)"
         }
         return "Keine Berechtigung. Ggf. unter Systemeinstellungen → Datenschutz & Sicherheit → Festplattenvollzugriff erlauben und die App neu starten. \(code)"
     }

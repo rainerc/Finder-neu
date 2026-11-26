@@ -27,6 +27,8 @@ In Xcode unter *Signing & Capabilities* das eigene Team wählen (oder `DEVELOPME
 Die App-Sandbox ist bewusst aus, weil ein Dateimanager freien Zugriff braucht. Verteilt wird später per Developer ID + Notarisierung, nicht über den App Store.
 Beim ersten Zugriff auf Schreibtisch, Dokumente usw. fragt macOS nach Erlaubnis. Für alles andere ggf. *Systemeinstellungen → Datenschutz → Festplattenvollzugriff*.
 
+**Empfehlung:** Finder-Ersatz unter Systemeinstellungen → Datenschutz & Sicherheit → **Festplattenvollzugriff** einschalten. Das deckt Netzwerkvolumes, externe Laufwerke und geschützte Ordner ab und bleibt nach Neubauten erhalten (gleiches Signaturzertifikat).
+
 Beim ersten Start fragt macOS, ob die App auf das lokale Netzwerk zugreifen darf – das ist für die Serversuche nötig.
 
 ## Funktionen im MVP

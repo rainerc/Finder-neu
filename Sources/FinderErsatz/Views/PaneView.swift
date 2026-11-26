@@ -40,7 +40,19 @@ struct PaneView: View {
 
             Group {
                 if let error = pane.errorMessage {
-                    ContentUnavailableView("Ordner nicht lesbar", systemImage: "lock.fill", description: Text(error))
+                    ContentUnavailableView {
+                        Label("Ordner nicht lesbar", systemImage: "lock.fill")
+                    } description: {
+                        Text(error)
+                    } actions: {
+                        if pane.errorIsPermission {
+                            Button("Festplattenvollzugriff öffnen") {
+                                SystemSettings.open(.fullDiskAccess)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            Button("Erneut versuchen") { pane.reload() }
+                        }
+                    }
                 } else if pane.activeSearch != nil, pane.items.isEmpty, !pane.isSearchRunning {
                     ContentUnavailableView.search
                 } else if pane.viewMode == .list || pane.activeSearch != nil {
