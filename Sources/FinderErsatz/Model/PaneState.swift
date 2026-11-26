@@ -90,9 +90,23 @@ final class PaneState: Identifiable {
             selection.formIntersection(Set(items.map(\.id)))
         } catch {
             items = []
-            errorMessage = error.localizedDescription
+            errorMessage = Self.describe(error, for: currentURL)
         }
         watchCurrentFolder()
+    }
+
+    /// Bei fehlender Berechtigung auf Netzlaufwerken erklären, wo man sie in macOS erteilt.
+    private static func describe(_ error: Error, for url: URL) -> String {
+        let nsError = error as NSError
+        let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? NSError
+        let isPermission = nsError.code == NSFileReadNoPermissionError
+            || (underlying?.domain == NSPOSIXErrorDomain && [Int(EPERM), Int(EACCES)].contains(underlying?.code ?? 0))
+        guard isPermission else { return error.localizedDescription }
+        let isNetwork = (try? url.resourceValues(forKeys: [.volumeIsLocalKey]).volumeIsLocal) == false
+        if isNetwork {
+            return "macOS hat den Zugriff auf Netzwerkvolumes nicht erlaubt. Systemeinstellungen → Datenschutz & Sicherheit → Dateien und Ordner → bei Finder-Ersatz (bzw. Terminal, wenn per „swift run“ gestartet) „Netzwerkvolumes“ einschalten – oder „Festplattenvollzugriff“ erteilen. Danach die App neu starten."
+        }
+        return "Keine Berechtigung. Ggf. unter Systemeinstellungen → Datenschutz & Sicherheit → Festplattenvollzugriff erlauben und die App neu starten."
     }
 
     // MARK: Live-Aktualisierung

@@ -16,14 +16,16 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 HSplitView {
                     PaneView(side: .left, focus: $focusedPane)
-                        .frame(minWidth: 350)
+                        .frame(minWidth: 350, maxWidth: .infinity, maxHeight: .infinity)
                     PaneView(side: .right, focus: $focusedPane)
-                        .frame(minWidth: 350)
+                        .frame(minWidth: 350, maxWidth: .infinity, maxHeight: .infinity)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 Divider()
                 JobsPanel(queue: browser.operations)
                 ActionBar()
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onAppear { focusedPane = browser.activeSide }
         .onChange(of: focusedPane) { _, side in

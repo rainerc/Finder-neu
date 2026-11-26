@@ -8,6 +8,16 @@
 	<string>Finder-Ersatz</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Finder-Ersatz sucht im lokalen Netzwerk nach Servern und Freigaben (z. B. NAS), damit du dich mit ihnen verbinden kannst.</string>
+	<key>NSNetworkVolumesUsageDescription</key>
+	<string>Finder-Ersatz zeigt und bearbeitet Dateien auf deinen Netzwerkfreigaben.</string>
+	<key>NSRemovableVolumesUsageDescription</key>
+	<string>Finder-Ersatz zeigt und bearbeitet Dateien auf externen Laufwerken.</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>Finder-Ersatz zeigt und bearbeitet Dateien auf deinem Schreibtisch.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Finder-Ersatz zeigt und bearbeitet Dateien in deinem Dokumente-Ordner.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>Finder-Ersatz zeigt und bearbeitet Dateien in deinem Downloads-Ordner.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_smb._tcp</string>
