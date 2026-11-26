@@ -62,6 +62,8 @@ struct ContentView: View {
                     browser.activePane.toggleHidden()
                 }
                 .help("Unsichtbare Dateien im aktiven Fenster ein-/ausblenden (⇧⌘.)")
+                Button("Vorschaubereich unten", systemImage: "rectangle.bottomthird.inset.filled") { browser.showPanePreview.toggle() }
+                    .help("Vorschaubereich unten in den Fenstern ein-/ausblenden (⌃⌘P)")
                 Button("Vorschau", systemImage: "sidebar.trailing") { browser.showInspector.toggle() }
                     .help("Vorschau-Spalte ein-/ausblenden (⇧⌘P)")
             }

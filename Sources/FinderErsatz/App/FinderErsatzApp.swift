@@ -170,6 +170,7 @@ struct BrowserCommands: Commands {
             item(.viewGallery) { browser.setViewMode(.gallery) }
             Divider()
             item(.toggleInspector) { browser.showInspector.toggle() }
+            item(.togglePanePreview) { browser.showPanePreview.toggle() }
             Divider()
             item(.toggleHidden) { browser.activePane.toggleHidden() }
             item(.reload) { browser.reloadAll() }

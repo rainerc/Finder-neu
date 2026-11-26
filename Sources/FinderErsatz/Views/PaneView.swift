@@ -42,57 +42,66 @@ struct PaneView: View {
                 Divider()
             }
 
-            Group {
-                if let error = pane.errorMessage {
-                    ContentUnavailableView {
-                        Label("Ordner nicht lesbar", systemImage: "lock.fill")
-                    } description: {
-                        Text(error)
-                    } actions: {
-                        if pane.errorIsPermission {
-                            Button("Festplattenvollzugriff öffnen") {
-                                SystemSettings.open(.fullDiskAccess)
+            VSplitView {
+                Group {
+                    if let error = pane.errorMessage {
+                        ContentUnavailableView {
+                            Label("Ordner nicht lesbar", systemImage: "lock.fill")
+                        } description: {
+                            Text(error)
+                        } actions: {
+                            if pane.errorIsPermission {
+                                Button("Festplattenvollzugriff öffnen") {
+                                    SystemSettings.open(.fullDiskAccess)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                Button("Erneut versuchen") { pane.reload() }
                             }
-                            .buttonStyle(.borderedProminent)
-                            Button("Erneut versuchen") { pane.reload() }
                         }
+                    } else if pane.activeSearch != nil, pane.items.isEmpty, !pane.isSearchRunning {
+                        ContentUnavailableView.search
+                    } else if pane.viewMode == .list || pane.activeSearch != nil {
+                        keyHandling(fileTable(pane: pane, settings: settings), pane: pane)
+                    } else if pane.viewMode == .columns {
+                        keyHandling(
+                            ColumnBrowserView(pane: pane, side: side, onOpen: { open($0, in: pane) }) { ids in
+                                fileMenu(ids, pane: pane)
+                            }
+                            .focusable()
+                            .focusEffectDisabled(),
+                            pane: pane
+                        )
+                    } else if pane.viewMode == .gallery {
+                        keyHandling(
+                            GalleryView(pane: pane, onOpen: { open($0, in: pane) }) { ids in
+                                fileMenu(ids, pane: pane)
+                            }
+                            .focusable()
+                            .focusEffectDisabled(),
+                            pane: pane
+                        )
+                    } else {
+                        keyHandling(
+                            FileGridView(pane: pane, mode: pane.viewMode, onOpen: { open($0, in: pane) }) { ids in
+                                fileMenu(ids, pane: pane)
+                            }
+                            .focusable()
+                            .focusEffectDisabled(),
+                            pane: pane
+                        )
                     }
-                } else if pane.activeSearch != nil, pane.items.isEmpty, !pane.isSearchRunning {
-                    ContentUnavailableView.search
-                } else if pane.viewMode == .list || pane.activeSearch != nil {
-                    keyHandling(fileTable(pane: pane, settings: settings), pane: pane)
-                } else if pane.viewMode == .columns {
-                    keyHandling(
-                        ColumnBrowserView(pane: pane, side: side, onOpen: { open($0, in: pane) }) { ids in
-                            fileMenu(ids, pane: pane)
-                        }
-                        .focusable()
-                        .focusEffectDisabled(),
-                        pane: pane
-                    )
-                } else if pane.viewMode == .gallery {
-                    keyHandling(
-                        GalleryView(pane: pane, onOpen: { open($0, in: pane) }) { ids in
-                            fileMenu(ids, pane: pane)
-                        }
-                        .focusable()
-                        .focusEffectDisabled(),
-                        pane: pane
-                    )
-                } else {
-                    keyHandling(
-                        FileGridView(pane: pane, mode: pane.viewMode, onOpen: { open($0, in: pane) }) { ids in
-                            fileMenu(ids, pane: pane)
-                        }
-                        .focusable()
-                        .focusEffectDisabled(),
-                        pane: pane
-                    )
                 }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)   // Liste füllt immer die volle Höhe
-            .dropDestination(for: URL.self) { urls, _ in
-                _ = browser.drop(urls, into: pane)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)   // Liste füllt immer die volle Höhe
+                .dropDestination(for: URL.self) { urls, _ in
+                    _ = browser.drop(urls, into: pane)
+                }
+                .frame(minHeight: 120)
+
+                // Vorschaubereich unten im Fenster (⌃⌘P)
+                if browser.showPanePreview {
+                    PanePreview(pane: pane)
+                        .frame(minHeight: 110, idealHeight: 200, maxHeight: .infinity)
+                }
             }
 
             Divider()

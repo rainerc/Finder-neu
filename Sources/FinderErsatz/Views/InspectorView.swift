@@ -139,7 +139,7 @@ enum SpotlightMetadata {
 }
 
 /// Echte Quick-Look-Vorschau (blättern in PDFs, Videos abspielen usw.).
-private struct QuickLookPreview: NSViewRepresentable {
+struct QuickLookPreview: NSViewRepresentable {
     let url: URL
 
     func makeNSView(context: Context) -> QLPreviewView {
@@ -158,5 +158,83 @@ private struct QuickLookPreview: NSViewRepresentable {
 
     static func dismantleNSView(_ view: QLPreviewView, coordinator: ()) {
         view.close()
+    }
+}
+
+/// Vorschaubereich unten in einem Dateifenster: links die Quick-Look-Vorschau, rechts die wichtigsten Angaben.
+struct PanePreview: View {
+    let pane: PaneState
+
+    var body: some View {
+        let selected = pane.selectedItems
+        Group {
+            if let item = selected.last {
+                PanePreviewContent(item: item, selectionCount: selected.count)
+                    .id(item.url)
+            } else {
+                Text(pane.items.isEmpty ? "Keine Objekte" : "Objekt auswählen, um es hier anzuzeigen")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .background(Color(nsColor: .controlBackgroundColor))
+    }
+}
+
+private struct PanePreviewContent: View {
+    let item: FileItem
+    let selectionCount: Int
+    @State private var metadata: [SpotlightMetadata.Entry] = []
+    @State private var folderSize: Int64?
+
+    var body: some View {
+        HStack(spacing: 0) {
+            QuickLookPreview(url: item.url)
+                .frame(minWidth: 160, maxWidth: .infinity, maxHeight: .infinity)
+            Divider()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(item.name).font(.headline).lineLimit(2).textSelection(.enabled)
+                    Text(item.kind + (selectionCount > 1 ? " – \(selectionCount) ausgewählt" : ""))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 8, verticalSpacing: 3) {
+                        GridRow {
+                            Text("Größe").foregroundStyle(.secondary)
+                            Text(sizeText)
+                        }
+                        GridRow {
+                            Text("Geändert").foregroundStyle(.secondary)
+                            Text(item.modified.formatted(date: .abbreviated, time: .shortened))
+                        }
+                        GridRow {
+                            Text("Erstellt").foregroundStyle(.secondary)
+                            Text(item.created.formatted(date: .abbreviated, time: .shortened))
+                        }
+                        ForEach(metadata) { entry in
+                            GridRow {
+                                Text(entry.label).foregroundStyle(.secondary)
+                                Text(entry.value).lineLimit(2).textSelection(.enabled)
+                            }
+                        }
+                    }
+                    .font(.caption)
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(width: 240)
+        }
+        .task {
+            metadata = SpotlightMetadata.entries(for: item.url)
+            guard item.isBrowsableFolder else { return }
+            let url = item.url
+            folderSize = await Task.detached(priority: .utility) { FileTransfer.size(of: url) }.value
+        }
+    }
+
+    private var sizeText: String {
+        guard item.isBrowsableFolder else { return item.size.formatted(.byteCount(style: .file)) }
+        return folderSize.map { $0.formatted(.byteCount(style: .file)) } ?? "Wird berechnet …"
     }
 }

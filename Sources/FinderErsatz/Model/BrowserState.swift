@@ -78,6 +78,11 @@ final class BrowserState {
         didSet { UserDefaults.standard.set(showInspector, forKey: "showInspector") }
     }
 
+    /// Vorschaubereich unten in beiden Dateifenstern (⌃⌘P).
+    var showPanePreview = UserDefaults.standard.bool(forKey: "showPanePreview") {
+        didSet { UserDefaults.standard.set(showPanePreview, forKey: "showPanePreview") }
+    }
+
     /// Schnellansicht (Quick Look)
     var previewURL: URL?
     var previewItems: [URL] = []
