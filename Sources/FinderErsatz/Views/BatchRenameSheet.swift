@@ -8,11 +8,12 @@ struct BatchRenameSheet: View {
     let request: BatchRenameRequest
 
     enum Mode: String, CaseIterable, Identifiable {
-        case replace, add, format
+        case replace, regex, add, format
         var id: String { rawValue }
         var title: String {
             switch self {
             case .replace: "Text ersetzen"
+            case .regex: "Regex"
             case .add: "Text hinzufügen"
             case .format: "Formatieren"
             }
@@ -37,6 +38,10 @@ struct BatchRenameSheet: View {
     @State private var digits = 2
     @State private var numberPosition: Position = .after
     @State private var keepExtension = true
+    @State private var regexPattern = ""
+    @State private var regexReplacement = ""
+    @State private var regexCaseSensitive = false
+    @State private var showRegexHelper = false
 
     var body: some View {
         let preview = previewNames
@@ -55,6 +60,16 @@ struct BatchRenameSheet: View {
                     TextField("Suchen", text: $find)
                     TextField("Ersetzen durch", text: $replacement)
                     Toggle("Groß-/Kleinschreibung beachten", isOn: $caseSensitive)
+                case .regex:
+                    TextField("Muster", text: $regexPattern)
+                        .font(.body.monospaced())
+                    TextField("Ersetzen durch ($1, $2 …)", text: $regexReplacement)
+                        .font(.body.monospaced())
+                    HStack {
+                        Toggle("Groß-/Kleinschreibung beachten", isOn: $regexCaseSensitive)
+                        Spacer()
+                        Button("Regex-Assistent …", systemImage: "wand.and.stars") { showRegexHelper = true }
+                    }
                 case .add:
                     TextField("Text", text: $addText)
                     Picker("Position", selection: $addPosition) {
@@ -107,6 +122,15 @@ struct BatchRenameSheet: View {
         }
         .padding(20)
         .frame(width: 560, height: 620)
+        .sheet(isPresented: $showRegexHelper) {
+            RegexHelperSheet(purpose: .rename, sampleNames: request.items.map { split($0).0 },
+                             pattern: regexPattern, replacement: regexReplacement,
+                             caseSensitive: regexCaseSensitive) { pattern, replacement, caseSensitive in
+                regexPattern = pattern
+                regexReplacement = replacement
+                regexCaseSensitive = caseSensitive
+            }
+        }
     }
 
     // MARK: Namen berechnen
@@ -123,6 +147,13 @@ struct BatchRenameSheet: View {
                     newStem = stem.replacingOccurrences(of: find, with: replacement,
                                                         options: caseSensitive ? [] : [.caseInsensitive])
                 }
+            case .regex:
+                if let regex = compiledRegex {
+                    newStem = regex.stringByReplacingMatches(in: stem, range: NSRange(stem.startIndex..., in: stem),
+                                                             withTemplate: regexReplacement)
+                } else {
+                    newStem = stem
+                }
             case .add:
                 newStem = addPosition == .before ? addText + stem : stem + addText
             case .format:
@@ -133,6 +164,11 @@ struct BatchRenameSheet: View {
         }
     }
 
+    private var compiledRegex: NSRegularExpression? {
+        guard !regexPattern.isEmpty else { return nil }
+        return try? NSRegularExpression(pattern: regexPattern, options: regexCaseSensitive ? [] : [.caseInsensitive])
+    }
+
     /// Name ohne und mit Endung. Bei „Endung beibehalten“ wird nur der Teil vor der Endung verändert.
     private func split(_ item: FileItem) -> (String, String) {
         let ext = (item.name as NSString).pathExtension
@@ -141,6 +177,7 @@ struct BatchRenameSheet: View {
     }
 
     private func validate(_ names: [String]) -> String? {
+        if mode == .regex, !regexPattern.isEmpty, compiledRegex == nil { return "Ungültiger regulärer Ausdruck." }
         if names.contains(where: { $0.trimmingCharacters(in: .whitespaces).isEmpty }) { return "Leere Namen sind nicht erlaubt." }
         if names.contains(where: { $0.contains("/") || $0.contains(":") }) { return "Namen dürfen kein „/“ oder „:“ enthalten." }
         if names.contains(where: { $0.hasPrefix(".") }) { return "Namen mit „.“ am Anfang wären unsichtbar." }

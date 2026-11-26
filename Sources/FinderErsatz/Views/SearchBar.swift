@@ -6,6 +6,7 @@ struct SearchBar: View {
     let pane: PaneState
     @State private var query: SearchQuery
     @FocusState private var termFocused: Bool
+    @State private var showRegexHelper = false
 
     init(pane: PaneState) {
         self.pane = pane
@@ -27,6 +28,12 @@ struct SearchBar: View {
                 }
                 .labelsHidden()
                 .fixedSize()
+                if query.mode == .regex {
+                    Button("Regex-Assistent", systemImage: "wand.and.stars") { showRegexHelper = true }
+                        .labelStyle(.iconOnly)
+                        .buttonStyle(.borderless)
+                        .help("Regex-Assistent: Bausteine, Vorlagen, Erklärung und Live-Test an den Dateinamen")
+                }
                 Toggle("Aa", isOn: $query.caseSensitive)
                     .toggleStyle(.button)
                     .help("Groß-/Kleinschreibung beachten")
@@ -79,6 +86,26 @@ struct SearchBar: View {
         .padding(.vertical, 6)
         .background(.bar)
         .onAppear { termFocused = true }
+        .sheet(isPresented: $showRegexHelper) {
+            RegexHelperSheet(purpose: .search, sampleNames: regexSamples, pattern: query.term,
+                             caseSensitive: query.caseSensitive) { pattern, _, caseSensitive in
+                query.term = pattern
+                query.caseSensitive = caseSensitive
+            }
+        }
+    }
+
+    /// Namen zum Ausprobieren: aktueller Ordner (bzw. aktuelle Treffer) plus eine Ebene darunter.
+    private var regexSamples: [String] {
+        var names = pane.items.map(\.name)
+        if names.count < 300 {
+            for folder in pane.items.filter(\.isBrowsableFolder).prefix(20) {
+                names += ((try? FileManager.default.contentsOfDirectory(atPath: folder.url.path)) ?? [])
+                    .filter { !$0.hasPrefix(".") }.prefix(30)
+            }
+        }
+        var seen = Set<String>()
+        return names.filter { seen.insert($0).inserted }
     }
 
     private func start() {

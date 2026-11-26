@@ -41,7 +41,8 @@ Beim ersten Start fragt macOS, ob die App auf das lokale Netzwerk zugreifen darf
 | Suche ab aktuellem Ordner: Name enthält / Platzhalter (`*.jpg; *.png`) / Regex / Spotlight, Groß-/Kleinschreibung, Inhaltssuche mit Kodierung | `⌘F`, Lupe im Fensterkopf |
 | Ansichten Liste, Kurz (mehrspaltig), Miniaturen (Vorschaubilder), Spalten (wie Finder, ←/→ wechselt die Spalte), Galerie | `⌘1` … `⌘5` oder Umschalter im Fensterkopf |
 | Seitenleiste: Zuletzt benutzt (`⇧⌘F`), Tags (alle Dateien je Farb-Tag), intelligente Ordner (Suche sichern per Knopf in der Suchleiste) | Klick zeigt die Treffer im aktiven Fenster, „Zurück zum Ordner“ in der Statuszeile |
-| Mehrere umbenennen: Text ersetzen, Text hinzufügen, Formatieren mit Nummer – mit Vorschau, als ein Schritt widerrufbar | `F2` bei mehreren Objekten, `⇧F2`, Kontextmenü |
+| Regex-Assistent für Suche und Umbenennen: Bausteine zum Anklicken, Vorlagen, Muster aus Beispielnamen ableiten, Erklärung auf Deutsch, Live-Test an echten Dateinamen | Zauberstab in der Suchleiste (Modus Regex) bzw. im Umbenennen-Dialog |
+| Mehrere umbenennen: Text ersetzen, Regex mit $1, Text hinzufügen, Formatieren mit Nummer – mit Vorschau, als ein Schritt widerrufbar | `F2` bei mehreren Objekten, `⇧F2`, Kontextmenü |
 | Vorschaubereich unten in jedem Fenster (Quick Look + Angaben, Höhe per Trennlinie ziehen) | `⌃⌘P` oder Symbolleiste |
 | Vorschau-Spalte rechts: echte Quick-Look-Vorschau, Metadaten (Abmessungen, Dauer, Herkunft …), Ordnergröße | `⇧⌘P` oder Symbolleiste |
 | Ordnergrößen in der Liste (im Hintergrund, nur lokale Laufwerke) | Einstellungen `⌘,` |

@@ -49,6 +49,7 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 - v0.11 zusätzlich: „Neuer Tab“-Knopf im Fensterkopf bei nur einem Tab; Vorschaubereich unten in jedem Fenster (`PanePreview` in `InspectorView.swift`, `VSplitView` in `PaneView`, `browser.showPanePreview`, ⌃⌘P)
 - Schnellansicht nutzt jetzt das native `QLPreviewPanel` (`Services/QuickLookController.swift`, hängt sich in die Responder-Kette des Fensters, folgt der Auswahl, Pfeiltasten werden ans Fenster weitergereicht) statt SwiftUIs `.quickLookPreview` – das brauchte bei Ordnern sehr lange
 - Leertaste auf einem Ordner zeigt die eigene schnelle Vorschau (`FolderPreviewSheet`, eine Ebene). Grund: XRay durchsucht den ganzen Ordnerbaum (bei Rainer ~/Documents: 4,79 GB, 18.151 Objekte) und braucht selbst mit `qlmanage -p` ewig. Quick Look/XRay für Ordner: Einstellung `folderPreviewUsesQuickLook`, ⇧-Leertaste, ⌘Y (umbelegbar) oder Knopf im Sheet; ⌥-Leertaste ging nicht (Alfred) (Rainers Wahl)
+- Regex-Assistent (`RegexHelperSheet`): in der Suchleiste (Modus Regex, Zauberstab) und im Stapel-Umbenennen (Modus „Regex“ mit $1-Ersetzung). Bausteine, Vorlagen, Muster aus Beispielnamen ableiten (`RegexInference`), deutsche Erklärung (`RegexExplainer`), Live-Test mit Markierung, Gruppen und Umbenennungs-Vorschau. Alles lokal, kein externer Dienst
 - v0.1 baut auf Rainers Mac (macOS 26) ohne Fehler mit `swift run`
 
 ## Nächste Schritte
