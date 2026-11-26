@@ -14,16 +14,7 @@ Voraussetzung: Hookmark Pro (eigene Skripte gibt es nur dort) und Finder-Ersatz 
 1. Finder-Ersatz starten und in den Vordergrund holen.
 2. Hookmark → Einstellungen → **Scripts** → „+“ bzw. die App „Finder-Ersatz“ wählen
    (Bundle-ID `com.example.FinderErsatz`).
-3. Bei **Get Address** als Sprache **JavaScript** wählen und einfügen:
-
-```javascript
-const app = Application("/Applications/Finder-Ersatz.app");
-const paths = app.selectedPaths();
-const path = paths.length > 0 ? paths[0] : app.currentFolder();
-path ? $.NSURL.fileURLWithPath(path).absoluteString.js : "";
-```
-
-   Falls Hookmark nur AppleScript annimmt, stattdessen dieses AppleScript verwenden:
+3. Bei **Get Address** dieses AppleScript einfügen (getestet, funktioniert; JavaScript nimmt Hookmark hier nicht an):
 
 ```applescript
 use framework "Foundation"
@@ -32,6 +23,8 @@ tell application "/Applications/Finder-Ersatz.app" to set thePaths to selected p
 if thePaths is {} then return ""
 return ((current application's NSURL's fileURLWithPath:(item 1 of thePaths))'s absoluteString()) as text
 ```
+
+   Wichtig: die App über ihren Pfad ansprechen, nicht über die Bundle-ID (die findet macOS nicht zuverlässig).
 
 4. **Get Name** leer lassen (Hookmark nimmt bei Datei-Links den Dateinamen).
 5. Beim ersten ⌃H fragt macOS, ob Hookmark Finder-Ersatz steuern darf → **Erlauben**.
