@@ -5,7 +5,7 @@ import AppKit
 enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
     case newTab, newFolder, copy, move, rename, quickLook, trash, compress, extractHere, extractToOther
     case copyFiles, pasteFiles, moveFilesHere, duplicate, makeAlias, copyPath, getInfo, goToFolder, selectAll, undo
-    case search, reveal, terminal
+    case search, saveSearch, reveal, terminal, batchRename, recents
     case back, forward, up, switchPane, nextTab, previousTab, syncPanes, swapPanes, addFavorite, connectServer
     case viewList, viewBrief, viewIcons, viewColumns, viewGallery, toggleInspector, toggleHidden, reload
 
@@ -34,6 +34,9 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .selectAll: "Alles auswählen"
         case .undo: "Widerrufen"
         case .search: "Suchen"
+        case .saveSearch: "Suche als intelligenten Ordner sichern"
+        case .batchRename: "Mehrere umbenennen …"
+        case .recents: "Zuletzt benutzt"
         case .reveal: "Im Finder zeigen"
         case .terminal: "Terminal hier öffnen"
         case .back: "Zurück"
@@ -80,6 +83,9 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .selectAll: Shortcut("a", .command)
         case .undo: Shortcut("z", .command)
         case .search: Shortcut("f", .command)
+        case .saveSearch: nil
+        case .batchRename: Shortcut(functionKey: 2, .shift)
+        case .recents: Shortcut("f", [.command, .shift])
         case .reveal: Shortcut("r", [.command, .option])
         case .terminal: Shortcut("t", [.command, .option])
         case .back: Shortcut("[", .command)

@@ -23,6 +23,11 @@ enum FinderTag: String, CaseIterable, Identifiable {
         "Blue": .blue, "Purple": .purple, "Gray": .gray, "Grey": .gray,
     ]
 
+    /// Englischer Name (Tags können je nach Systemsprache so gespeichert sein).
+    var englishName: String {
+        Self.englishNames.first { $0.value == self && $0.key != "Grey" }?.key ?? rawValue
+    }
+
     /// Farbe zu einem Tag-Namen (nil bei eigenen Tags ohne Farbe).
     static func color(for name: String) -> Color? {
         (FinderTag(rawValue: name) ?? englishNames[name])?.color

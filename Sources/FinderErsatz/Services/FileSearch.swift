@@ -12,6 +12,10 @@ enum FileSearch {
     }
 
     static func run(_ query: SearchQuery, onBatch: @Sendable ([FileItem]) -> Void) throws {
+        if let raw = query.spotlightQuery {
+            try spotlight(raw: raw, root: query.searchesEverywhere ? nil : query.root, onBatch: onBatch)
+            return
+        }
         if query.mode == .spotlight {
             try spotlight(query, onBatch: onBatch)
             return
@@ -114,6 +118,21 @@ enum FileSearch {
         let paths = output.split(separator: "\n").prefix(maxResults)
         var batch: [FileItem] = []
         for path in paths {
+            if Task.isCancelled { break }
+            if let item = FileItem(url: URL(filePath: String(path))) { batch.append(item) }
+            if batch.count >= 200 { onBatch(batch); batch.removeAll() }
+        }
+        if !batch.isEmpty { onBatch(batch) }
+    }
+
+    /// Fertige Spotlight-Abfrage (Zuletzt benutzt, Tags, intelligente Ordner).
+    private static func spotlight(raw: String, root: URL?, onBatch: @Sendable ([FileItem]) -> Void) throws {
+        var arguments: [String] = []
+        if let root { arguments += ["-onlyin", root.path] }
+        arguments.append(raw)
+        let output = try ProcessRunner.run("/usr/bin/mdfind", arguments)
+        var batch: [FileItem] = []
+        for path in output.split(separator: "\n").prefix(maxResults) {
             if Task.isCancelled { break }
             if let item = FileItem(url: URL(filePath: String(path))) { batch.append(item) }
             if batch.count >= 200 { onBatch(batch); batch.removeAll() }

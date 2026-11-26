@@ -311,6 +311,12 @@ struct PaneView: View {
                 activate(pane, ids)
                 browser.beginRename()
             }
+            if selected.count > 1 {
+                Button("\(selected.count) Objekte umbenennen …") {
+                    activate(pane, ids)
+                    browser.beginBatchRename()
+                }
+            }
             Button("Informationen") {
                 activate(pane, ids)
                 browser.showInfo()
@@ -545,6 +551,11 @@ struct PaneStatusBar: View {
                 if bytes > 0 { Text("(\(bytes.formatted(.byteCount(style: .file))))") }
             }
             Spacer()
+            if pane.activeSearch != nil, !pane.isSearchBarVisible {
+                Button("Zurück zum Ordner", systemImage: "xmark.circle.fill") { pane.stopSearch() }
+                    .buttonStyle(.borderless)
+                    .help("Ergebnisliste schließen und wieder „\(pane.currentURL.lastPathComponent)“ zeigen")
+            }
             if pane.showHidden { Image(systemName: "eye").help("Unsichtbare Dateien sichtbar") }
         }
         .font(.caption)

@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Suchleiste unter dem Fensterkopf (⌘F). Sucht rekursiv ab dem aktuellen Ordner.
 struct SearchBar: View {
+    @Environment(BrowserState.self) private var browser
     let pane: PaneState
     @State private var query: SearchQuery
     @FocusState private var termFocused: Bool
@@ -37,6 +38,16 @@ struct SearchBar: View {
                         .keyboardShortcut(.defaultAction)
                         .disabled(query.isEmpty)
                 }
+                Button("Sichern", systemImage: "folder.badge.gearshape") {
+                    var saved = query
+                    saved.root = pane.currentURL
+                    browser.saveSearchQuery = saved
+                    browser.saveSearchName = query.term.isEmpty ? query.contentText : query.term
+                }
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .disabled(query.isEmpty)
+                .help("Suche als intelligenten Ordner in der Seitenleiste sichern")
                 Button("Schließen", systemImage: "xmark.circle.fill") { pane.closeSearch() }
                     .labelStyle(.iconOnly)
                     .buttonStyle(.borderless)

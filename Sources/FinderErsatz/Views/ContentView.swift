@@ -95,6 +95,21 @@ struct ContentView: View {
             Text("Im Ziel gibt es bereits \(names)\(more). Ersetzte Objekte kommen in den Papierkorb.")
         }
         .quickLookPreview($browser.previewURL, in: browser.previewItems)
+        .sheet(item: $browser.batchRenameRequest) { request in
+            BatchRenameSheet(request: request)
+                .environment(browser)
+        }
+        .alert(
+            "Intelligenten Ordner sichern",
+            isPresented: Binding(get: { browser.saveSearchQuery != nil },
+                                 set: { if !$0 { browser.saveSearchQuery = nil } })
+        ) {
+            TextField("Name", text: $browser.saveSearchName)
+            Button("Sichern") { browser.commitSaveSearch() }
+            Button("Abbrechen", role: .cancel) { browser.saveSearchQuery = nil }
+        } message: {
+            Text("Die Suche erscheint in der Seitenleiste unter „Intelligente Ordner“ und wird bei jedem Klick neu ausgeführt.")
+        }
         .sheet(item: $browser.infoItem) { item in
             InfoSheet(item: item)
                 .environment(browser)

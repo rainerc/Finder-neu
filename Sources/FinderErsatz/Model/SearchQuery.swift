@@ -1,8 +1,8 @@
 import Foundation
 
 /// Parameter einer Suche im aktuellen Ordner (rekursiv).
-struct SearchQuery: Sendable, Equatable {
-    enum Mode: String, CaseIterable, Identifiable, Sendable {
+struct SearchQuery: Sendable, Hashable, Codable {
+    enum Mode: String, CaseIterable, Identifiable, Sendable, Codable {
         case contains, wildcard, regex, spotlight
         var id: String { rawValue }
         var title: String {
@@ -15,7 +15,7 @@ struct SearchQuery: Sendable, Equatable {
         }
     }
 
-    enum TextEncoding: String, CaseIterable, Identifiable, Sendable {
+    enum TextEncoding: String, CaseIterable, Identifiable, Sendable, Codable {
         case utf8, latin1, utf16
         var id: String { rawValue }
         var title: String {
@@ -42,7 +42,45 @@ struct SearchQuery: Sendable, Equatable {
     var encoding: TextEncoding = .utf8
     var includeHidden = false
 
+    /// Für „Zuletzt benutzt“, Tags und intelligente Ordner: Anzeigename statt Ordnername.
+    var title: String?
+    /// Fertige Spotlight-Abfrage (mdfind-Syntax), z. B. `kMDItemUserTags == "Rot"`. Ersetzt Name/Inhalt.
+    var spotlightQuery: String?
+    /// Markiert den passenden Eintrag in der Seitenleiste.
+    var sidebarTag: URL?
+
     var isEmpty: Bool {
-        term.trimmingCharacters(in: .whitespaces).isEmpty && contentText.isEmpty
+        spotlightQuery == nil && term.trimmingCharacters(in: .whitespaces).isEmpty && contentText.isEmpty
+    }
+
+    /// Spotlight durchsucht dann den ganzen Index (statt nur ab `root`).
+    var searchesEverywhere: Bool { root.path == "/" }
+
+    // MARK: Vorgefertigte Abfragen für die Seitenleiste
+
+    static let recentsTag = URL(string: "finderersatz://recents")!
+
+    /// Dateien, die in den letzten 30 Tagen benutzt wurden (wie „Zuletzt benutzt“ im Finder).
+    static var recents: SearchQuery {
+        var query = SearchQuery(root: FileManager.default.homeDirectoryForCurrentUser)
+        query.title = "Zuletzt benutzt"
+        query.spotlightQuery = #"kMDItemLastUsedDate >= $time.today(-30) && kMDItemContentType != "public.folder""#
+        query.sidebarTag = recentsTag
+        return query
+    }
+
+    static func tagTag(_ name: String) -> URL {
+        URL(string: "finderersatz://tag/\(name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name)")!
+    }
+
+    /// Alle Objekte mit einem Tag (auch unter dem englischen Namen gesetzte Standard-Tags).
+    static func tagged(_ name: String, alternative: String? = nil) -> SearchQuery {
+        var query = SearchQuery(root: URL(filePath: "/"))
+        query.title = "Tag: \(name)"
+        let names = [name] + (alternative.map { [$0] } ?? [])
+        query.spotlightQuery = names.map { "kMDItemUserTags == \"\($0.replacingOccurrences(of: "\"", with: "\\\""))\"" }
+            .joined(separator: " || ")
+        query.sidebarTag = tagTag(name)
+        return query
     }
 }

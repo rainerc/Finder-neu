@@ -80,10 +80,10 @@ Stand November 2026. ✅ vorhanden · ⬜ fehlt · ✖ technisch nicht möglich
 | Pfad kopieren ⌥⌘C | ✅ Stapel A |
 | Widerrufen ⌘Z (Umbenennen, Verschieben, Papierkorb, neuer Ordner) | ✅ Stapel A |
 | Ordnergrößen berechnen | ✅ Stapel B |
-| Zuletzt benutzt (Recents) | ⬜ Stapel C |
-| Tags in der Seitenleiste (Dateien je Tag) | ⬜ Stapel C |
-| Intelligente Ordner / gespeicherte Suchen | ⬜ Stapel C |
-| Stapel-Umbenennen (Text ersetzen, Nummerieren, Format) | ⬜ Stapel C |
+| Zuletzt benutzt (Recents) | ✅ Stapel C |
+| Tags in der Seitenleiste (Dateien je Tag) | ✅ Stapel C |
+| Intelligente Ordner / gespeicherte Suchen | ✅ Stapel C |
+| Stapel-Umbenennen (Text ersetzen, Nummerieren, Format) | ✅ Stapel C |
 | Federnde Ordner (beim Ziehen öffnen) | ⬜ Stapel D |
 | Dienste / Schnellaktionen | ⬜ Stapel D |
 | Symbolleiste anpassen | ⬜ Stapel D |
@@ -95,5 +95,5 @@ Stand November 2026. ✅ vorhanden · ⬜ fehlt · ✖ technisch nicht möglich
 
 **Stapel A – Alltag** (umgesetzt in v0.9): Kopieren/Einsetzen/Bewegen über die Zwischenablage, Duplizieren, Alias, Öffnen mit, Informationen, Gehe zu Ordner, Tags & Farben, Teilen/AirDrop, Paketinhalt, Pfad kopieren, Widerrufen.
 **Stapel B – Ansichten** (umgesetzt in v0.10): Spaltenansicht, Galerie, Vorschau/Inspektor, Ordnergrößen.
-**Stapel C – Organisieren:** Zuletzt benutzt, Tags in der Seitenleiste, intelligente Ordner, Stapel-Umbenennen.
+**Stapel C – Organisieren** (umgesetzt in v0.11): Zuletzt benutzt, Tags in der Seitenleiste, intelligente Ordner, Stapel-Umbenennen.
 **Stapel D – Feinschliff:** Federnde Ordner, Dienste, Symbolleiste, iCloud-Status, Fenster wiederherstellen, Papierkorb.

@@ -40,6 +40,8 @@ Beim ersten Start fragt macOS, ob die App auf das lokale Netzwerk zugreifen darf
 | Schnellansicht (Quick Look, nutzt installierte Erweiterungen wie XRay) | Leertaste oder `F3` |
 | Suche ab aktuellem Ordner: Name enthält / Platzhalter (`*.jpg; *.png`) / Regex / Spotlight, Groß-/Kleinschreibung, Inhaltssuche mit Kodierung | `⌘F`, Lupe im Fensterkopf |
 | Ansichten Liste, Kurz (mehrspaltig), Miniaturen (Vorschaubilder), Spalten (wie Finder, ←/→ wechselt die Spalte), Galerie | `⌘1` … `⌘5` oder Umschalter im Fensterkopf |
+| Seitenleiste: Zuletzt benutzt (`⇧⌘F`), Tags (alle Dateien je Farb-Tag), intelligente Ordner (Suche sichern per Knopf in der Suchleiste) | Klick zeigt die Treffer im aktiven Fenster, „Zurück zum Ordner“ in der Statuszeile |
+| Mehrere umbenennen: Text ersetzen, Text hinzufügen, Formatieren mit Nummer – mit Vorschau, als ein Schritt widerrufbar | `F2` bei mehreren Objekten, `⇧F2`, Kontextmenü |
 | Vorschau-Spalte rechts: echte Quick-Look-Vorschau, Metadaten (Abmessungen, Dauer, Herkunft …), Ordnergröße | `⇧⌘P` oder Symbolleiste |
 | Ordnergrößen in der Liste (im Hintergrund, nur lokale Laufwerke) | Einstellungen `⌘,` |
 | Als ZIP komprimieren; entpacken (zip, tar.gz, tar.bz2, tar.xz, 7z, rar …) hierher oder ins andere Fenster | Kontextmenü, Menü „Ablage-Aktionen“ |

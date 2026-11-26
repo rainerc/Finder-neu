@@ -120,6 +120,7 @@ struct BrowserCommands: Commands {
         }
         CommandGroup(after: .textEditing) {
             item(.search) { browser.showSearch() }
+            item(.saveSearch) { browser.requestSaveSearch() }
         }
         CommandGroup(after: .newItem) {
             Divider()
@@ -131,6 +132,7 @@ struct BrowserCommands: Commands {
             item(.copy) { browser.copyToOtherPane() }
             item(.move) { browser.moveToOtherPane() }
             item(.rename) { browser.beginRename() }
+            item(.batchRename) { browser.beginBatchRename() }
             item(.quickLook) { browser.toggleQuickLook() }
             item(.trash) { browser.trashSelection() }
             Divider()
@@ -142,6 +144,7 @@ struct BrowserCommands: Commands {
             item(.terminal) { browser.openTerminal() }
         }
         CommandMenu("Gehe zu") {
+            item(.recents) { browser.showRecents() }
             item(.goToFolder) { browser.showGoToFolder() }
             item(.connectServer) {
                 NotificationCenter.default.post(name: .connectToServer, object: nil)

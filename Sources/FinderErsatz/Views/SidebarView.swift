@@ -13,15 +13,31 @@ struct SidebarView: View {
     @State private var cloudFolders: [URL] = []
     @State private var renaming: Favorite?
     @State private var renameText = ""
+    @State private var renamingSmart: SmartFolder?
 
     private var favorites: FavoritesStore { browser.favorites }
 
     /// Markiert den Eintrag, der dem Ordner des aktiven Fensters entspricht.
     private var selection: Binding<URL?> {
         Binding(
-            get: { browser.activePane.currentURL },
-            set: { url in if let url { browser.activePane.navigate(to: url) } }
+            get: { browser.activePane.activeSearch?.sidebarTag ?? browser.activePane.currentURL },
+            set: { url in if let url { open(url) } }
         )
+    }
+
+    /// Ordner öffnen – oder bei „finderersatz://…“ eine Abfrage (Zuletzt benutzt, Tag, intelligenter Ordner) zeigen.
+    private func open(_ url: URL) {
+        guard url.scheme == "finderersatz" else {
+            browser.activePane.navigate(to: url)
+            return
+        }
+        if url == SearchQuery.recentsTag {
+            browser.showRecents()
+        } else if let tag = FinderTag.allCases.first(where: { SearchQuery.tagTag($0.rawValue) == url }) {
+            browser.showTag(tag.rawValue, alternative: tag.englishName)
+        } else if let folder = browser.smartFolders.folder(for: url) {
+            browser.showSmartFolder(folder)
+        }
     }
 
     var body: some View {
@@ -37,6 +53,42 @@ struct SidebarView: View {
                 .onMove { favorites.move(fromOffsets: $0, toOffset: $1) }
                 .dropDestination(for: URL.self) { urls, offset in
                     favorites.add(urls, at: offset)
+                }
+            }
+
+            Section("Intelligente Ordner") {
+                Label("Zuletzt benutzt", systemImage: "clock")
+                    .tag(SearchQuery.recentsTag)
+                    .help("Dateien, die in den letzten 30 Tagen geöffnet wurden (⇧⌘F)")
+                ForEach(browser.smartFolders.items) { folder in
+                    Label(folder.name, systemImage: "gearshape")
+                        .tag(folder.sidebarTag)
+                        .help(smartFolderHelp(folder))
+                        .contextMenu {
+                            Button("Im anderen Fenster öffnen") {
+                                browser.toggleActivePane()
+                                browser.showSmartFolder(folder)
+                            }
+                            Button("Umbenennen …") {
+                                renameText = folder.name
+                                renamingSmart = folder
+                            }
+                            Divider()
+                            Button("Entfernen", role: .destructive) { browser.smartFolders.remove(folder) }
+                        }
+                }
+                .onMove { browser.smartFolders.move(fromOffsets: $0, toOffset: $1) }
+            }
+
+            Section("Tags") {
+                ForEach(FinderTag.allCases) { tag in
+                    Label {
+                        Text(tag.rawValue)
+                    } icon: {
+                        Image(systemName: "circle.fill").foregroundStyle(tag.color)
+                    }
+                    .tag(SearchQuery.tagTag(tag.rawValue))
+                    .help("Alle Objekte mit dem Tag „\(tag.rawValue)“ (Spotlight)")
                 }
             }
 
@@ -132,6 +184,17 @@ struct SidebarView: View {
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didMountNotification)) { _ in reloadVolumes() }
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didUnmountNotification)) { _ in reloadVolumes() }
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didRenameVolumeNotification)) { _ in reloadVolumes() }
+        .alert(
+            "Intelligenten Ordner umbenennen",
+            isPresented: Binding(get: { renamingSmart != nil }, set: { if !$0 { renamingSmart = nil } })
+        ) {
+            TextField("Name", text: $renameText)
+            Button("Umbenennen") {
+                if let folder = renamingSmart { browser.smartFolders.rename(folder, to: renameText) }
+                renamingSmart = nil
+            }
+            Button("Abbrechen", role: .cancel) { renamingSmart = nil }
+        }
         .alert("Mit Server verbinden", isPresented: $showConnect) {
             TextField("smb://server/freigabe", text: $serverAddress)
             Button("Verbinden") { connect() }
@@ -250,5 +313,14 @@ struct SidebarView: View {
         } catch {
             browser.alertMessage = error.localizedDescription
         }
+    }
+
+    private func smartFolderHelp(_ folder: SmartFolder) -> String {
+        let query = folder.query
+        var parts: [String] = []
+        if !query.term.isEmpty { parts.append("„\(query.term)“ (\(query.mode.title))") }
+        if !query.contentText.isEmpty { parts.append("enthält „\(query.contentText)“") }
+        parts.append("in \(query.root.path)")
+        return parts.joined(separator: ", ")
     }
 }

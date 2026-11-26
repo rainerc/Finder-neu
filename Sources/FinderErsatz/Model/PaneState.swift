@@ -56,7 +56,8 @@ final class PaneState: Identifiable {
 
     /// Tab-Titel: Anzeigename des aktuellen Ordners.
     var title: String {
-        currentURL.path == "/" ? "Macintosh HD" : FileManager.default.displayName(atPath: currentURL.path)
+        if let title = activeSearch?.title { return title }
+        return currentURL.path == "/" ? "Macintosh HD" : FileManager.default.displayName(atPath: currentURL.path)
     }
 
     @ObservationIgnored private var watcher: DirectoryWatcher?
@@ -218,9 +219,20 @@ final class PaneState: Identifiable {
 
     // MARK: Suche
 
-    func startSearch(_ query: SearchQuery) {
+    /// Sortierung vor einer Abfrage mit eigener Sortierung (z. B. „Zuletzt benutzt“), wird danach wiederhergestellt.
+    @ObservationIgnored private var sortOrderBeforeSearch: [KeyPathComparator<FileItem>]?
+
+    func startSearch(_ query: SearchQuery, sortOrder customSort: [KeyPathComparator<FileItem>]? = nil) {
         guard !query.isEmpty else { return }
         cancelSearchTask()
+        sizeTask?.cancel()
+        if let customSort {
+            if sortOrderBeforeSearch == nil { sortOrderBeforeSearch = sortOrder }
+            sortOrder = customSort
+        } else if let previous = sortOrderBeforeSearch {
+            sortOrderBeforeSearch = nil
+            sortOrder = previous
+        }
         let token = UUID()
         searchToken = token
         lastSearch = query
@@ -254,6 +266,10 @@ final class PaneState: Identifiable {
         cancelSearchTask()
         searchToken = UUID()
         activeSearch = nil
+        if let previous = sortOrderBeforeSearch {
+            sortOrderBeforeSearch = nil
+            sortOrder = previous
+        }
         reload()
     }
 

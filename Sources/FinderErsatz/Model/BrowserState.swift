@@ -6,6 +6,11 @@ import UniformTypeIdentifiers
 enum PaneSide: Hashable { case left, right }
 
 /// Dialog vor dem Kopieren/Verschieben (F5/F6): Ziel und ggf. neuer Name sind änderbar.
+struct BatchRenameRequest: Identifiable {
+    let id = UUID()
+    let items: [FileItem]
+}
+
 struct TransferRequest: Identifiable {
     let id = UUID()
     let sources: [URL]
@@ -34,6 +39,7 @@ final class BrowserState {
     var right: PaneGroup
     var activeSide: PaneSide = .left
     let favorites = FavoritesStore()
+    let smartFolders = SmartFolderStore()
     let operations = FileOperationQueue()
     let network = NetworkBrowser()
     let settings = AppSettings()
@@ -45,7 +51,10 @@ final class BrowserState {
     var renameTarget: FileItem?
     var renameText = ""
 
-    /// Kopieren/Verschieben-Dialog und Konfliktabfrage
+        /// Stapel-Umbenennen (mehrere Objekte)
+    var batchRenameRequest: BatchRenameRequest?
+
+    /// Kopieren/Verschieben-Dialog und Konfliktabfrage und Konfliktabfrage
     var transferRequest: TransferRequest?
     var conflictRequest: ConflictRequest?
 
@@ -515,7 +524,12 @@ final class BrowserState {
     }
 
     func beginRename() {
-        guard let item = activePane.selectedItems.first else { return }
+        let selected = activePane.selectedItems
+        if selected.count > 1 {
+            beginBatchRename()
+            return
+        }
+        guard let item = selected.first else { return }
         renameTarget = item
         renameText = item.name
     }
@@ -532,6 +546,93 @@ final class BrowserState {
             pane.reload()
             pane.selection = [url.normalizedFileURL]
         }
+    }
+
+    // MARK: Stapel-Umbenennen
+
+    func beginBatchRename() {
+        let selected = activePane.selectedItems
+        guard !selected.isEmpty else { NSSound.beep(); return }
+        batchRenameRequest = BatchRenameRequest(items: selected)
+    }
+
+    /// Benennt mehrere Objekte um. Zuerst auf vorläufige Namen, damit sich Ziel- und Quellnamen nicht in die Quere kommen
+    /// (z. B. „Bild 1“ → „Bild 2“ und „Bild 2“ → „Bild 3“). Als ein Schritt widerrufbar.
+    func applyBatchRename(_ renames: [(url: URL, newName: String)]) {
+        let pane = activePane
+        let changes = renames.filter { $0.url.lastPathComponent != $0.newName }
+        guard !changes.isEmpty else { return }
+        run {
+            let fm = FileManager.default
+            // Schritt 1: vorläufige Namen
+            var temporary: [(original: URL, temp: URL, newName: String)] = []
+            do {
+                for change in changes {
+                    let temp = try FileService.rename(change.url, to: ".umbenennen-\(UUID().uuidString)")
+                    temporary.append((change.url, temp, change.newName))
+                }
+            } catch {
+                for entry in temporary.reversed() { try? fm.moveItem(at: entry.temp, to: entry.original) }
+                throw error
+            }
+            // Schritt 2: endgültige Namen
+            var done: [(from: URL, to: URL)] = []
+            for (index, entry) in temporary.enumerated() {
+                do {
+                    let final = try FileService.rename(entry.temp, to: entry.newName)
+                    done.append((entry.original, final))
+                } catch {
+                    // Rest zurück auf die alten Namen, Erledigtes bleibt widerrufbar.
+                    for rest in temporary[index...] { try? fm.moveItem(at: rest.temp, to: rest.original) }
+                    if !done.isEmpty { recordUndo(.moved(done)) }
+                    throw error
+                }
+            }
+            recordUndo(.moved(done))
+            pane.reload()
+            pane.selection = Set(done.map { $0.to.normalizedFileURL })
+        }
+    }
+
+    // MARK: Zuletzt benutzt, Tags, intelligente Ordner
+
+    func showRecents() {
+        showQuery(.recents, sortOrder: [KeyPathComparator(\FileItem.accessed, order: .reverse)])
+    }
+
+    func showTag(_ name: String, alternative: String? = nil) {
+        showQuery(.tagged(name, alternative: alternative))
+    }
+
+    /// „Suche sichern“: Name abfragen (Dialog in ContentView), dann als intelligenten Ordner speichern.
+    var saveSearchName = ""
+    var saveSearchQuery: SearchQuery?
+
+    func requestSaveSearch() {
+        let pane = activePane
+        guard let query = pane.activeSearch ?? pane.lastSearch else {
+            NSSound.beep(); return
+        }
+        saveSearchQuery = query
+        saveSearchName = query.title ?? (query.term.isEmpty ? query.contentText : query.term)
+    }
+
+    func commitSaveSearch() {
+        guard let query = saveSearchQuery else { return }
+        saveSearchQuery = nil
+        let name = saveSearchName.trimmingCharacters(in: .whitespaces)
+        smartFolders.add(name: name.isEmpty ? "Suche" : name, query: query)
+    }
+
+    func showSmartFolder(_ folder: SmartFolder) {
+        showQuery(folder.displayQuery)
+    }
+
+    /// Zeigt das Ergebnis einer Abfrage im aktiven Fenster (ohne Suchleiste).
+    func showQuery(_ query: SearchQuery, sortOrder: [KeyPathComparator<FileItem>]? = nil) {
+        let pane = activePane
+        pane.isSearchBarVisible = false
+        pane.startSearch(query, sortOrder: sortOrder)
     }
 
     /// Ausgewählte Ordner – oder, ohne Auswahl, den aktuellen Ordner – zu den Favoriten hinzufügen.
