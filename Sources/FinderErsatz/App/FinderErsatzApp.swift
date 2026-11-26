@@ -29,20 +29,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 
-    // MARK: AppleScript (für Hookmark: „selected paths“, „current folder“)
-
-    func application(_ sender: NSApplication, delegateHandlesKey key: String) -> Bool {
-        key == "selectedPaths" || key == "currentFolderPath"
-    }
-
-    @objc var selectedPaths: [String] {
-        browser?.activePane.selectedItems.map(\.url.path) ?? []
-    }
-
-    @objc var currentFolderPath: String {
-        browser?.activePane.currentURL.path ?? ""
-    }
-
     func applicationWillTerminate(_ notification: Notification) {
         // Temporär entpackte Archive aufräumen.
         try? FileManager.default.removeItem(at: ArchiveService.browseRoot)
@@ -137,4 +123,20 @@ struct BrowserCommands: Commands {
 extension Notification.Name {
     /// Öffnet den Dialog „Mit Server verbinden“ in der Seitenleiste.
     static let connectToServer = Notification.Name("connectToServer")
+}
+
+// MARK: AppleScript (für Hookmark: „selected paths“, „current folder“)
+// Direkt an NSApplication, damit Cocoa Scripting die Werte per KVC findet
+// (der von SwiftUI eingesetzte App-Delegate ist ein Proxy und leitet KVC nicht zuverlässig weiter).
+extension NSApplication {
+    /// Ausgewählte Objekte im aktiven Fenster; ohne Auswahl der aktuelle Ordner.
+    @objc var selectedPaths: [String] {
+        guard let browser = BrowserState.current else { return [] }
+        let selected = browser.activePane.selectedItems.map(\.url.path)
+        return selected.isEmpty ? [browser.activePane.currentURL.path] : selected
+    }
+
+    @objc var currentFolderPath: String {
+        BrowserState.current?.activePane.currentURL.path ?? ""
+    }
 }

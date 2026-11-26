@@ -52,10 +52,14 @@ final class BrowserState {
     var previewURL: URL?
     var previewItems: [URL] = []
 
+    /// Für AppleScript (es gibt genau ein Hauptfenster).
+    static weak var current: BrowserState?
+
     init() {
         let home = FileManager.default.homeDirectoryForCurrentUser
         left = PaneGroup(url: home)
         right = PaneGroup(url: home.appending(path: "Downloads"))
+        BrowserState.current = self
         operations.onFinish = { [weak self] error in
             if let error { self?.alertMessage = error }
             self?.reloadAll()
