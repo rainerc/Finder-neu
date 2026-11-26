@@ -1,0 +1,24 @@
+# XcodeGen-Konfiguration: `brew install xcodegen && xcodegen` erzeugt FinderErsatz.xcodeproj
+name: FinderErsatz
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    macOS: "26.0"
+targets:
+  FinderErsatz:
+    type: application
+    platform: macOS
+    sources: [Sources/FinderErsatz]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.FinderErsatz
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "6.0"
+        CODE_SIGN_STYLE: Automatic
+        # DEVELOPMENT_TEAM: XXXXXXXXXX   # eigene Team-ID eintragen
+        ENABLE_APP_SANDBOX: NO           # Dateimanager braucht vollen Dateizugriff
+        ENABLE_HARDENED_RUNTIME: YES
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Finder-Ersatz
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
