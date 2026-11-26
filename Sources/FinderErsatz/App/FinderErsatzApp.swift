@@ -2,7 +2,23 @@ import SwiftUI
 import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    weak var browser: BrowserState?
+    private var keyMonitor: Any?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // ⌘W abfangen, bevor das Standardmenü „Fenster schließen“ greift:
+        // schließt nur den aktiven Tab; beim letzten Tab passiert nichts (Beenden mit ⌘Q).
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            guard flags == .command, event.charactersIgnoringModifiers?.lowercased() == "w" else { return event }
+            let handled = MainActor.assumeIsolated { () -> Bool in
+                guard let browser = self?.browser, NSApp.keyWindow?.attachedSheet == nil else { return false }
+                if !browser.closeTab() { NSSound.beep() }
+                return true
+            }
+            return handled ? nil : event
+        }
+
         // Nötig, wenn die App per `swift run` ohne .app-Bundle startet.
         NSApp.setActivationPolicy(.regular)
         NSApp.activate()
@@ -22,6 +38,7 @@ struct FinderErsatzApp: App {
         WindowGroup("Finder-Ersatz") {
             ContentView()
                 .environment(browser)
+                .onAppear { appDelegate.browser = browser }
                 .frame(minWidth: 900, minHeight: 500)
         }
         .defaultSize(width: 1200, height: 720)
@@ -41,8 +58,8 @@ struct BrowserCommands: Commands {
         CommandGroup(after: .newItem) {
             Button("Neuer Tab") { browser.newTab() }
                 .keyboardShortcut("t", modifiers: .command)
-            Button("Tab schließen") { browser.closeTabOrWindow() }
-                .keyboardShortcut("w", modifiers: .command)
+            // ⌘W wird im AppDelegate abgefangen (sonst schließt das Standardmenü das Fenster).
+            Button("Tab schließen (⌘W)") { _ = browser.closeTab() }
             Divider()
             Button("Neuer Ordner") { browser.newFolder() }
                 .keyboardShortcut("n", modifiers: [.command, .shift])

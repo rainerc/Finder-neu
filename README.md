@@ -26,7 +26,7 @@ Beim ersten Zugriff auf Schreibtisch, Dokumente usw. fragt macOS nach Erlaubnis.
 | Funktion | Bedienung |
 |---|---|
 | Zwei Fenster nebeneinander, aktives Fenster farbig markiert | Klick, `⇥` oder `⌥⇥` zum Wechseln |
-| Tabs pro Fenster | `⌘T` neu, `⌘W` schließen, `⌃⇥` / `⌃⇧⇥` wechseln, Kontextmenü „In neuem Tab öffnen“ |
+| Tabs pro Fenster | `⌘T` neu, `⌘W` schließen (der letzte Tab bleibt offen), `⌃⇥` / `⌃⇧⇥` wechseln, Kontextmenü „In neuem Tab öffnen“ |
 | Schnellansicht (Quick Look) | Leertaste oder `F3` |
 | Ordner aktualisieren sich automatisch | – |
 | Terminal im aktuellen Ordner | `⌥⌘T` oder Kontextmenü |

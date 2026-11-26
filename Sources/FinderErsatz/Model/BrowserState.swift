@@ -86,11 +86,10 @@ final class BrowserState {
 
     func newTab() { activeGroup.newTab() }
 
-    /// Schließt den aktiven Tab; beim letzten Tab wird das Fenster geschlossen.
-    func closeTabOrWindow() {
-        if !activeGroup.close(activeGroup.selectedID) {
-            NSApp.keyWindow?.performClose(nil)
-        }
+    /// Schließt den aktiven Tab. Der letzte Tab einer Seite bleibt offen (Rückgabe `false`).
+    @discardableResult
+    func closeTab() -> Bool {
+        activeGroup.close(activeGroup.selectedID)
     }
 
     func nextTab() { activeGroup.selectNext() }

@@ -26,7 +26,7 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 ## Stand
 - v0.1 MVP-Gerüst: Zwei-Fenster-Ansicht, Navigation, Pfadleiste, Favoriten, Sortierung, F5/F6 kopieren/verschieben, F2 umbenennen, neuer Ordner, Papierkorb, Drag & Drop, unsichtbare Dateien
 - v0.2 Seitenleiste: eigene Favoriten (hinzufügen per +, ⌃⌘T, Kontextmenü oder Ordner hineinziehen; umbenennen, entfernen, sortieren per Ziehen), Orte mit Volumes und Auswerfen. Klick öffnet im aktiven Fenster
-- v0.3 Paket 1 der Roadmap: Tabs, Kopier-Warteschlange mit Fortschritt/Abbrechen/Konfliktdialog, F5/F6-Dialog mit änderbarem Ziel und Namen, Live-Aktualisierung, Quick Look (Leertaste/F3), Terminal hier öffnen, Cloud-Ordner in der Seitenleiste. Noch nicht auf dem Mac gebaut. Offen aus Paket 1: eigener Hex-Viewer
+- v0.3 Paket 1 der Roadmap: Tabs, Kopier-Warteschlange mit Fortschritt/Abbrechen/Konfliktdialog, F5/F6-Dialog mit änderbarem Ziel und Namen, Live-Aktualisierung, Quick Look (Leertaste/F3), Terminal hier öffnen, Cloud-Ordner in der Seitenleiste. Baut auf dem Mac. ⌘W wird per NSEvent-Monitor im AppDelegate abgefangen (Menü-Shortcut kollidierte mit „Fenster schließen“). Offen aus Paket 1: eigener Hex-Viewer
 - v0.1 baut auf Rainers Mac (macOS 26) ohne Fehler mit `swift run`
 
 ## Nächste Schritte
