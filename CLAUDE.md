@@ -23,7 +23,7 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 
 ## Stand
 - v0.1 MVP-Gerüst: Zwei-Fenster-Ansicht, Navigation, Pfadleiste, Favoriten, Sortierung, F5/F6 kopieren/verschieben, F2 umbenennen, neuer Ordner, Papierkorb, Drag & Drop, unsichtbare Dateien
-- Noch nie auf einem Mac kompiliert (erstellt in einer Linux-Session)
+- Baut auf Rainers Mac (macOS 26) ohne Fehler mit `swift run`
 
 ## Nächste Schritte
 Siehe README „Nächste Schritte“. Priorität laut Rainer: Zwei-Fenster-Komfort zuerst.

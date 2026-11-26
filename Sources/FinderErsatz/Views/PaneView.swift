@@ -72,7 +72,7 @@ struct PaneView: View {
                     open(ids, in: pane)
                 }
                 .dropDestination(for: URL.self) { urls, _ in
-                    browser.drop(urls, into: pane)
+                    _ = browser.drop(urls, into: pane)
                 }
                 .focused(focus, equals: side)
                 .onKeyPress(.tab) {
