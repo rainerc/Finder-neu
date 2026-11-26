@@ -52,3 +52,48 @@ Legende: ✅ vorhanden · 🟡 teilweise · ⬜ fehlt. Aufwand: S (Stunden), M (
 13. Cloud-Dienste per eigener API, Root-Zugriff, weitere Archivformate
 
 Bewusst zurückgestellt: iOS-/Android-/MTP-Geräte (sehr aufwändig, kaum Nutzen gegenüber macOS-eigenen Wegen).
+
+---
+
+# Abgleich mit dem macOS-Finder (Wunsch: alle Finder-Funktionen)
+
+Stand November 2026. ✅ vorhanden · ⬜ fehlt · ✖ technisch nicht möglich
+
+| Finder-Funktion | Status |
+|---|---|
+| Listen-, Symbol-(Miniaturen-)Ansicht | ✅ |
+| Spaltenansicht (Miller Columns) | ⬜ Stapel B |
+| Galerie-Ansicht | ⬜ Stapel B |
+| Vorschau-Spalte / Inspektor mit Metadaten | ⬜ Stapel B |
+| Tabs, Seitenleiste, Favoriten, Pfadleiste, Statusleiste | ✅ |
+| Quick Look (Leertaste) | ✅ |
+| Suche, Spotlight | ✅ |
+| Komprimieren / Entpacken | ✅ |
+| Kopieren ⌘C / Einsetzen ⌘V / Bewegen ⌥⌘V | ⬜ Stapel A |
+| Duplizieren ⌘D, Alias erstellen ⌃⌘A | ⬜ Stapel A |
+| Öffnen mit … | ⬜ Stapel A |
+| Informationen ⌘I (Größe inkl. Ordnergröße, Daten, Pfad, Tags, Rechte) | ⬜ Stapel A |
+| Gehe zu Ordner ⇧⌘G | ⬜ Stapel A |
+| Tags & Farben setzen und anzeigen | ⬜ Stapel A |
+| Teilen (inkl. AirDrop, Mail, Nachrichten) | ⬜ Stapel A |
+| Paketinhalt zeigen | ⬜ Stapel A |
+| Pfad kopieren ⌥⌘C | ⬜ Stapel A (bisher nur Kontextmenü) |
+| Widerrufen ⌘Z (Umbenennen, Verschieben, Papierkorb, neuer Ordner) | ⬜ Stapel A |
+| Ordnergrößen berechnen | ⬜ Stapel B |
+| Zuletzt benutzt (Recents) | ⬜ Stapel C |
+| Tags in der Seitenleiste (Dateien je Tag) | ⬜ Stapel C |
+| Intelligente Ordner / gespeicherte Suchen | ⬜ Stapel C |
+| Stapel-Umbenennen (Text ersetzen, Nummerieren, Format) | ⬜ Stapel C |
+| Federnde Ordner (beim Ziehen öffnen) | ⬜ Stapel D |
+| Dienste / Schnellaktionen | ⬜ Stapel D |
+| Symbolleiste anpassen | ⬜ Stapel D |
+| iCloud-Status (geladen / nur in der Cloud), Laden/Entfernen | ⬜ Stapel D |
+| Fenster/Tabs beim Neustart wiederherstellen | ⬜ Stapel D |
+| Papierkorb anzeigen / entleeren, „Zurücklegen“ | ⬜ Stapel D |
+| Sync-Symbole von Dropbox & Co. (Finder-Sync-Erweiterungen) | ✖ nur im Finder selbst |
+| CDs/DVDs brennen | ✖ veraltet, nicht vorgesehen |
+
+**Stapel A – Alltag:** Kopieren/Einsetzen/Bewegen über die Zwischenablage, Duplizieren, Alias, Öffnen mit, Informationen, Gehe zu Ordner, Tags & Farben, Teilen/AirDrop, Paketinhalt, Pfad kopieren, Widerrufen.
+**Stapel B – Ansichten:** Spaltenansicht, Galerie, Vorschau/Inspektor, Ordnergrößen.
+**Stapel C – Organisieren:** Zuletzt benutzt, Tags in der Seitenleiste, intelligente Ordner, Stapel-Umbenennen.
+**Stapel D – Feinschliff:** Federnde Ordner, Dienste, Symbolleiste, iCloud-Status, Fenster wiederherstellen, Papierkorb.
