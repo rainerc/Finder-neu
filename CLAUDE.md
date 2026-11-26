@@ -27,4 +27,4 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 - v0.1 baut auf Rainers Mac (macOS 26) ohne Fehler mit `swift run`
 
 ## Nächste Schritte
-Siehe README „Nächste Schritte“. Priorität laut Rainer: Zwei-Fenster-Komfort zuerst.
+Siehe `docs/ROADMAP.md` (Abgleich mit Commander One, Pakete 1–3). Priorität laut Rainer: Zwei-Fenster-Komfort zuerst.
