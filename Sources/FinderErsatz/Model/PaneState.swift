@@ -16,6 +16,15 @@ final class PaneState: Identifiable {
     private(set) var showHidden = false
     private(set) var errorMessage: String?
 
+    /// Tab-Titel: Anzeigename des aktuellen Ordners.
+    var title: String {
+        currentURL.path == "/" ? "Macintosh HD" : FileManager.default.displayName(atPath: currentURL.path)
+    }
+
+    @ObservationIgnored private var watcher: DirectoryWatcher?
+    @ObservationIgnored private var watchedURL: URL?
+    @ObservationIgnored private var pendingReload: Task<Void, Never>?
+
     private var backStack: [URL] = []
     private var forwardStack: [URL] = []
 
@@ -82,6 +91,27 @@ final class PaneState: Identifiable {
         } catch {
             items = []
             errorMessage = error.localizedDescription
+        }
+        watchCurrentFolder()
+    }
+
+    // MARK: Live-Aktualisierung
+
+    private func watchCurrentFolder() {
+        guard watchedURL != currentURL else { return }
+        watchedURL = currentURL
+        watcher = DirectoryWatcher(url: currentURL) { [weak self] in
+            Task { @MainActor in self?.scheduleReload() }
+        }
+    }
+
+    /// Fasst schnell aufeinanderfolgende Änderungen zusammen (z. B. beim Kopieren vieler Dateien).
+    private func scheduleReload() {
+        pendingReload?.cancel()
+        pendingReload = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(200))
+            guard !Task.isCancelled else { return }
+            self?.reload()
         }
     }
 

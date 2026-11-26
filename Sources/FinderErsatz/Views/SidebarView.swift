@@ -7,6 +7,7 @@ import Combine
 struct SidebarView: View {
     @Environment(BrowserState.self) private var browser
     @State private var volumes: [URL] = []
+    @State private var cloudFolders: [URL] = []
     @State private var renaming: Favorite?
     @State private var renameText = ""
 
@@ -33,6 +34,20 @@ struct SidebarView: View {
                 .onMove { favorites.move(fromOffsets: $0, toOffset: $1) }
                 .dropDestination(for: URL.self) { urls, offset in
                     favorites.add(urls, at: offset)
+                }
+            }
+
+            if !cloudFolders.isEmpty {
+                Section("Cloud") {
+                    ForEach(cloudFolders, id: \.self) { folder in
+                        Label(cloudName(folder), systemImage: cloudSymbol(folder))
+                            .help(folder.path)
+                            .tag(folder.normalizedFileURL)
+                            .contextMenu {
+                                Button("Zu Favoriten hinzufügen") { favorites.add([folder]) }
+                                Button("Im anderen Fenster öffnen") { browser.otherPane.navigate(to: folder) }
+                            }
+                    }
                 }
             }
 
@@ -65,7 +80,10 @@ struct SidebarView: View {
             .buttonStyle(.borderless)
             .padding(8)
         }
-        .onAppear(perform: reloadVolumes)
+        .onAppear {
+            reloadVolumes()
+            reloadCloudFolders()
+        }
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didMountNotification)) { _ in reloadVolumes() }
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didUnmountNotification)) { _ in reloadVolumes() }
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didRenameVolumeNotification)) { _ in reloadVolumes() }
@@ -103,6 +121,34 @@ struct SidebarView: View {
             includingResourceValuesForKeys: [.volumeLocalizedNameKey],
             options: [.skipHiddenVolumes]
         ) ?? []
+    }
+
+    /// iCloud Drive und alle Cloud-Anbieter, die sich über macOS einbinden (Dropbox, Google Drive, OneDrive, Box …).
+    private func reloadCloudFolders() {
+        let fm = FileManager.default
+        let home = fm.homeDirectoryForCurrentUser
+        var result: [URL] = []
+        let iCloud = home.appending(path: "Library/Mobile Documents/com~apple~CloudDocs")
+        if fm.fileExists(atPath: iCloud.path) { result.append(iCloud) }
+        let cloudStorage = home.appending(path: "Library/CloudStorage")
+        if let providers = try? fm.contentsOfDirectory(at: cloudStorage, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) {
+            result += providers.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+        }
+        cloudFolders = result
+    }
+
+    private func cloudName(_ url: URL) -> String {
+        if url.lastPathComponent == "com~apple~CloudDocs" { return "iCloud Drive" }
+        // Ordner heißen z. B. „GoogleDrive-name@example.com“ oder „OneDrive-Persönlich“.
+        let name = url.lastPathComponent
+        guard let dash = name.firstIndex(of: "-") else { return name }
+        let provider = String(name[..<dash])
+        let account = String(name[name.index(after: dash)...])
+        return "\(provider) (\(account))"
+    }
+
+    private func cloudSymbol(_ url: URL) -> String {
+        url.lastPathComponent == "com~apple~CloudDocs" ? "icloud" : "cloud"
     }
 
     private func volumeName(_ url: URL) -> String {

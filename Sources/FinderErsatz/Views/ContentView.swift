@@ -1,4 +1,5 @@
 import SwiftUI
+import QuickLook
 
 struct ContentView: View {
     @Environment(BrowserState.self) private var browser
@@ -20,6 +21,7 @@ struct ContentView: View {
                         .frame(minWidth: 350)
                 }
                 Divider()
+                JobsPanel(queue: browser.operations)
                 ActionBar()
             }
         }
@@ -49,6 +51,26 @@ struct ContentView: View {
         } message: {
             Text(browser.alertMessage ?? "")
         }
+        .sheet(item: $browser.transferRequest) { request in
+            TransferSheet(request: request)
+                .environment(browser)
+        }
+        .alert(
+            "Objekte bereits vorhanden",
+            isPresented: Binding(get: { browser.conflictRequest != nil },
+                                 set: { if !$0 { browser.conflictRequest = nil } }),
+            presenting: browser.conflictRequest
+        ) { _ in
+            Button("Ersetzen", role: .destructive) { browser.resolveConflicts(.replace) }
+            Button("Beide behalten") { browser.resolveConflicts(.keepBoth) }
+            Button("Überspringen") { browser.resolveConflicts(.skip) }
+            Button("Abbrechen", role: .cancel) { browser.conflictRequest = nil }
+        } message: { request in
+            let names = request.conflictNames.prefix(5).map { "„\($0)“" }.joined(separator: ", ")
+            let more = request.conflictNames.count > 5 ? " und \(request.conflictNames.count - 5) weitere" : ""
+            Text("Im Ziel gibt es bereits \(names)\(more). Ersetzte Objekte kommen in den Papierkorb.")
+        }
+        .quickLookPreview($browser.previewURL, in: browser.previewItems)
         .alert(
             "Umbenennen",
             isPresented: Binding(get: { browser.renameTarget != nil },
@@ -68,12 +90,13 @@ struct ActionBar: View {
     var body: some View {
         HStack(spacing: 8) {
             Button("F2 Umbenennen") { browser.beginRename() }
+            Button("F3 Ansicht") { browser.toggleQuickLook() }
             Button("F5 Kopieren →") { browser.copyToOtherPane() }
             Button("F6 Verschieben →") { browser.moveToOtherPane() }
             Button("⇧⌘N Neuer Ordner") { browser.newFolder() }
             Button("⌘⌫ Papierkorb") { browser.trashSelection() }
             Spacer()
-            Text("⌃⇥ Fenster wechseln")
+            Text("⇥ Fenster wechseln · ⌃⇥ Tab wechseln")
                 .foregroundStyle(.secondary)
         }
         .buttonStyle(.bordered)

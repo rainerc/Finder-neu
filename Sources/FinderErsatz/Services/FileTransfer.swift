@@ -1,0 +1,89 @@
+import Foundation
+
+/// Ein einzelner Auftrag: Quelle → vollständige Ziel-URL (inkl. Name).
+struct TransferItem: Sendable {
+    let source: URL
+    var destination: URL
+    let move: Bool
+    var replaceExisting = false
+}
+
+/// Kopiert/verschiebt im Hintergrund mit Fortschritt in Bytes. Abbruch über `Task.cancel()`.
+enum FileTransfer {
+    typealias Progress = @Sendable (_ done: Int64, _ total: Int64, _ currentName: String) async -> Void
+
+    private final class Counter {
+        var done: Int64 = 0
+        let total: Int64
+        init(total: Int64) { self.total = total }
+    }
+
+    static func run(_ items: [TransferItem], progress: Progress) async throws {
+        let fm = FileManager.default
+        let fastMoves = items.map { $0.move && FileService.sameVolume($0.source, $0.destination.deletingLastPathComponent()) }
+        var total: Int64 = 0
+        for (item, fast) in zip(items, fastMoves) where !fast {
+            total += size(of: item.source)
+        }
+        let counter = Counter(total: total)
+        await progress(0, total, items.first?.source.lastPathComponent ?? "")
+
+        for (item, fast) in zip(items, fastMoves) {
+            try Task.checkCancellation()
+            if item.destination.path.hasPrefix(item.source.path + "/") {
+                throw CocoaError(.fileWriteInvalidFileName, userInfo: [
+                    NSLocalizedDescriptionKey: "„\(item.source.lastPathComponent)“ kann nicht in sich selbst kopiert werden.",
+                ])
+            }
+            if item.replaceExisting, fm.fileExists(atPath: item.destination.path) {
+                try fm.trashItem(at: item.destination, resultingItemURL: nil)
+            }
+            if fast {
+                try fm.moveItem(at: item.source, to: item.destination)
+                await progress(counter.done, counter.total, item.source.lastPathComponent)
+                continue
+            }
+            try await copyTree(item.source, to: item.destination, counter: counter, progress: progress)
+            if item.move {
+                try fm.removeItem(at: item.source)
+            }
+        }
+    }
+
+    private static let keys: Set<URLResourceKey> = [.isDirectoryKey, .isSymbolicLinkKey, .fileSizeKey]
+
+    private static func copyTree(_ source: URL, to destination: URL, counter: Counter, progress: Progress) async throws {
+        try Task.checkCancellation()
+        let fm = FileManager.default
+        let values = try source.resourceValues(forKeys: keys)
+
+        if values.isDirectory == true, values.isSymbolicLink != true {
+            try fm.createDirectory(at: destination, withIntermediateDirectories: false)
+            let children = try fm.contentsOfDirectory(at: source, includingPropertiesForKeys: Array(keys), options: [])
+            for child in children {
+                try await copyTree(child, to: destination.appending(path: child.lastPathComponent), counter: counter, progress: progress)
+            }
+            // Rechte, Datum, erweiterte Attribute und Tags des Ordners übernehmen.
+            _ = copyfile(source.path, destination.path, nil, copyfile_flags_t(COPYFILE_SECURITY | COPYFILE_XATTR | COPYFILE_STAT))
+        } else {
+            await progress(counter.done, counter.total, source.lastPathComponent)
+            try fm.copyItem(at: source, to: destination)
+            counter.done += Int64(values.fileSize ?? 0)
+            await progress(counter.done, counter.total, source.lastPathComponent)
+        }
+    }
+
+    /// Gesamtgröße einer Datei oder eines Ordners (rekursiv).
+    static func size(of url: URL) -> Int64 {
+        let keys: [URLResourceKey] = [.fileSizeKey, .isDirectoryKey, .isSymbolicLinkKey]
+        guard let values = try? url.resourceValues(forKeys: Set(keys)) else { return 0 }
+        guard values.isDirectory == true, values.isSymbolicLink != true else { return Int64(values.fileSize ?? 0) }
+        var total: Int64 = 0
+        if let enumerator = FileManager.default.enumerator(at: url, includingPropertiesForKeys: keys) {
+            for case let child as URL in enumerator {
+                total += Int64((try? child.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+            }
+        }
+        return total
+    }
+}

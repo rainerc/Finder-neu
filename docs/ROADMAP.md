@@ -32,7 +32,7 @@ Legende: ✅ vorhanden · 🟡 teilweise · ⬜ fehlt. Aufwand: S (Stunden), M (
 
 ## Vorschlag zur Reihenfolge
 
-**Paket 1: Zwei-Fenster-Komfort (empfohlen als Nächstes)**
+**Paket 1: Zwei-Fenster-Komfort** – umgesetzt in v0.3 (außer Hex-Viewer)
 1. Tabs pro Fenster (⌘T, ⌘W, ⌃⇥)
 2. Warteschlange für Kopieren/Verschieben mit Fortschritt und Abbrechen, Konfliktdialog (Ersetzen / Überspringen / Beide behalten) und Umbenennen beim Kopieren
 3. Ordner live aktualisieren (FSEvents)

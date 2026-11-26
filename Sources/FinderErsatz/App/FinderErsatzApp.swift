@@ -6,6 +6,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Nötig, wenn die App per `swift run` ohne .app-Bundle startet.
         NSApp.setActivationPolicy(.regular)
         NSApp.activate()
+        // Eigene Tabs statt macOS-Fenster-Tabs (sonst Konflikt mit ⌘T).
+        NSWindow.allowsAutomaticWindowTabbing = false
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
@@ -37,6 +39,11 @@ struct BrowserCommands: Commands {
 
     var body: some Commands {
         CommandGroup(after: .newItem) {
+            Button("Neuer Tab") { browser.newTab() }
+                .keyboardShortcut("t", modifiers: .command)
+            Button("Tab schließen") { browser.closeTabOrWindow() }
+                .keyboardShortcut("w", modifiers: .command)
+            Divider()
             Button("Neuer Ordner") { browser.newFolder() }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
         }
@@ -47,11 +54,15 @@ struct BrowserCommands: Commands {
                 .keyboardShortcut(Self.fKey(NSF6FunctionKey), modifiers: [])
             Button("Umbenennen …") { browser.beginRename() }
                 .keyboardShortcut(Self.fKey(NSF2FunctionKey), modifiers: [])
+            Button("Schnellansicht") { browser.toggleQuickLook() }
+                .keyboardShortcut(Self.fKey(NSF3FunctionKey), modifiers: [])
             Button("In den Papierkorb") { browser.trashSelection() }
                 .keyboardShortcut(.delete, modifiers: .command)
             Divider()
             Button("Im Finder zeigen") { browser.revealInFinder() }
                 .keyboardShortcut("r", modifiers: [.command, .option])
+            Button("Terminal hier öffnen") { browser.openTerminal() }
+                .keyboardShortcut("t", modifiers: [.command, .option])
         }
         CommandMenu("Gehe zu") {
             Button("Zurück") { browser.activePane.goBack() }
@@ -62,7 +73,11 @@ struct BrowserCommands: Commands {
                 .keyboardShortcut(.upArrow, modifiers: .command)
             Divider()
             Button("Fenster wechseln") { browser.toggleActivePane() }
+                .keyboardShortcut(.tab, modifiers: .option)
+            Button("Nächster Tab") { browser.nextTab() }
                 .keyboardShortcut(.tab, modifiers: .control)
+            Button("Vorheriger Tab") { browser.previousTab() }
+                .keyboardShortcut(.tab, modifiers: [.control, .shift])
             Button("Anderes Fenster auf gleichen Ordner") { browser.syncOtherPane() }
                 .keyboardShortcut("=", modifiers: .command)
             Button("Fenster tauschen") { browser.swapPanes() }

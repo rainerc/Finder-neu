@@ -25,7 +25,12 @@ Beim ersten Zugriff auf Schreibtisch, Dokumente usw. fragt macOS nach Erlaubnis.
 
 | Funktion | Bedienung |
 |---|---|
-| Zwei Fenster nebeneinander, aktives Fenster farbig markiert | Klick oder `⌃⇥` / `⇥` zum Wechseln |
+| Zwei Fenster nebeneinander, aktives Fenster farbig markiert | Klick, `⇥` oder `⌥⇥` zum Wechseln |
+| Tabs pro Fenster | `⌘T` neu, `⌘W` schließen, `⌃⇥` / `⌃⇧⇥` wechseln, Kontextmenü „In neuem Tab öffnen“ |
+| Schnellansicht (Quick Look) | Leertaste oder `F3` |
+| Ordner aktualisieren sich automatisch | – |
+| Terminal im aktuellen Ordner | `⌥⌘T` oder Kontextmenü |
+| Cloud-Ordner (iCloud Drive, Dropbox, Google Drive, OneDrive …) | Seitenleiste „Cloud“ |
 | Navigation zurück / vorwärts / hoch | `⌘[` `⌘]` `⌘↑`, Backspace = hoch |
 | Seitenleiste mit eigenen Favoriten und Orten (Volumes) | Klick öffnet im aktiven Fenster |
 | Favorit hinzufügen | `+` unten in der Seitenleiste, `⌃⌘T`, Kontextmenü oder Ordner in die Seitenleiste ziehen |
@@ -33,7 +38,8 @@ Beim ersten Zugriff auf Schreibtisch, Dokumente usw. fragt macOS nach Erlaubnis.
 | Klickbare Pfadleiste | Fensterkopf |
 | Sortierbare Spalten (Name, Datum, Größe, Art), Ordner zuerst | Spaltenkopf |
 | Öffnen | Doppelklick / Return |
-| In anderes Fenster kopieren / verschieben | `F5` / `F6` |
+| In anderes Fenster kopieren / verschieben (Dialog: Ziel und Name änderbar) | `F5` / `F6` |
+| Hintergrund-Warteschlange mit Fortschritt und Abbrechen, Konfliktdialog (Ersetzen / Beide behalten / Überspringen) | automatisch |
 | Umbenennen | `F2` |
 | Neuer Ordner | `⇧⌘N` |
 | In den Papierkorb | `⌘⌫` |

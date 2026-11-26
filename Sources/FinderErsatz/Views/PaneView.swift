@@ -11,7 +11,13 @@ struct PaneView: View {
     var body: some View {
         @Bindable var pane = browser.pane(side)
 
+        let group = browser.group(side)
+
         VStack(spacing: 0) {
+            if group.tabs.count > 1 {
+                TabBar(group: group) { browser.activeSide = side }
+                Divider()
+            }
             PaneHeader(pane: pane)
                 .contentShape(Rectangle())
                 .onTapGesture { browser.activeSide = side }
@@ -55,6 +61,17 @@ struct PaneView: View {
                 .contextMenu(forSelectionType: FileItem.ID.self) { ids in
                     if !ids.isEmpty {
                         Button("Öffnen") { open(ids, in: pane) }
+                        let folderURLs = pane.items.filter { ids.contains($0.id) && $0.isBrowsableFolder }.map(\.url)
+                        if !folderURLs.isEmpty {
+                            Button("In neuem Tab öffnen") {
+                                browser.activeSide = side
+                                folderURLs.forEach { browser.openInNewTab($0) }
+                            }
+                        }
+                        Button("Schnellansicht") {
+                            browser.activeSide = side
+                            browser.toggleQuickLook()
+                        }
                         Button("Umbenennen …") { browser.beginRename() }
                         Divider()
                         Button("In anderes Fenster kopieren") { browser.copyToOtherPane() }
@@ -65,12 +82,17 @@ struct PaneView: View {
                             Button("Zu Favoriten hinzufügen") { browser.favorites.add(folders) }
                         }
                         Button("Pfad kopieren") { copyPaths(ids) }
+                        Button("Terminal hier öffnen") {
+                            browser.activeSide = side
+                            browser.openTerminal()
+                        }
                         Button("Im Finder zeigen") { browser.revealInFinder() }
                         Divider()
                         Button("In den Papierkorb", role: .destructive) { browser.trashSelection() }
                     } else {
                         Button("Neuer Ordner") { browser.newFolder() }
                         Button("Ordner zu Favoriten hinzufügen") { browser.favorites.add([pane.currentURL]) }
+                        Button("Terminal hier öffnen") { AppLauncher.openTerminal(at: pane.currentURL) }
                     }
                 } primaryAction: { ids in
                     // Doppelklick oder Return
@@ -82,6 +104,10 @@ struct PaneView: View {
                 .focused(focus, equals: side)
                 .onKeyPress(.tab) {
                     browser.toggleActivePane()
+                    return .handled
+                }
+                .onKeyPress(.space) {
+                    browser.toggleQuickLook()   // Leertaste = Schnellansicht
                     return .handled
                 }
                 .onKeyPress(.delete, phases: .down) { press in
