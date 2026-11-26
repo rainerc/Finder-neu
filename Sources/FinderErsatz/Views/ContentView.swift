@@ -30,6 +30,7 @@ struct ContentView: View {
         }
         .preferredColorScheme(browser.settings.appearance.colorScheme)
         .onAppear {
+            BrowserState.current = browser
             focusedPane = browser.activeSide
             updateRepresentedURL(browser.focusedItemURL)
         }

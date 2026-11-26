@@ -139,4 +139,12 @@ extension NSApplication {
     @objc var currentFolderPath: String {
         BrowserState.current?.activePane.currentURL.path ?? ""
     }
+
+    /// Diagnose: `osascript -e 'tell application "/Applications/Finder-Ersatz.app" to get debug info'`
+    @objc var scriptingDebugInfo: String {
+        guard let browser = BrowserState.current else { return "BrowserState.current = nil (Fenster noch nicht erschienen?)" }
+        let pane = browser.activePane
+        return "aktiv: \(browser.activeSide == .left ? "links" : "rechts"), Ordner: \(pane.currentURL.path), "
+            + "Objekte: \(pane.items.count), ausgewählt: \(pane.selection.count), Fenster: \(NSApp.windows.count)"
+    }
 }

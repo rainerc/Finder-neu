@@ -14,6 +14,9 @@
             <property name="current folder" code="FEcf" type="text" access="r" description="POSIX-Pfad des Ordners im aktiven Fenster.">
                 <cocoa key="currentFolderPath"/>
             </property>
+            <property name="debug info" code="FEdb" type="text" access="r" description="Diagnose-Informationen.">
+                <cocoa key="scriptingDebugInfo"/>
+            </property>
         </class>
     </suite>
 </dictionary>
