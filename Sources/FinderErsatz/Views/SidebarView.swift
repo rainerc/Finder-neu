@@ -7,6 +7,9 @@ import Combine
 struct SidebarView: View {
     @Environment(BrowserState.self) private var browser
     @State private var volumes: [URL] = []
+    @State private var shares: [URL] = []
+    @State private var showConnect = false
+    @State private var serverAddress = "smb://"
     @State private var cloudFolders: [URL] = []
     @State private var renaming: Favorite?
     @State private var renameText = ""
@@ -51,6 +54,29 @@ struct SidebarView: View {
                 }
             }
 
+            Section("Netzwerk") {
+                ForEach(shares, id: \.self) { share in
+                    Label(volumeName(share), systemImage: "server.rack")
+                        .help(remoteAddress(share) ?? share.path)
+                        .tag(share.normalizedFileURL)
+                        .contextMenu {
+                            Button("Zu Favoriten hinzufügen") { favorites.add([share]) }
+                            Button("Im anderen Fenster öffnen") { browser.otherPane.navigate(to: share) }
+                            if let address = remoteAddress(share) {
+                                Button("Adresse kopieren") {
+                                    NSPasteboard.general.clearContents()
+                                    NSPasteboard.general.setString(address, forType: .string)
+                                }
+                            }
+                            Divider()
+                            Button("Trennen") { eject(share) }
+                        }
+                }
+                Button("Mit Server verbinden …", systemImage: "plus.circle") { showConnect = true }
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("Orte") {
                 ForEach(volumes, id: \.self) { volume in
                     Label(volumeName(volume), systemImage: volume.path == "/" ? "internaldrive" : "externaldrive")
@@ -87,6 +113,14 @@ struct SidebarView: View {
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didMountNotification)) { _ in reloadVolumes() }
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didUnmountNotification)) { _ in reloadVolumes() }
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didRenameVolumeNotification)) { _ in reloadVolumes() }
+        .alert("Mit Server verbinden", isPresented: $showConnect) {
+            TextField("smb://server/freigabe", text: $serverAddress)
+            Button("Verbinden") { connect() }
+            Button("Abbrechen", role: .cancel) {}
+        } message: {
+            Text("z. B. smb://nas.local/daten oder afp://server. Anmeldung und Freigabe wählt macOS.")
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .connectToServer)) { _ in showConnect = true }
         .alert(
             "Favorit umbenennen",
             isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })
@@ -116,11 +150,47 @@ struct SidebarView: View {
         Button("Standard-Favoriten wiederherstellen") { favorites.resetToDefaults() }
     }
 
+    private static let volumeKeys: [URLResourceKey] = [
+        .volumeLocalizedNameKey, .volumeIsLocalKey, .volumeIsBrowsableKey, .volumeURLForRemountingKey,
+    ]
+
+    /// Teilt die eingehängten Volumes auf: lokale Laufwerke unter „Orte“, Netzwerkfreigaben unter „Netzwerk“.
     private func reloadVolumes() {
-        volumes = FileManager.default.mountedVolumeURLs(
-            includingResourceValuesForKeys: [.volumeLocalizedNameKey],
-            options: [.skipHiddenVolumes]
-        ) ?? []
+        let all = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: Self.volumeKeys, options: []) ?? []
+        var local: [URL] = []
+        var network: [URL] = []
+        for url in all {
+            guard let values = try? url.resourceValues(forKeys: Set(Self.volumeKeys)) else { continue }
+            if values.volumeIsLocal == false {
+                // Automounter-Pfade (/net, /home, /Network) ausblenden – das sind keine echten Freigaben.
+                let path = url.path
+                if path == "/net" || path == "/home" || path.hasPrefix("/Network") || path.hasPrefix("/System") { continue }
+                network.append(url)
+            } else if values.volumeIsBrowsable == true {
+                local.append(url)
+            }
+        }
+        volumes = local
+        shares = network.sorted { volumeName($0).localizedStandardCompare(volumeName($1)) == .orderedAscending }
+    }
+
+    /// z. B. „smb://nas.local/daten“ (ohne Benutzername)
+    private func remoteAddress(_ url: URL) -> String? {
+        guard let remote = try? url.resourceValues(forKeys: [.volumeURLForRemountingKey]).volumeURLForRemounting,
+              var components = URLComponents(url: remote, resolvingAgainstBaseURL: false) else { return nil }
+        components.user = nil
+        components.password = nil
+        return components.string
+    }
+
+    private func connect() {
+        let address = serverAddress.trimmingCharacters(in: .whitespaces)
+        guard let url = URL(string: address), url.scheme != nil, url.host != nil else {
+            browser.alertMessage = "Ungültige Serveradresse „\(address)“."
+            return
+        }
+        // macOS übernimmt Anmeldung, Freigabeauswahl und Einhängen; die Seitenleiste aktualisiert sich danach.
+        NSWorkspace.shared.open(url)
     }
 
     /// iCloud Drive und alle Cloud-Anbieter, die sich über macOS einbinden (Dropbox, Google Drive, OneDrive, Box …).

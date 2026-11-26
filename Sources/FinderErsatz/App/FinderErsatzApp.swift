@@ -82,6 +82,11 @@ struct BrowserCommands: Commands {
                 .keyboardShortcut("t", modifiers: [.command, .option])
         }
         CommandMenu("Gehe zu") {
+            Button("Mit Server verbinden …") {
+                NotificationCenter.default.post(name: .connectToServer, object: nil)
+            }
+            .keyboardShortcut("k", modifiers: .command)
+            Divider()
             Button("Zurück") { browser.activePane.goBack() }
                 .keyboardShortcut("[", modifiers: .command)
             Button("Vorwärts") { browser.activePane.goForward() }
@@ -110,4 +115,9 @@ struct BrowserCommands: Commands {
                 .keyboardShortcut("r", modifiers: .command)
         }
     }
+}
+
+extension Notification.Name {
+    /// Öffnet den Dialog „Mit Server verbinden“ in der Seitenleiste.
+    static let connectToServer = Notification.Name("connectToServer")
 }

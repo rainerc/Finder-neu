@@ -30,6 +30,7 @@ Beim ersten Zugriff auf Schreibtisch, Dokumente usw. fragt macOS nach Erlaubnis.
 | Schnellansicht (Quick Look) | Leertaste oder `F3` |
 | Ordner aktualisieren sich automatisch | – |
 | Terminal im aktuellen Ordner | `⌥⌘T` oder Kontextmenü |
+| Netzwerkfreigaben in der Seitenleiste „Netzwerk“, Trennen per Rechtsklick | Mit Server verbinden: `⌘K` |
 | Cloud-Ordner (iCloud Drive, Dropbox, Google Drive, OneDrive …) | Seitenleiste „Cloud“ |
 | Navigation zurück / vorwärts / hoch | `⌘[` `⌘]` `⌘↑`, Backspace = hoch |
 | Seitenleiste mit eigenen Favoriten und Orten (Volumes) | Klick öffnet im aktiven Fenster |
