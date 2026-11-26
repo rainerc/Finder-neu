@@ -9,7 +9,7 @@ struct SearchBar: View {
     init(pane: PaneState) {
         self.pane = pane
         var initial = pane.lastSearch ?? SearchQuery(root: pane.currentURL)
-        initial.root = pane.activeSearch?.root ?? pane.currentURL
+        initial.root = pane.currentURL
         _query = State(initialValue: initial)
     }
 
@@ -59,7 +59,7 @@ struct SearchBar: View {
                         .toggleStyle(.checkbox)
                 }
             }
-            Text("Sucht in „\(query.root.lastPathComponent.isEmpty ? "/" : query.root.lastPathComponent)“ und allen Unterordnern")
+            Text("Sucht in „\(pane.title)“ und allen Unterordnern")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -71,6 +71,8 @@ struct SearchBar: View {
     }
 
     private func start() {
+        // Immer ab dem Ordner suchen, der gerade angezeigt wird.
+        query.root = pane.currentURL
         pane.startSearch(query)
     }
 }

@@ -56,6 +56,7 @@ struct PaneView: View {
                     )
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)   // Liste füllt immer die volle Höhe
             .dropDestination(for: URL.self) { urls, _ in
                 _ = browser.drop(urls, into: pane)
             }
@@ -63,6 +64,7 @@ struct PaneView: View {
             Divider()
             PaneStatusBar(pane: pane)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .overlay(alignment: .top) {
             // Markierung des aktiven Fensters
             Rectangle()
