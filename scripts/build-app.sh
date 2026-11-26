@@ -3,8 +3,9 @@
 # Nötig, damit macOS die App als eigene App kennt und Berechtigungen
 # (Netzwerkvolumes, lokales Netzwerk, Schreibtisch …) korrekt abfragt und speichert.
 #
-#   ./scripts/build-app.sh          → baut build/Finder-Ersatz.app und startet sie
-#   ./scripts/build-app.sh --no-open
+#   ./scripts/build-app.sh             → baut, installiert nach /Applications und startet
+#   ./scripts/build-app.sh --no-install → nur build/Finder-Ersatz.app bauen und von dort starten
+#   ./scripts/build-app.sh --no-open    → bauen und installieren, nicht starten
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -44,8 +45,27 @@ else
   codesign --force --sign - "$APP"
 fi
 
-echo "✓ Fertig: $APP"
-if [[ "${1:-}" != "--no-open" ]]; then
-  pkill -x FinderErsatz 2>/dev/null || true
-  open "$APP"
+INSTALL=1; OPEN=1
+for arg in "$@"; do
+  case "$arg" in
+    --no-install) INSTALL=0 ;;
+    --no-open) OPEN=0 ;;
+  esac
+done
+
+# Laufende App beenden, bevor sie ersetzt wird.
+pkill -x FinderErsatz 2>/dev/null || true
+sleep 0.5
+
+TARGET="$APP"
+if [[ $INSTALL == 1 ]]; then
+  TARGET="/Applications/Finder-Ersatz.app"
+  rm -rf "$TARGET"
+  cp -R "$APP" "$TARGET"
+  echo "✓ Installiert: $TARGET"
 fi
+echo "✓ Fertig"
+if [[ $OPEN == 1 ]]; then
+  open "$TARGET"
+fi
+exit 0
