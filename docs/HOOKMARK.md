@@ -1,6 +1,9 @@
 # Hookmark mit Finder-Ersatz verwenden (⌃H)
 
-Hookmark erkennt nur Apps, für die es ein Skript kennt. Finder-Ersatz stellt dafür per AppleScript
+**Erst ohne Skript probieren:** Finder-Ersatz meldet das ausgewählte Objekt (bzw. den Ordner) als „Dokument“
+des Fensters. Hookmark erkennt das bei vielen Apps automatisch. Klappt ⌃H damit nicht, das Skript unten einrichten.
+
+Hookmark erkennt sonst nur Apps, für die es ein Skript kennt. Finder-Ersatz stellt dafür per AppleScript
 die Eigenschaften `selected paths` (ausgewählte Objekte im aktiven Fenster) und `current folder` bereit.
 
 Voraussetzung: Hookmark Pro (eigene Skripte gibt es nur dort) und Finder-Ersatz als echte App
@@ -14,7 +17,7 @@ Voraussetzung: Hookmark Pro (eigene Skripte gibt es nur dort) und Finder-Ersatz 
 3. Bei **Get Address** als Sprache **JavaScript** wählen und einfügen:
 
 ```javascript
-const app = Application("Finder-Ersatz");
+const app = Application("com.example.FinderErsatz");
 const paths = app.selectedPaths();
 const path = paths.length > 0 ? paths[0] : app.currentFolder();
 path ? $.NSURL.fileURLWithPath(path).absoluteString.js : "";
@@ -26,4 +29,4 @@ path ? $.NSURL.fileURLWithPath(path).absoluteString.js : "";
 Danach öffnet ⌃H auf einer markierten Datei oder einem Ordner das Hookmark-Fenster wie im Finder.
 Ohne Auswahl wird der aktuelle Ordner verwendet.
 
-Test im Terminal: `osascript -e 'tell application "Finder-Ersatz" to get selected paths'`
+Test im Terminal: `osascript -e 'tell application id "com.example.FinderErsatz" to get selected paths'`

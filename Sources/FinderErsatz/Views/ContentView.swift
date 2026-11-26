@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import QuickLook
 
 struct ContentView: View {
@@ -28,7 +29,11 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .preferredColorScheme(browser.settings.appearance.colorScheme)
-        .onAppear { focusedPane = browser.activeSide }
+        .onAppear {
+            focusedPane = browser.activeSide
+            updateRepresentedURL(browser.focusedItemURL)
+        }
+        .onChange(of: browser.focusedItemURL) { _, url in updateRepresentedURL(url) }
         .onChange(of: focusedPane) { _, side in
             if let side { browser.activeSide = side }
         }
@@ -84,6 +89,13 @@ struct ContentView: View {
             Button("Abbrechen", role: .cancel) { browser.renameTarget = nil }
         }
     }
+}
+
+/// Meldet macOS (und damit Hookmark per Bedienungshilfen) das ausgewählte Objekt als Dokument des Fensters.
+@MainActor
+private func updateRepresentedURL(_ url: URL) {
+    let window = NSApp.keyWindow ?? NSApp.mainWindow ?? NSApp.windows.first { $0.isVisible && $0.canBecomeMain }
+    window?.representedURL = url
 }
 
 /// Untere Aktionsleiste, angelehnt an klassische Zwei-Fenster-Dateimanager.

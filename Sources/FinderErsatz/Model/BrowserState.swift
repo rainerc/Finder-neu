@@ -65,6 +65,13 @@ final class BrowserState {
     func group(_ side: PaneSide) -> PaneGroup { side == .left ? left : right }
     func pane(_ side: PaneSide) -> PaneState { group(side).current }
 
+    /// Erstes ausgewähltes Objekt im aktiven Fenster, sonst dessen Ordner.
+    /// Wird dem Fenster als „Dokument“ gemeldet (representedURL → AXDocument),
+    /// damit Hookmark & Co. es ohne eigenes Skript erkennen.
+    var focusedItemURL: URL {
+        activePane.selectedItems.first?.url ?? activePane.currentURL
+    }
+
     var activeGroup: PaneGroup { group(activeSide) }
     var activePane: PaneState { activeGroup.current }
     var otherPane: PaneState { group(activeSide == .left ? .right : .left).current }
