@@ -35,6 +35,7 @@ final class BrowserState {
     let favorites = FavoritesStore()
     let operations = FileOperationQueue()
     let network = NetworkBrowser()
+    let settings = AppSettings()
 
     /// Fehlermeldung für einen Alert im Hauptfenster.
     var alertMessage: String?
@@ -104,8 +105,68 @@ final class BrowserState {
     func open(_ item: FileItem, in pane: PaneState) {
         if item.isBrowsableFolder {
             pane.navigate(to: item.url)
+        } else if ArchiveService.isArchive(item.url) {
+            browseArchive(item.url, in: pane)
         } else {
             NSWorkspace.shared.open(item.url)
+        }
+    }
+
+    /// Öffnet eine Datei mit der Standard-App (auch Archive, statt sie zu durchsuchen).
+    func openWithDefaultApp(_ urls: [URL]) {
+        urls.forEach { NSWorkspace.shared.open($0) }
+    }
+
+    // MARK: Suche, Ansicht
+
+    func showSearch() {
+        activePane.isSearchBarVisible = true
+    }
+
+    func setViewMode(_ mode: ViewMode) {
+        activePane.viewMode = mode
+    }
+
+    // MARK: Archive
+
+    /// Komprimiert die Auswahl als ZIP in den aktuellen Ordner.
+    func compressSelection() {
+        let pane = activePane
+        let sources = pane.selectedItems.map(\.url)
+        guard !sources.isEmpty else { return }
+        let name = sources.count == 1 ? "\(sources[0].lastPathComponent).zip" : "Archiv.zip"
+        let archive = FileService.uniqueURL(for: name, in: pane.currentURL)
+        operations.enqueue(title: "Komprimieren: \(archive.lastPathComponent)", onSuccess: {
+            pane.reload()
+            pane.selection = [archive.normalizedFileURL]
+        }) { _ in
+            try ArchiveService.compress(sources, to: archive)
+        }
+    }
+
+    /// Entpackt ausgewählte Archive in je einen eigenen Ordner – hier oder im anderen Fenster.
+    func extractSelection(toOtherPane: Bool) {
+        let archives = activePane.selectedItems.map(\.url).filter(ArchiveService.isArchive)
+        guard !archives.isEmpty else {
+            alertMessage = "Bitte ein Archiv auswählen (zip, tar.gz, 7z, rar …)."
+            return
+        }
+        let target = toOtherPane ? otherPane.currentURL : activePane.currentURL
+        for archive in archives {
+            let folder = FileService.uniqueURL(for: ArchiveService.baseName(of: archive), in: target)
+            operations.enqueue(title: "Entpacken: \(archive.lastPathComponent)") { _ in
+                try ArchiveService.extract(archive, to: folder)
+            }
+        }
+    }
+
+    /// „Archiv wie Ordner öffnen“: entpackt eine temporäre Kopie und zeigt sie an.
+    func browseArchive(_ archive: URL, in pane: PaneState) {
+        let folder = ArchiveService.browseFolder(for: archive)
+        operations.enqueue(title: "Öffne Archiv: \(archive.lastPathComponent)", onSuccess: {
+            pane.navigate(to: folder)
+        }) { _ in
+            try ArchiveService.extract(archive, to: folder)
         }
     }
 

@@ -10,8 +10,8 @@ struct PaneView: View {
 
     var body: some View {
         @Bindable var pane = browser.pane(side)
-
         let group = browser.group(side)
+        let settings = browser.settings
 
         VStack(spacing: 0) {
             if group.tabs.count > 1 {
@@ -22,99 +22,42 @@ struct PaneView: View {
                 .contentShape(Rectangle())
                 .onTapGesture { browser.activeSide = side }
             Divider()
+            if pane.isSearchBarVisible {
+                SearchBar(pane: pane)
+                    .id(pane.id)
+                Divider()
+            }
+            if pane.isBrowsingArchive {
+                Label("Entpackte Kopie eines Archivs – Änderungen wirken sich nicht auf das Archiv aus.", systemImage: "archivebox")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(.yellow.opacity(0.15))
+                Divider()
+            }
 
-            if let error = pane.errorMessage {
-                ContentUnavailableView("Ordner nicht lesbar", systemImage: "lock.fill", description: Text(error))
-            } else {
-                Table(of: FileItem.self, selection: $pane.selection, sortOrder: $pane.sortOrder) {
-                    TableColumn("Name", value: \.name) { item in
-                        HStack(spacing: 6) {
-                            Image(nsImage: NSWorkspace.shared.icon(forFile: item.url.path))
-                                .resizable()
-                                .frame(width: 16, height: 16)
-                            Text(item.name)
-                                .lineLimit(1)
-                                .opacity(item.isHidden ? 0.55 : 1)
+            Group {
+                if let error = pane.errorMessage {
+                    ContentUnavailableView("Ordner nicht lesbar", systemImage: "lock.fill", description: Text(error))
+                } else if pane.activeSearch != nil, pane.items.isEmpty, !pane.isSearchRunning {
+                    ContentUnavailableView.search
+                } else if pane.viewMode == .list || pane.activeSearch != nil {
+                    keyHandling(fileTable(pane: pane, settings: settings), pane: pane)
+                } else {
+                    keyHandling(
+                        FileGridView(pane: pane, mode: pane.viewMode, onOpen: { open($0, in: pane) }) { ids in
+                            fileMenu(ids, pane: pane)
                         }
-                    }
-                    .width(min: 160, ideal: 260)
-                    TableColumn("Änderungsdatum", value: \.modified) { item in
-                        Text(item.modified, format: .dateTime.day().month().year().hour().minute())
-                            .foregroundStyle(.secondary)
-                    }
-                    .width(min: 110, ideal: 140)
-                    TableColumn("Größe", value: \.size) { item in
-                        Text(item.sizeText)
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                    }
-                    .width(min: 60, ideal: 80)
-                    TableColumn("Art", value: \.kind) { item in
-                        Text(item.kind).foregroundStyle(.secondary)
-                    }
-                    .width(min: 80, ideal: 120)
-                } rows: {
-                    ForEach(pane.items) { item in
-                        TableRow(item).draggable(item.url)
-                    }
+                        .focusable()
+                        .focusEffectDisabled(),
+                        pane: pane
+                    )
                 }
-                .contextMenu(forSelectionType: FileItem.ID.self) { ids in
-                    if !ids.isEmpty {
-                        Button("Öffnen") { open(ids, in: pane) }
-                        let folderURLs = pane.items.filter { ids.contains($0.id) && $0.isBrowsableFolder }.map(\.url)
-                        if !folderURLs.isEmpty {
-                            Button("In neuem Tab öffnen") {
-                                browser.activeSide = side
-                                folderURLs.forEach { browser.openInNewTab($0) }
-                            }
-                        }
-                        Button("Schnellansicht") {
-                            browser.activeSide = side
-                            browser.toggleQuickLook()
-                        }
-                        Button("Umbenennen …") { browser.beginRename() }
-                        Divider()
-                        Button("In anderes Fenster kopieren") { browser.copyToOtherPane() }
-                        Button("In anderes Fenster verschieben") { browser.moveToOtherPane() }
-                        Divider()
-                        let folders = pane.items.filter { ids.contains($0.id) && $0.isBrowsableFolder }.map(\.url)
-                        if !folders.isEmpty {
-                            Button("Zu Favoriten hinzufügen") { browser.favorites.add(folders) }
-                        }
-                        Button("Pfad kopieren") { copyPaths(ids) }
-                        Button("Terminal hier öffnen") {
-                            browser.activeSide = side
-                            browser.openTerminal()
-                        }
-                        Button("Im Finder zeigen") { browser.revealInFinder() }
-                        Divider()
-                        Button("In den Papierkorb", role: .destructive) { browser.trashSelection() }
-                    } else {
-                        Button("Neuer Ordner") { browser.newFolder() }
-                        Button("Ordner zu Favoriten hinzufügen") { browser.favorites.add([pane.currentURL]) }
-                        Button("Terminal hier öffnen") { AppLauncher.openTerminal(at: pane.currentURL) }
-                    }
-                } primaryAction: { ids in
-                    // Doppelklick oder Return
-                    open(ids, in: pane)
-                }
-                .dropDestination(for: URL.self) { urls, _ in
-                    _ = browser.drop(urls, into: pane)
-                }
-                .focused(focus, equals: side)
-                .onKeyPress(.tab) {
-                    browser.toggleActivePane()
-                    return .handled
-                }
-                .onKeyPress(.space) {
-                    browser.toggleQuickLook()   // Leertaste = Schnellansicht
-                    return .handled
-                }
-                .onKeyPress(.delete, phases: .down) { press in
-                    guard press.modifiers.isEmpty else { return .ignored }
-                    pane.goUp()   // Backspace = übergeordneter Ordner
-                    return .handled
-                }
+            }
+            .dropDestination(for: URL.self) { urls, _ in
+                _ = browser.drop(urls, into: pane)
             }
 
             Divider()
@@ -123,9 +66,201 @@ struct PaneView: View {
         .overlay(alignment: .top) {
             // Markierung des aktiven Fensters
             Rectangle()
-                .fill(isActive ? Color.accentColor : .clear)
+                .fill(isActive ? settings.activeColor : .clear)
                 .frame(height: 3)
         }
+    }
+
+    // MARK: Tastatur
+
+    private func keyHandling(_ content: some View, pane: PaneState) -> some View {
+        content
+            .focused(focus, equals: side)
+            .onKeyPress(.tab) {
+                browser.toggleActivePane()
+                return .handled
+            }
+            .onKeyPress(.space) {
+                browser.toggleQuickLook()   // Leertaste = Schnellansicht
+                return .handled
+            }
+            .onKeyPress(.return) {
+                guard pane.viewMode != .list, pane.activeSearch == nil, !pane.selection.isEmpty else { return .ignored }
+                open(pane.selection, in: pane)
+                return .handled
+            }
+            .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow]) { press in
+                guard pane.viewMode != .list, pane.activeSearch == nil, press.modifiers.isEmpty else { return .ignored }
+                moveSelection(in: pane, forward: press.key == .rightArrow || press.key == .downArrow)
+                return .handled
+            }
+            .onKeyPress(.delete, phases: .down) { press in
+                guard press.modifiers.isEmpty else { return .ignored }
+                pane.goUp()   // Backspace = übergeordneter Ordner
+                return .handled
+            }
+    }
+
+    // MARK: Liste
+
+    @ViewBuilder
+    private func fileTable(pane: PaneState, settings: AppSettings) -> some View {
+        @Bindable var pane = pane
+        let searching = pane.activeSearch != nil
+        Table(of: FileItem.self, selection: $pane.selection, sortOrder: $pane.sortOrder) {
+            TableColumn("Name", value: \.name) { item in
+                HStack(spacing: 6) {
+                    Image(nsImage: NSWorkspace.shared.icon(forFile: item.url.path))
+                        .resizable()
+                        .frame(width: settings.listSize.iconSize, height: settings.listSize.iconSize)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(item.name)
+                            .lineLimit(1)
+                            .foregroundStyle(item.isBrowsableFolder ? (settings.folderColor ?? .primary) : .primary)
+                        if searching {
+                            Text(pane.relativeFolder(of: item))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.head)
+                        }
+                    }
+                    .opacity(item.isHidden && settings.showHiddenDimmed ? 0.55 : 1)
+                }
+            }
+            .width(min: 160, ideal: 260)
+            TableColumn("Änderungsdatum", value: \.modified) { item in
+                Text(item.modified, format: .dateTime.day().month().year().hour().minute())
+                    .foregroundStyle(.secondary)
+            }
+            .width(min: 110, ideal: 140)
+            TableColumn("Größe", value: \.size) { item in
+                Text(item.sizeText)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .width(min: 60, ideal: 80)
+            TableColumn("Art", value: \.kind) { item in
+                Text(item.kind).foregroundStyle(.secondary)
+            }
+            .width(min: 80, ideal: 120)
+        } rows: {
+            ForEach(pane.items) { item in
+                TableRow(item).draggable(item.url)
+            }
+        }
+        .font(settings.listSize.font)
+        .alternatingRowBackgrounds(settings.alternatingRows ? .enabled : .disabled)
+        .contextMenu(forSelectionType: FileItem.ID.self) { ids in
+            fileMenu(ids, pane: pane)
+        } primaryAction: { ids in
+            // Doppelklick oder Return
+            open(ids, in: pane)
+        }
+    }
+
+    // MARK: Kontextmenü (Liste und Raster)
+
+    @ViewBuilder
+    private func fileMenu(_ ids: Set<FileItem.ID>, pane: PaneState) -> some View {
+        let selected = pane.items.filter { ids.contains($0.id) }
+        if !selected.isEmpty {
+            Button("Öffnen") { open(ids, in: pane) }
+            let folderURLs = selected.filter(\.isBrowsableFolder).map(\.url)
+            if !folderURLs.isEmpty {
+                Button("In neuem Tab öffnen") {
+                    browser.activeSide = side
+                    folderURLs.forEach { browser.openInNewTab($0) }
+                }
+            }
+            let archives = selected.map(\.url).filter(ArchiveService.isArchive)
+            if !archives.isEmpty {
+                Button("Mit Standard-App öffnen") { browser.openWithDefaultApp(archives) }
+            }
+            if pane.activeSearch != nil, selected.count == 1 {
+                Button("Im Ordner zeigen") { pane.reveal(selected[0]) }
+            }
+            Button("Schnellansicht") {
+                activate(pane, ids)
+                browser.toggleQuickLook()
+            }
+            Button("Umbenennen …") {
+                activate(pane, ids)
+                browser.beginRename()
+            }
+            Divider()
+            Button("In anderes Fenster kopieren") {
+                activate(pane, ids)
+                browser.copyToOtherPane()
+            }
+            Button("In anderes Fenster verschieben") {
+                activate(pane, ids)
+                browser.moveToOtherPane()
+            }
+            Divider()
+            Button("Als ZIP komprimieren") {
+                activate(pane, ids)
+                browser.compressSelection()
+            }
+            if !archives.isEmpty {
+                Button("Entpacken (hierher)") {
+                    activate(pane, ids)
+                    browser.extractSelection(toOtherPane: false)
+                }
+                Button("Entpacken ins andere Fenster") {
+                    activate(pane, ids)
+                    browser.extractSelection(toOtherPane: true)
+                }
+            }
+            Divider()
+            if !folderURLs.isEmpty {
+                Button("Zu Favoriten hinzufügen") { browser.favorites.add(folderURLs) }
+            }
+            Button("Pfad kopieren") { copyPaths(ids) }
+            Button("Terminal hier öffnen") {
+                activate(pane, ids)
+                browser.openTerminal()
+            }
+            Button("Im Finder zeigen") {
+                activate(pane, ids)
+                browser.revealInFinder()
+            }
+            Divider()
+            Button("In den Papierkorb", role: .destructive) {
+                activate(pane, ids)
+                browser.trashSelection()
+            }
+        } else {
+            Button("Neuer Ordner") {
+                browser.activeSide = side
+                browser.newFolder()
+            }
+            Button("Suchen …") {
+                browser.activeSide = side
+                browser.showSearch()
+            }
+            Button("Ordner zu Favoriten hinzufügen") { browser.favorites.add([pane.currentURL]) }
+            Button("Terminal hier öffnen") { AppLauncher.openTerminal(at: pane.currentURL) }
+        }
+    }
+
+    /// Kontextmenü-Aktionen wirken auf die angeklickten Objekte in diesem Fenster.
+    private func activate(_ pane: PaneState, _ ids: Set<FileItem.ID>) {
+        browser.activeSide = side
+        if !ids.isSubset(of: pane.selection) { pane.selection = ids }
+    }
+
+    /// Pfeiltasten in den Rasteransichten: vorheriges/nächstes Objekt.
+    private func moveSelection(in pane: PaneState, forward: Bool) {
+        guard !pane.items.isEmpty else { return }
+        let current = pane.items.lastIndex { pane.selection.contains($0.id) }
+        let next: Int
+        if let current {
+            next = forward ? min(current + 1, pane.items.count - 1) : max(current - 1, 0)
+        } else {
+            next = 0
+        }
+        pane.selection = [pane.items[next].id]
     }
 
     private func open(_ ids: Set<FileItem.ID>, in pane: PaneState) {
@@ -158,6 +293,18 @@ struct PaneHeader: View {
             Button("Nach oben", systemImage: "arrow.up") { pane.goUp() }
                 .disabled(!pane.canGoUp)
             PathBar(url: pane.currentURL) { pane.navigate(to: $0) }
+            Spacer(minLength: 4)
+            Button("Suchen", systemImage: "magnifyingglass") { pane.isSearchBarVisible.toggle() }
+                .help("Suchen (⌘F)")
+            Picker("Ansicht", selection: Bindable(pane).viewMode) {
+                ForEach(ViewMode.allCases) { mode in
+                    Label(mode.title, systemImage: mode.symbol).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .fixedSize()
+            .help("Ansicht: Liste (⌘1), Kurz (⌘2), Miniaturen (⌘3)")
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.borderless)
@@ -214,7 +361,15 @@ struct PaneStatusBar: View {
         let selected = pane.selectedItems
         let bytes = selected.filter { !$0.isBrowsableFolder }.reduce(Int64(0)) { $0 + $1.size }
         HStack {
-            Text("\(pane.items.count) Objekte")
+            if pane.isSearchRunning {
+                ProgressView().controlSize(.mini)
+                Text("Suche läuft … \(pane.items.count) Treffer")
+            } else if pane.activeSearch != nil {
+                Text("\(pane.items.count) Treffer")
+                if pane.items.count >= FileSearch.maxResults { Text("(Maximum erreicht)") }
+            } else {
+                Text("\(pane.items.count) Objekte")
+            }
             if !selected.isEmpty {
                 Text("· \(selected.count) ausgewählt")
                 if bytes > 0 { Text("(\(bytes.formatted(.byteCount(style: .file))))") }

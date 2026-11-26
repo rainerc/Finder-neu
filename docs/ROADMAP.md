@@ -39,7 +39,7 @@ Legende: ✅ vorhanden · 🟡 teilweise · ⬜ fehlt. Aufwand: S (Stunden), M (
 4. Schnellansicht mit Leertaste/F3 (Quick Look) und Text-/Hex-Viewer
 5. „Terminal hier öffnen“, Cloud-Ordner von macOS in der Seitenleiste
 
-**Paket 2: Suchen, Archive, Ansichten**
+**Paket 2: Suchen, Archive, Ansichten** – umgesetzt in v0.6
 6. Suche nach Name (Platzhalter/Regex, Groß/klein) und Inhalt, plus Spotlight
 7. ZIP packen/entpacken, ZIP wie Ordner durchsuchen
 8. Ansichten „Kurz“ (mehrspaltig) und „Miniaturen“

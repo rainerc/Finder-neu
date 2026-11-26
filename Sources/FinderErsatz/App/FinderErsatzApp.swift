@@ -27,6 +27,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        // Temporär entpackte Archive aufräumen.
+        try? FileManager.default.removeItem(at: ArchiveService.browseRoot)
+    }
 }
 
 @main
@@ -42,77 +47,74 @@ struct FinderErsatzApp: App {
                 .frame(minWidth: 900, minHeight: 500)
         }
         .defaultSize(width: 1200, height: 720)
-        .commands { BrowserCommands(browser: browser) }
+        .commands { BrowserCommands(browser: browser, settings: browser.settings) }
+
+        Settings {
+            SettingsView()
+                .environment(browser.settings)
+        }
     }
 }
 
-/// Menübefehle mit Tastenkürzeln im Stil klassischer Zwei-Fenster-Dateimanager.
+/// Menübefehle. Tastenkürzel kommen aus den Einstellungen (änderbar unter ⌘, → Tastenkürzel).
 struct BrowserCommands: Commands {
     let browser: BrowserState
+    let settings: AppSettings
 
-    private static func fKey(_ code: Int) -> KeyEquivalent {
-        KeyEquivalent(Character(UnicodeScalar(code)!))
+    private func item(_ action: ShortcutAction, _ perform: @escaping () -> Void) -> some View {
+        Button(action.title, action: perform)
+            .keyboardShortcut(settings.keyboardShortcut(for: action))
     }
 
     var body: some Commands {
         CommandGroup(after: .newItem) {
-            Button("Neuer Tab") { browser.newTab() }
-                .keyboardShortcut("t", modifiers: .command)
+            item(.newTab) { browser.newTab() }
             // ⌘W wird im AppDelegate abgefangen (sonst schließt das Standardmenü das Fenster).
             Button("Tab schließen (⌘W)") { _ = browser.closeTab() }
             Divider()
-            Button("Neuer Ordner") { browser.newFolder() }
-                .keyboardShortcut("n", modifiers: [.command, .shift])
+            item(.newFolder) { browser.newFolder() }
+        }
+        CommandGroup(after: .textEditing) {
+            item(.search) { browser.showSearch() }
         }
         CommandMenu("Ablage-Aktionen") {
-            Button("In anderes Fenster kopieren") { browser.copyToOtherPane() }
-                .keyboardShortcut(Self.fKey(NSF5FunctionKey), modifiers: [])
-            Button("In anderes Fenster verschieben") { browser.moveToOtherPane() }
-                .keyboardShortcut(Self.fKey(NSF6FunctionKey), modifiers: [])
-            Button("Umbenennen …") { browser.beginRename() }
-                .keyboardShortcut(Self.fKey(NSF2FunctionKey), modifiers: [])
-            Button("Schnellansicht") { browser.toggleQuickLook() }
-                .keyboardShortcut(Self.fKey(NSF3FunctionKey), modifiers: [])
-            Button("In den Papierkorb") { browser.trashSelection() }
-                .keyboardShortcut(.delete, modifiers: .command)
+            item(.copy) { browser.copyToOtherPane() }
+            item(.move) { browser.moveToOtherPane() }
+            item(.rename) { browser.beginRename() }
+            item(.quickLook) { browser.toggleQuickLook() }
+            item(.trash) { browser.trashSelection() }
             Divider()
-            Button("Im Finder zeigen") { browser.revealInFinder() }
-                .keyboardShortcut("r", modifiers: [.command, .option])
-            Button("Terminal hier öffnen") { browser.openTerminal() }
-                .keyboardShortcut("t", modifiers: [.command, .option])
+            item(.compress) { browser.compressSelection() }
+            item(.extractHere) { browser.extractSelection(toOtherPane: false) }
+            item(.extractToOther) { browser.extractSelection(toOtherPane: true) }
+            Divider()
+            item(.reveal) { browser.revealInFinder() }
+            item(.terminal) { browser.openTerminal() }
         }
         CommandMenu("Gehe zu") {
-            Button("Mit Server verbinden …") {
+            item(.connectServer) {
                 NotificationCenter.default.post(name: .connectToServer, object: nil)
             }
-            .keyboardShortcut("k", modifiers: .command)
             Divider()
-            Button("Zurück") { browser.activePane.goBack() }
-                .keyboardShortcut("[", modifiers: .command)
-            Button("Vorwärts") { browser.activePane.goForward() }
-                .keyboardShortcut("]", modifiers: .command)
-            Button("Übergeordneter Ordner") { browser.activePane.goUp() }
-                .keyboardShortcut(.upArrow, modifiers: .command)
+            item(.back) { browser.activePane.goBack() }
+            item(.forward) { browser.activePane.goForward() }
+            item(.up) { browser.activePane.goUp() }
             Divider()
-            Button("Fenster wechseln") { browser.toggleActivePane() }
-                .keyboardShortcut(.tab, modifiers: .option)
-            Button("Nächster Tab") { browser.nextTab() }
-                .keyboardShortcut(.tab, modifiers: .control)
-            Button("Vorheriger Tab") { browser.previousTab() }
-                .keyboardShortcut(.tab, modifiers: [.control, .shift])
-            Button("Anderes Fenster auf gleichen Ordner") { browser.syncOtherPane() }
-                .keyboardShortcut("=", modifiers: .command)
-            Button("Fenster tauschen") { browser.swapPanes() }
-                .keyboardShortcut("u", modifiers: .command)
+            item(.switchPane) { browser.toggleActivePane() }
+            item(.nextTab) { browser.nextTab() }
+            item(.previousTab) { browser.previousTab() }
+            item(.syncPanes) { browser.syncOtherPane() }
+            item(.swapPanes) { browser.swapPanes() }
             Divider()
-            Button("Zu Favoriten hinzufügen") { browser.addSelectionToFavorites() }
-                .keyboardShortcut("t", modifiers: [.control, .command])
+            item(.addFavorite) { browser.addSelectionToFavorites() }
         }
         CommandGroup(after: .toolbar) {
-            Button("Unsichtbare Dateien ein/aus") { browser.activePane.toggleHidden() }
-                .keyboardShortcut(".", modifiers: [.command, .shift])
-            Button("Aktualisieren") { browser.reloadAll() }
-                .keyboardShortcut("r", modifiers: .command)
+            item(.viewList) { browser.setViewMode(.list) }
+            item(.viewBrief) { browser.setViewMode(.brief) }
+            item(.viewIcons) { browser.setViewMode(.icons) }
+            Divider()
+            item(.toggleHidden) { browser.activePane.toggleHidden() }
+            item(.reload) { browser.reloadAll() }
         }
     }
 }

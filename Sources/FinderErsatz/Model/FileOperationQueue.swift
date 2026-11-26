@@ -46,29 +46,44 @@ final class FileOperationQueue {
 
     func enqueue(title: String, items: [TransferItem]) {
         guard !items.isEmpty else { return }
+        enqueue(title: title) { progress in
+            try await FileTransfer.run(items, progress: progress)
+        }
+    }
+
+    /// Allgemeiner Auftrag (z. B. Packen/Entpacken). Ohne Fortschrittsmeldung zeigt der Balken „unbestimmt“.
+    /// `onSuccess` läuft nach erfolgreichem Ende auf dem Main-Thread.
+    func enqueue(
+        title: String,
+        onSuccess: (@MainActor @Sendable () -> Void)? = nil,
+        work: @escaping @Sendable (_ progress: FileTransfer.Progress) async throws -> Void
+    ) {
         let job = FileJob(title: title)
         jobs.append(job)
         let previous = lastTask
         let task = Task.detached { [weak self] in
             await previous?.value
             var errorText: String?
+            var succeeded = false
             do {
-                try await FileTransfer.run(items) { done, total, name in
+                try await work { done, total, name in
                     await job.update(done: done, total: total, name: name)
                 }
+                succeeded = !Task.isCancelled
             } catch is CancellationError {
                 // Vom Benutzer abgebrochen
             } catch {
                 errorText = error.localizedDescription
             }
-            await self?.finish(job, error: errorText)
+            await self?.finish(job, error: errorText, onSuccess: succeeded ? onSuccess : nil)
         }
         job.task = task
         lastTask = task
     }
 
-    private func finish(_ job: FileJob, error: String?) {
+    private func finish(_ job: FileJob, error: String?, onSuccess: (@MainActor @Sendable () -> Void)?) {
         jobs.removeAll { $0.id == job.id }
         onFinish?(error)
+        onSuccess?()
     }
 }

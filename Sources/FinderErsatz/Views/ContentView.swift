@@ -27,6 +27,7 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .preferredColorScheme(browser.settings.appearance.colorScheme)
         .onAppear { focusedPane = browser.activeSide }
         .onChange(of: focusedPane) { _, side in
             if let side { browser.activeSide = side }

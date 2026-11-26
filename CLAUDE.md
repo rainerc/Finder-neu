@@ -13,9 +13,11 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 ## Struktur
 - `App/` Einstieg, Menüs, Tastenkürzel (`BrowserCommands`)
 - `Model/` `PaneGroup` (eine Seite mit Tabs), `FileOperationQueue`/`FileJob` (Hintergrund-Aufträge mit Fortschritt), `FileItem`, `FavoritesStore` (Seitenleisten-Favoriten, gespeichert in UserDefaults), `PaneState` (ein Fenster: Ordner, Verlauf, Auswahl, Sortierung), `BrowserState` (beide Fenster, aktives Fenster, Dateiaktionen)
+- `Model/` `AppSettings` (Darstellung, eigene Tastenkürzel; UserDefaults), `Shortcuts` (`ShortcutAction` mit Standardkürzeln, `Shortcut`), `SearchQuery`
 - `Model/NetworkBrowser` (Bonjour-Suche per NWBrowser nach _smb._tcp/_afpovertcp._tcp)
+- `Services/` `FileSearch` (Name/Regex/Inhalt, `mdfind` für Spotlight), `ArchiveService` (ditto/zip/tar), `ProcessRunner` (Werkzeuge starten, abbrechbar)
 - `Services/` `NetworkMounter` (Einhängen per NetFSMountURLAsync mit macOS-Anmelde-/Freigabedialog), `FileService` (schnelle Dateioperationen), `FileTransfer` (Kopieren/Verschieben mit Fortschritt, läuft per `Task.detached`), `DirectoryWatcher` (Live-Aktualisierung per DispatchSource), `AppLauncher` (Terminal)
-- `Views/` `ContentView` (NavigationSplitView: Seitenleiste + zwei Fenster + Aktionsleiste), `SidebarView` (Favoriten, Cloud, Netzwerk, Orte/Volumes), `TabBar`, `JobsPanel`, `TransferSheet` (F5/F6-Dialog), `PaneView` (Kopf, Pfadleiste, Tabelle, Statuszeile)
+- `Views/` `ContentView` (NavigationSplitView: Seitenleiste + zwei Fenster + Aktionsleiste), `SidebarView` (Favoriten, Cloud, Netzwerk, Orte/Volumes), `TabBar`, `JobsPanel`, `TransferSheet` (F5/F6-Dialog), `SearchBar`, `FileGridView` (Kurz/Miniaturen), `ThumbnailView`, `SettingsView`, `PaneView` (Kopf, Pfadleiste, Tabelle, Statuszeile)
 
 ## Konventionen
 - UI-Texte deutsch, Code/Bezeichner englisch
@@ -23,6 +25,8 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 - Schnelle Dateiaktionen: Logik in `FileService`, Aufruf über `BrowserState.run { }` (Fehler-Alert + Neuladen)
 - Langsame Aktionen (Kopieren/Verschieben): `TransferItem`s bauen und über `BrowserState.enqueue` (Konfliktprüfung) an `FileOperationQueue` geben
 - `browser.pane(side)` / `activePane` liefern immer den aktiven Tab der Seite
+- Neue Menübefehle: Fall in `ShortcutAction` ergänzen (Titel, Standardkürzel) und in `BrowserCommands` per `item(.fall) { … }` einhängen – dann sind sie automatisch in den Einstellungen umbelegbar
+- Während einer Suche ersetzt `PaneState.items` den Ordnerinhalt durch die Treffer (`activeSearch != nil`)
 
 ## Stand
 - v0.1 MVP-Gerüst: Zwei-Fenster-Ansicht, Navigation, Pfadleiste, Favoriten, Sortierung, F5/F6 kopieren/verschieben, F2 umbenennen, neuer Ordner, Papierkorb, Drag & Drop, unsichtbare Dateien
@@ -30,6 +34,7 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 - v0.3 Paket 1 der Roadmap: Tabs, Kopier-Warteschlange mit Fortschritt/Abbrechen/Konfliktdialog, F5/F6-Dialog mit änderbarem Ziel und Namen, Live-Aktualisierung, Quick Look (Leertaste/F3), Terminal hier öffnen, Cloud-Ordner in der Seitenleiste. Baut auf dem Mac. ⌘W wird per NSEvent-Monitor im AppDelegate abgefangen (Menü-Shortcut kollidierte mit „Fenster schließen“). Offen aus Paket 1: eigener Hex-Viewer
 - v0.4 Netzwerk-Abschnitt in der Seitenleiste (eingehängte Freigaben, `volumeIsLocal == false`), Trennen, Mit Server verbinden (⌘K, öffnet smb://… über NSWorkspace)
 - v0.5 Server im lokalen Netz in „Netzwerk“ (Bonjour), Klick → NetFS-Mount → Freigabe öffnet im aktiven Fenster; ⌘K nutzt ebenfalls NetFS. `Support/Info.plist` (Local-Network-Berechtigung, NSBonjourServices) wird per Linker in die `swift run`-Binary eingebettet und von XcodeGen genutzt
+- v0.6 Paket 2: Suche (⌘F), ZIP/Archive (packen, entpacken, als Ordner öffnen), Ansichten Liste/Kurz/Miniaturen (⌘1–3), Einstellungen (⌘,) mit eigenen Tastenkürzeln, Schriftgröße, Hell/Dunkel, Farben. Noch nicht auf dem Mac gebaut
 - v0.1 baut auf Rainers Mac (macOS 26) ohne Fehler mit `swift run`
 
 ## Nächste Schritte

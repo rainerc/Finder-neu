@@ -35,7 +35,12 @@ Beim ersten Start fragt macOS, ob die App auf das lokale Netzwerk zugreifen darf
 |---|---|
 | Zwei Fenster nebeneinander, aktives Fenster farbig markiert | Klick, `⇥` oder `⌥⇥` zum Wechseln |
 | Tabs pro Fenster | `⌘T` neu, `⌘W` schließen (der letzte Tab bleibt offen), `⌃⇥` / `⌃⇧⇥` wechseln, Kontextmenü „In neuem Tab öffnen“ |
-| Schnellansicht (Quick Look) | Leertaste oder `F3` |
+| Schnellansicht (Quick Look, nutzt installierte Erweiterungen wie XRay) | Leertaste oder `F3` |
+| Suche ab aktuellem Ordner: Name enthält / Platzhalter (`*.jpg; *.png`) / Regex / Spotlight, Groß-/Kleinschreibung, Inhaltssuche mit Kodierung | `⌘F`, Lupe im Fensterkopf |
+| Ansichten Liste, Kurz (mehrspaltig), Miniaturen (Vorschaubilder) | `⌘1` / `⌘2` / `⌘3` oder Umschalter im Fensterkopf |
+| Als ZIP komprimieren; entpacken (zip, tar.gz, tar.bz2, tar.xz, 7z, rar …) hierher oder ins andere Fenster | Kontextmenü, Menü „Ablage-Aktionen“ |
+| Archiv wie Ordner öffnen (entpackte Kopie) | Doppelklick auf Archiv |
+| Einstellungen: eigene Tastenkürzel, Schriftgröße, Hell/Dunkel, Farben | `⌘,` |
 | Ordner aktualisieren sich automatisch | – |
 | Terminal im aktuellen Ordner | `⌥⌘T` oder Kontextmenü |
 | Netzwerk: Server im lokalen Netz (Bonjour, SMB/AFP) – Klick verbindet und öffnet die Freigabe; eingehängte Freigaben, Trennen per Rechtsklick | Mit Server verbinden: `⌘K` |

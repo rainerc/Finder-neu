@@ -28,10 +28,15 @@ private struct JobRow: View {
                 HStack {
                     Text(job.title).font(.callout)
                     Spacer()
-                    Text(progressText).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                    if job.totalBytes > 0 {
+                        Text(progressText).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                    }
                 }
-                ProgressView(value: job.fraction)
-                    .progressViewStyle(.linear)
+                if job.totalBytes > 0 {
+                    ProgressView(value: job.fraction).progressViewStyle(.linear)
+                } else {
+                    ProgressView().progressViewStyle(.linear)   // unbestimmt (z. B. Packen)
+                }
                 Text(job.isCancelling ? "Wird abgebrochen …" : job.currentName)
                     .font(.caption)
                     .foregroundStyle(.secondary)
