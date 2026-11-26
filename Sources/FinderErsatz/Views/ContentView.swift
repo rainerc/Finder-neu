@@ -15,6 +15,10 @@ struct ContentView: View {
                 .navigationSplitViewColumnWidth(min: 160, ideal: 200, max: 320)
         } detail: {
             VStack(spacing: 0) {
+                if AppEnvironment.isRunningUnbundled {
+                    UnbundledBanner()
+                    Divider()
+                }
                 HSplitView {
                     PaneView(side: .left, focus: $focusedPane)
                         .frame(minWidth: 350, maxWidth: .infinity, maxHeight: .infinity)
@@ -148,5 +152,41 @@ struct ActionBar: View {
         .controlSize(.small)
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
+    }
+}
+
+/// Erkennt, ob die App ohne .app-Bundle läuft (z. B. `swift run` oder `.build/debug/FinderErsatz`).
+/// Dann gelten die macOS-Freigaben (Netzwerkvolumes, Festplattenvollzugriff) der installierten App nicht.
+enum AppEnvironment {
+    static let installedAppURL = URL(filePath: "/Applications/Finder-Ersatz.app")
+    static var isRunningUnbundled: Bool { Bundle.main.bundleURL.pathExtension != "app" }
+}
+
+/// Warnhinweis oben, wenn die App ohne Bundle läuft – mit Knopf zum Wechsel auf die installierte App.
+private struct UnbundledBanner: View {
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+            Text("Läuft als Test-Build ohne App-Bundle (\(Bundle.main.executablePath ?? "?")). Netzlaufwerke und andere macOS-Freigaben funktionieren so nicht.")
+                .lineLimit(2)
+                .truncationMode(.middle)
+            Spacer()
+            if FileManager.default.fileExists(atPath: AppEnvironment.installedAppURL.path) {
+                Button("Installierte App starten") {
+                    Task { @MainActor in
+                        _ = try? await NSWorkspace.shared.openApplication(
+                            at: AppEnvironment.installedAppURL,
+                            configuration: NSWorkspace.OpenConfiguration()
+                        )
+                        NSApp.terminate(nil)
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .font(.callout)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(.orange.opacity(0.15))
     }
 }

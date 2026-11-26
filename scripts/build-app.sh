@@ -89,6 +89,7 @@ done
 
 # Laufende App beenden, bevor sie ersetzt wird.
 pkill -x FinderErsatz 2>/dev/null || true
+pkill -f '\.build/.*/FinderErsatz' 2>/dev/null || true   # auch Test-Builds (swift run / .build/debug)
 sleep 0.5
 
 TARGET="$APP"

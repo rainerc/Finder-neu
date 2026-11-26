@@ -159,6 +159,9 @@ final class PaneState: Identifiable {
             || (underlying?.domain == NSPOSIXErrorDomain && [Int(EPERM), Int(EACCES)].contains(underlying?.code ?? 0))
         let code = "(\(nsError.domain) \(nsError.code)" + (underlying.map { ", \($0.domain) \($0.code)" } ?? "") + ")"
         guard isPermission else { return "\(error.localizedDescription) \(code)" }
+        if AppEnvironment.isRunningUnbundled {
+            return "Die App läuft als Test-Build ohne App-Bundle (\(Bundle.main.executablePath ?? "?")) – dafür gelten die macOS-Freigaben nicht. Bitte die installierte App /Applications/Finder-Ersatz.app starten (Knopf oben im Fenster). \(code)"
+        }
         let isNetwork = (try? url.resourceValues(forKeys: [.volumeIsLocalKey]).volumeIsLocal) == false
         if isNetwork {
             return "macOS hat Finder-Ersatz den Zugriff auf Netzwerkvolumes nicht erlaubt. Am dauerhaftesten: Finder-Ersatz unter „Festplattenvollzugriff“ einschalten (gilt für alle Laufwerke und bleibt auch nach Neubauten erhalten). Danach die App neu starten. \(code)"
