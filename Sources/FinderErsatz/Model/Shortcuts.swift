@@ -3,7 +3,7 @@ import AppKit
 
 /// Alle Befehle, deren Tastenkürzel man in den Einstellungen ändern kann.
 enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
-    case newTab, newFolder, copy, move, rename, quickLook, trash, compress, extractHere, extractToOther
+    case newTab, newFolder, copy, move, rename, quickLook, systemQuickLook, trash, compress, extractHere, extractToOther
     case copyFiles, pasteFiles, moveFilesHere, duplicate, makeAlias, copyPath, getInfo, goToFolder, selectAll, undo
     case search, saveSearch, reveal, terminal, batchRename, recents
     case back, forward, up, switchPane, nextTab, previousTab, syncPanes, swapPanes, addFavorite, connectServer
@@ -19,6 +19,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .move: "In anderes Fenster verschieben"
         case .rename: "Umbenennen"
         case .quickLook: "Schnellansicht"
+        case .systemQuickLook: "Quick Look (auch Ordner, z. B. XRay)"
         case .trash: "In den Papierkorb"
         case .compress: "Als ZIP komprimieren"
         case .extractHere: "Entpacken (hierher)"
@@ -69,6 +70,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .move: Shortcut(functionKey: 6)
         case .rename: Shortcut(functionKey: 2)
         case .quickLook: Shortcut(functionKey: 3)
+        case .systemQuickLook: Shortcut("y", .command)
         case .trash: Shortcut(Shortcut.deleteKey, .command)
         case .compress: nil
         case .extractHere: nil

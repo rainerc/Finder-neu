@@ -215,7 +215,7 @@ final class BrowserState {
     }
 
     /// Leertaste: bei genau einem Ordner die eigene, schnelle Ordnervorschau (XRay & Co. durchsuchen den ganzen Baum
-    /// und brauchen bei großen Ordnern sehr lange), sonst Quick Look. `forceSystemPreview` (⌥-Leertaste) = immer Quick Look.
+    /// und brauchen bei großen Ordnern sehr lange), sonst Quick Look. `forceSystemPreview` (⇧-Leertaste, ⌘Y) = immer Quick Look.
     func toggleQuickLook(forceSystemPreview: Bool = false) {
         if folderPreviewURL != nil { folderPreviewURL = nil; return }
         let selected = activePane.selectedItems

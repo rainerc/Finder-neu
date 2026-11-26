@@ -30,7 +30,7 @@ private struct AppearanceSettings: View {
             Toggle("Abwechselnde Zeilenfarben", isOn: $settings.alternatingRows)
             Toggle("Unsichtbare Dateien abgeblendet zeigen", isOn: $settings.showHiddenDimmed)
             Toggle("Leertaste auf Ordnern: Quick Look/XRay statt schneller Vorschau", isOn: $settings.folderPreviewUsesQuickLook)
-                .help("XRay & Co. durchsuchen den ganzen Ordnerbaum – bei großen Ordnern dauert das. ⌥-Leertaste öffnet Quick Look immer.")
+                .help("XRay & Co. durchsuchen den ganzen Ordnerbaum – bei großen Ordnern dauert das. ⇧-Leertaste oder ⌘Y öffnen Quick Look immer.")
             Toggle("Ordnergrößen berechnen", isOn: $settings.calculateFolderSizes)
                 .help("Größe von Ordnern in der Liste anzeigen (im Hintergrund, nur auf lokalen Laufwerken)")
 

@@ -129,9 +129,10 @@ struct PaneView: View {
                 browser.toggleActivePane()
                 return .handled
             }
-            // Leertaste = Schnellansicht; ⌥-Leertaste (ergibt „\u{a0}“) = immer Quick Look, auch bei Ordnern (XRay)
-            .onKeyPress(keys: [.space, KeyEquivalent("\u{a0}")]) { press in
-                browser.toggleQuickLook(forceSystemPreview: press.modifiers.contains(.option) || press.characters == "\u{a0}")
+            // Leertaste = Schnellansicht; ⇧-Leertaste = immer Quick Look, auch bei Ordnern (XRay).
+            // (⌥-Leertaste ist oft von Alfred/Spotlight belegt.)
+            .onKeyPress(.space) { press in
+                browser.toggleQuickLook(forceSystemPreview: press.modifiers.contains(.shift))
                 return .handled
             }
             .onKeyPress(.return) {

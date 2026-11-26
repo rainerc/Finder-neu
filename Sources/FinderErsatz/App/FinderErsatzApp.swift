@@ -134,6 +134,7 @@ struct BrowserCommands: Commands {
             item(.rename) { browser.beginRename() }
             item(.batchRename) { browser.beginBatchRename() }
             item(.quickLook) { browser.toggleQuickLook() }
+            item(.systemQuickLook) { browser.toggleQuickLook(forceSystemPreview: true) }
             item(.trash) { browser.trashSelection() }
             Divider()
             item(.compress) { browser.compressSelection() }

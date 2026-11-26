@@ -31,7 +31,7 @@ struct FolderPreviewSheet: View {
                     dismiss()
                     QuickLookController.shared.show([url])
                 }
-                .help("Systemvorschau (z. B. XRay) – kann bei großen Ordnern dauern (⌥-Leertaste)")
+                .help("Systemvorschau (z. B. XRay) – kann bei großen Ordnern dauern (⇧-Leertaste oder ⌘Y)")
             }
             .padding(12)
             Divider()
