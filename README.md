@@ -53,7 +53,7 @@ Beim ersten Start fragt macOS, ob die App auf das lokale Netzwerk zugreifen darf
 | Favorit hinzufügen | `+` unten in der Seitenleiste, `⌃⌘T`, Kontextmenü oder Ordner in die Seitenleiste ziehen |
 | Favoriten sortieren, umbenennen, entfernen | Ziehen bzw. Rechtsklick |
 | Klickbare Pfadleiste | Fensterkopf |
-| Sortierbare Spalten (Name, Datum, Größe, Art), Ordner zuerst | Spaltenkopf |
+| Sortierbare Spalten, Ordner zuerst; zusätzlich Erstellt, Zuletzt geöffnet, Erweiterung, Tags, Rechte, Eigentümer ein-/ausblendbar, Spalten verschieben und Breiten werden gespeichert | Klick bzw. Rechtsklick auf den Spaltenkopf |
 | Öffnen | Doppelklick / Return |
 | In anderes Fenster kopieren / verschieben (Dialog: Ziel und Name änderbar) | `F5` / `F6` |
 | Hintergrund-Warteschlange mit Fortschritt und Abbrechen, Konfliktdialog (Ersetzen / Beide behalten / Überspringen) | automatisch |

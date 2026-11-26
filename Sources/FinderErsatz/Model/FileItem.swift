@@ -11,6 +11,12 @@ struct FileItem: Identifiable, Hashable, Sendable {
     let size: Int64
     let modified: Date
     let kind: String
+    let created: Date
+    let accessed: Date
+    let fileExtension: String
+    let tags: String
+    let permissions: String
+    let owner: String
 
     /// Ordner, in die man hineinnavigiert (Pakete wie .app gelten als Datei).
     var isBrowsableFolder: Bool { isDirectory && !isPackage }
@@ -18,6 +24,7 @@ struct FileItem: Identifiable, Hashable, Sendable {
     static let resourceKeys: [URLResourceKey] = [
         .nameKey, .isDirectoryKey, .isPackageKey, .isHiddenKey,
         .fileSizeKey, .contentModificationDateKey, .localizedTypeDescriptionKey,
+        .creationDateKey, .contentAccessDateKey, .tagNamesKey,
     ]
 
     init?(url: URL) {
@@ -30,6 +37,24 @@ struct FileItem: Identifiable, Hashable, Sendable {
         self.size = Int64(v.fileSize ?? 0)
         self.modified = v.contentModificationDate ?? .distantPast
         self.kind = v.localizedTypeDescription ?? (isDirectory ? "Ordner" : "Dokument")
+        self.created = v.creationDate ?? .distantPast
+        self.accessed = v.contentAccessDate ?? .distantPast
+        self.fileExtension = (isDirectory && !isPackage) ? "" : url.pathExtension.lowercased()
+        self.tags = (v.tagNames ?? []).joined(separator: ", ")
+        let attributes = (try? FileManager.default.attributesOfItem(atPath: url.path)) ?? [:]
+        let mode = (attributes[.posixPermissions] as? NSNumber)?.intValue ?? 0
+        self.permissions = Self.permissionString(mode, isDirectory: isDirectory)
+        self.owner = attributes[.ownerAccountName] as? String ?? ""
+    }
+
+    /// z. B. „drwxr-xr-x (755)“
+    private static func permissionString(_ mode: Int, isDirectory: Bool) -> String {
+        let symbols = ["r", "w", "x"]
+        var text = isDirectory ? "d" : "-"
+        for shift in stride(from: 8, through: 0, by: -1) {
+            text += mode & (1 << shift) != 0 ? symbols[(8 - shift) % 3] : "-"
+        }
+        return "\(text) (\(String(mode & 0o777, radix: 8)))"
     }
 
     var sizeText: String {

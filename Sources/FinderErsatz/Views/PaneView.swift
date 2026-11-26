@@ -5,6 +5,7 @@ struct PaneView: View {
     @Environment(BrowserState.self) private var browser
     let side: PaneSide
     var focus: FocusState<PaneSide?>.Binding
+    @AppStorage("tableColumns") private var columnData = Data()
 
     private var isActive: Bool { browser.activeSide == side }
 
@@ -121,7 +122,8 @@ struct PaneView: View {
     private func fileTable(pane: PaneState, settings: AppSettings) -> some View {
         @Bindable var pane = pane
         let searching = pane.activeSearch != nil
-        Table(of: FileItem.self, selection: $pane.selection, sortOrder: $pane.sortOrder) {
+        Table(of: FileItem.self, selection: $pane.selection, sortOrder: $pane.sortOrder,
+              columnCustomization: columnCustomization) {
             TableColumn("Name", value: \.name) { item in
                 HStack(spacing: 6) {
                     Image(nsImage: NSWorkspace.shared.icon(forFile: item.url.path))
@@ -143,21 +145,65 @@ struct PaneView: View {
                 }
             }
             .width(min: 160, ideal: 260)
+            .customizationID("name")
+            .disabledCustomizationBehavior(.visibility)   // Name lässt sich nicht ausblenden
             TableColumn("Änderungsdatum", value: \.modified) { item in
                 Text(item.modified, format: .dateTime.day().month().year().hour().minute())
                     .foregroundStyle(.secondary)
             }
             .width(min: 110, ideal: 140)
+            .customizationID("modified")
             TableColumn("Größe", value: \.size) { item in
                 Text(item.sizeText)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .width(min: 60, ideal: 80)
+            .customizationID("size")
             TableColumn("Art", value: \.kind) { item in
                 Text(item.kind).foregroundStyle(.secondary)
             }
             .width(min: 80, ideal: 120)
+            .customizationID("kind")
+            // Zusätzliche Spalten – per Rechtsklick auf den Spaltenkopf einblenden
+            TableColumn("Erstellt", value: \.created) { item in
+                Text(item.created, format: .dateTime.day().month().year().hour().minute())
+                    .foregroundStyle(.secondary)
+            }
+            .width(min: 110, ideal: 140)
+            .customizationID("created")
+            .defaultVisibility(.hidden)
+            TableColumn("Zuletzt geöffnet", value: \.accessed) { item in
+                Text(item.accessed, format: .dateTime.day().month().year().hour().minute())
+                    .foregroundStyle(.secondary)
+            }
+            .width(min: 110, ideal: 140)
+            .customizationID("accessed")
+            .defaultVisibility(.hidden)
+            TableColumn("Erweiterung", value: \.fileExtension) { item in
+                Text(item.fileExtension).foregroundStyle(.secondary)
+            }
+            .width(min: 50, ideal: 70)
+            .customizationID("extension")
+            .defaultVisibility(.hidden)
+            TableColumn("Tags", value: \.tags) { item in
+                Text(item.tags).foregroundStyle(.secondary).lineLimit(1)
+            }
+            .width(min: 60, ideal: 100)
+            .customizationID("tags")
+            .defaultVisibility(.hidden)
+            TableColumn("Rechte", value: \.permissions) { item in
+                Text(item.permissions).monospaced().foregroundStyle(.secondary)
+            }
+            .width(min: 110, ideal: 130)
+            .customizationID("permissions")
+            .defaultVisibility(.hidden)
+            TableColumn("Eigentümer", value: \.owner) { item in
+                Text(item.owner).foregroundStyle(.secondary)
+            }
+            .width(min: 70, ideal: 90)
+            .customizationID("owner")
+            .defaultVisibility(.hidden)
         } rows: {
             ForEach(pane.items) { item in
                 TableRow(item).draggable(item.url)
@@ -171,6 +217,14 @@ struct PaneView: View {
             // Doppelklick oder Return
             open(ids, in: pane)
         }
+    }
+
+    /// Sichtbarkeit, Reihenfolge und Breite der Spalten – für beide Fenster gemeinsam gespeichert.
+    private var columnCustomization: Binding<TableColumnCustomization<FileItem>> {
+        Binding(
+            get: { (try? JSONDecoder().decode(TableColumnCustomization<FileItem>.self, from: columnData)) ?? TableColumnCustomization() },
+            set: { columnData = (try? JSONEncoder().encode($0)) ?? Data() }
+        )
     }
 
     // MARK: Kontextmenü (Liste und Raster)

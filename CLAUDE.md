@@ -37,6 +37,7 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 - v0.5 Server im lokalen Netz in „Netzwerk“ (Bonjour), Klick → NetFS-Mount → Freigabe öffnet im aktiven Fenster; ⌘K nutzt ebenfalls NetFS. `Support/Info.plist` (Local-Network-Berechtigung, NSBonjourServices) wird per Linker in die `swift run`-Binary eingebettet und von XcodeGen genutzt
 - v0.6 Paket 2: Suche (⌘F), ZIP/Archive (packen, entpacken, als Ordner öffnen), Ansichten Liste/Kurz/Miniaturen (⌘1–3), Einstellungen (⌘,) mit eigenen Tastenkürzeln, Schriftgröße, Hell/Dunkel, Farben. Baut auf dem Mac
 - v0.7 AppleScript-Schnittstelle (`Support/FinderErsatz.sdef`: `selected paths`, `current folder`, per `@objc`-Properties in einer `NSApplication`-Extension, Zugriff über `BrowserState.current`) für Hookmark ⌃H – funktioniert bei Rainer mit dem AppleScript aus `docs/HOOKMARK.md`. Fallstricke: `BrowserState.current` erst in `ContentView.onAppear` setzen (SwiftUI erzeugt `@State`-Startwerte mehrfach); App im Skript per Pfad ansprechen; Diagnose per `get debug info`. Zusätzlich meldet das Fenster das ausgewählte Objekt als `representedURL`
+- v0.8 Spalten wählbar (Rechtsklick auf Spaltenkopf): `TableColumnCustomization` mit `customizationID`, gespeichert per `@AppStorage("tableColumns")` (beide Fenster gemeinsam). Neue `FileItem`-Felder: created, accessed, fileExtension, tags, permissions, owner. Max. 10 Spalten pro TableColumnBuilder-Block
 - v0.1 baut auf Rainers Mac (macOS 26) ohne Fehler mit `swift run`
 
 ## Nächste Schritte
