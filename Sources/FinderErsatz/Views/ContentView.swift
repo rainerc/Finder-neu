@@ -37,6 +37,9 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(browser.settings.appearance.colorScheme)
+        // Fenstertitel wie im Finder: Ordner des aktiven Fensters, darunter der volle Pfad
+        .navigationTitle(browser.activePane.title)
+        .navigationSubtitle(windowSubtitle)
         .onAppear {
             BrowserState.current = browser
             focusedPane = browser.activeSide
@@ -139,6 +142,15 @@ struct ContentView: View {
             Button("Erweitert (Regex, Nummerieren) …") { browser.beginBatchRename(regex: true) }
             Button("Abbrechen", role: .cancel) { browser.renameTarget = nil }
         }
+    }
+}
+
+extension ContentView {
+    /// Pfad des aktiven Fensters (mit ~ für den Benutzerordner); bei Treffern einer Suche deren Ort.
+    var windowSubtitle: String {
+        let pane = browser.activePane
+        let path = pane.activeSearch.map { $0.searchesEverywhere ? "Alle Volumes" : $0.root.path } ?? pane.currentURL.path
+        return (path as NSString).abbreviatingWithTildeInPath
     }
 }
 

@@ -51,6 +51,7 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 - Leertaste auf einem Ordner zeigt die eigene schnelle Vorschau (`FolderPreviewSheet`, eine Ebene). Grund: XRay durchsucht den ganzen Ordnerbaum (bei Rainer ~/Documents: 4,79 GB, 18.151 Objekte) und braucht selbst mit `qlmanage -p` ewig. Quick Look/XRay für Ordner: Einstellung `folderPreviewUsesQuickLook`, ⇧-Leertaste, ⌘Y (umbelegbar) oder Knopf im Sheet; ⌥-Leertaste ging nicht (Alfred) (Rainers Wahl)
 - Regex-Assistent (`RegexHelperSheet`, nach dem Vorbild von regex101: links Muster mit Syntaxfarben/Ersetzung/editierbare Testnamen mit farbigen Gruppen, rechts Erklärung (`RegexSyntax.tokens`), Treffer-Details mit Positionen, durchsuchbare Kurzreferenz): in der Suchleiste (Modus Regex, Zauberstab) und im Stapel-Umbenennen (Modus „Regex“ mit $1-Ersetzung). Bausteine, Vorlagen, Muster aus Beispielnamen ableiten (`RegexInference`), deutsche Erklärung, Live-Test mit Markierung, Gruppen und Umbenennungs-Vorschau. Alles lokal, kein externer Dienst
 - v0.1 baut auf Rainers Mac (macOS 26) ohne Fehler mit `swift run`
+- Fenstertitel = Ordner des aktiven Fensters (`navigationTitle`), Untertitel = Pfad (`ContentView.windowSubtitle`)
 
 ## Übergabe an eine neue Session / einen anderen Claude-Account
 - **Repo:** GitHub `rainerc/Finder-neu` (Branch `main`, es wird direkt auf `main` gepusht – so mit Rainer vereinbart). Der neue Account braucht GitHub-Zugriff (claude.ai → GitHub verbinden, Claude-GitHub-App für das Repo installiert). Diese Datei zuerst lesen.
