@@ -7,6 +7,7 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 - Swift 6, SwiftUI (+ AppKit wo nötig), `@Observable`-Modelle auf `@MainActor`
 - Bau: **`./scripts/build-app.sh`** (signierte .app in `build/`, empfohlen – TCC-Berechtigungen wie Netzwerkvolumes funktionieren nur mit echtem Bundle), `swift run` nur für schnelle Tests, oder `xcodegen && open FinderErsatz.xcodeproj` für eine signierte .app
 - Berechtigungen (TCC): `build-app.sh` signiert immer mit demselben Zertifikat (SHA-1) → Freigaben bleiben über Neubauten erhalten. Wenn „Netzwerkvolumes“ trotz Schalter verweigert wird: `tccutil reset SystemPolicyNetworkVolumes com.example.FinderErsatz` (und `SystemPolicyAllFiles`), neu bauen, neu erlauben
+- Berechtigung nach Neubau wieder weg (Stand v0.10, Ursache noch offen): `./scripts/check-permissions.sh` vergleicht die Signatur der installierten App mit der in der TCC-Datenbank gespeicherten Anforderung (csreq) – zeigt, ob der Eintrag fehlt, verweigert ist oder die Signatur nicht passt. `build-app.sh` merkt sich das Zertifikat in `.signing-identity` (nicht im Git) und warnt, wenn sich das Designated Requirement gegenüber dem letzten Bau ändert (`build/.last-dr`). Empfehlung: Festplattenvollzugriff erteilen (deckt Netzwerkvolumes mit ab)
 - Keine App-Sandbox (Dateimanager braucht Vollzugriff); Verteilung später per Developer ID + Notarisierung
 - Keine externen Abhängigkeiten ohne Rücksprache
 - Linux-Sessions können nicht kompilieren: Änderungen sorgfältig gegen die macOS-26-SDK-APIs prüfen und Rainer bitten, lokal zu bauen

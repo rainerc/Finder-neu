@@ -42,9 +42,25 @@ fi
 
 # Immer dasselbe Zertifikat (per SHA-1 fest gewählt) → gleiche „Designated Requirement“ →
 # macOS behält erteilte Berechtigungen (Netzwerkvolumes, Festplattenvollzugriff) über Neubauten hinweg.
-IDENTITY_LINE="$(security find-identity -v -p codesigning | grep -E 'Apple Development|Developer ID Application' | sort | head -1 || true)"
-IDENTITY_HASH="$(echo "$IDENTITY_LINE" | awk '{print $2}')"
-IDENTITY_NAME="$(echo "$IDENTITY_LINE" | sed -E 's/.*"(.*)"/\1/')"
+# Das einmal gewählte Zertifikat wird in .signing-identity gemerkt (nicht im Git), damit nie
+# versehentlich ein anderes genommen wird (z. B. wenn ein zweites Zertifikat dazukommt).
+IDENTITIES="$(security find-identity -v -p codesigning | grep -E 'Apple Development|Developer ID Application' || true)"
+IDENTITY_HASH=""
+if [[ -f .signing-identity ]]; then
+  PINNED="$(head -1 .signing-identity | tr -d '[:space:]')"
+  if echo "$IDENTITIES" | grep -q "$PINNED"; then
+    IDENTITY_HASH="$PINNED"
+  else
+    echo "⚠︎ Gemerktes Zertifikat $PINNED nicht mehr gültig – wähle neu (Berechtigungen müssen dann einmal neu erteilt werden)."
+  fi
+fi
+if [[ -z "$IDENTITY_HASH" ]]; then
+  # Bevorzugt „Apple Development“, bei mehreren das erste nach Hash sortiert (stabil).
+  IDENTITY_HASH="$( (echo "$IDENTITIES" | grep 'Apple Development'; echo "$IDENTITIES" | grep 'Developer ID Application') \
+    | awk 'NF {print $2}' | head -1)"
+  [[ -n "$IDENTITY_HASH" ]] && echo "$IDENTITY_HASH" > .signing-identity
+fi
+IDENTITY_NAME="$(echo "$IDENTITIES" | grep "$IDENTITY_HASH" | sed -E 's/.*"(.*)"/\1/' | head -1)"
 if [[ -n "$IDENTITY_HASH" ]]; then
   echo "▸ Signiere mit: $IDENTITY_NAME ($IDENTITY_HASH)"
   codesign --force --options runtime --timestamp=none --identifier com.example.FinderErsatz --sign "$IDENTITY_HASH" "$APP"
@@ -53,7 +69,15 @@ else
   echo "  (Xcode → Einstellungen → Accounts → Zertifikate verwalten → „Apple Development“ anlegen)"
   codesign --force --sign - "$APP"
 fi
-echo "▸ Designated Requirement: $(codesign -d -r- "$APP" 2>&1 | grep -o 'designated => .*')"
+DR="$(codesign -d -r- "$APP" 2>&1 | sed -n 's/^designated => //p')"
+echo "▸ Designated Requirement: $DR"
+# Warnen, wenn sich die Signatur-Anforderung gegenüber dem letzten Bau geändert hat –
+# genau dann verwirft macOS erteilte Berechtigungen.
+if [[ -f build/.last-dr && "$(cat build/.last-dr)" != "$DR" ]]; then
+  echo "⚠︎ Designated Requirement hat sich geändert! Vorher: $(cat build/.last-dr)"
+  echo "  macOS fragt Berechtigungen (Netzwerkvolumes, Festplattenvollzugriff) deshalb neu ab."
+fi
+echo "$DR" > build/.last-dr
 
 INSTALL=1; OPEN=1
 for arg in "$@"; do
