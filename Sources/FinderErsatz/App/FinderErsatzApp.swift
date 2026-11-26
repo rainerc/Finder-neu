@@ -163,6 +163,10 @@ struct BrowserCommands: Commands {
             item(.viewList) { browser.setViewMode(.list) }
             item(.viewBrief) { browser.setViewMode(.brief) }
             item(.viewIcons) { browser.setViewMode(.icons) }
+            item(.viewColumns) { browser.setViewMode(.columns) }
+            item(.viewGallery) { browser.setViewMode(.gallery) }
+            Divider()
+            item(.toggleInspector) { browser.showInspector.toggle() }
             Divider()
             item(.toggleHidden) { browser.activePane.toggleHidden() }
             item(.reload) { browser.reloadAll() }

@@ -27,6 +27,10 @@ struct ContentView: View {
                 ActionBar()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .inspector(isPresented: $browser.showInspector) {
+                InspectorView()
+                    .inspectorColumnWidth(min: 220, ideal: 300, max: 480)
+            }
         }
         .preferredColorScheme(browser.settings.appearance.colorScheme)
         .onAppear {
@@ -54,6 +58,8 @@ struct ContentView: View {
                     browser.activePane.toggleHidden()
                 }
                 .help("Unsichtbare Dateien im aktiven Fenster ein-/ausblenden (⇧⌘.)")
+                Button("Vorschau", systemImage: "sidebar.trailing") { browser.showInspector.toggle() }
+                    .help("Vorschau-Spalte ein-/ausblenden (⇧⌘P)")
             }
         }
         .alert(

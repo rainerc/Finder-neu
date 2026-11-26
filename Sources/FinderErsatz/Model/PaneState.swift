@@ -3,20 +3,24 @@ import Observation
 
 /// Darstellung der Dateiliste.
 enum ViewMode: String, CaseIterable, Identifiable {
-    case list, brief, icons
+    case list, brief, icons, columns, gallery
     var id: String { rawValue }
     var title: String {
         switch self {
         case .list: "Liste"
         case .brief: "Kurz"
         case .icons: "Miniaturen"
+        case .columns: "Spalten"
+        case .gallery: "Galerie"
         }
     }
     var symbol: String {
         switch self {
         case .list: "list.bullet"
-        case .brief: "rectangle.split.3x1"
+        case .brief: "text.alignleft"
         case .icons: "square.grid.2x2"
+        case .columns: "rectangle.split.3x1"
+        case .gallery: "photo.on.rectangle"
         }
     }
 }
@@ -129,6 +133,7 @@ final class PaneState: Identifiable {
             items = loaded
             errorMessage = nil
             errorIsPermission = false
+            applyFolderSizes()
             applySort()
             selection.formIntersection(Set(items.map(\.id)))
         } catch {
@@ -159,6 +164,53 @@ final class PaneState: Identifiable {
             return "macOS hat Finder-Ersatz den Zugriff auf Netzwerkvolumes nicht erlaubt. Am dauerhaftesten: Finder-Ersatz unter „Festplattenvollzugriff“ einschalten (gilt für alle Laufwerke und bleibt auch nach Neubauten erhalten). Danach die App neu starten. \(code)"
         }
         return "Keine Berechtigung. Ggf. unter Systemeinstellungen → Datenschutz & Sicherheit → Festplattenvollzugriff erlauben und die App neu starten. \(code)"
+    }
+
+    // MARK: Ordnergrößen
+
+    @ObservationIgnored private var sizeTask: Task<Void, Never>?
+    /// Bereits berechnete Ordnergrößen (gültig, solange sich das Änderungsdatum des Ordners nicht ändert).
+    @ObservationIgnored private var folderSizeCache: [URL: (modified: Date, size: Int64)] = [:]
+
+    /// Setzt bekannte Größen sofort und berechnet die übrigen im Hintergrund.
+    private func applyFolderSizes() {
+        sizeTask?.cancel()
+        guard UserDefaults.standard.bool(forKey: AppSettings.calculateFolderSizesKey) else { return }
+        // Auf Netzlaufwerken wäre das sehr langsam.
+        guard (try? currentURL.resourceValues(forKeys: [.volumeIsLocalKey]).volumeIsLocal) != false else { return }
+        var missing: [URL] = []
+        for index in items.indices where items[index].isBrowsableFolder {
+            if let cached = folderSizeCache[items[index].url], cached.modified == items[index].modified {
+                items[index].size = cached.size
+                items[index].folderSizeKnown = true
+            } else {
+                missing.append(items[index].url)
+            }
+        }
+        guard !missing.isEmpty else { return }
+        let folder = currentURL
+        sizeTask = Task.detached(priority: .utility) { [weak self] in
+            for url in missing {
+                if Task.isCancelled { return }
+                let size = FileTransfer.size(of: url)
+                if Task.isCancelled { return }
+                await self?.setFolderSize(size, for: url, in: folder)
+            }
+            await self?.folderSizesFinished(in: folder)
+        }
+    }
+
+    private func setFolderSize(_ size: Int64, for url: URL, in folder: URL) {
+        guard folder == currentURL, activeSearch == nil,
+              let index = items.firstIndex(where: { $0.id == url }) else { return }
+        items[index].size = size
+        items[index].folderSizeKnown = true
+        folderSizeCache[url] = (items[index].modified, size)
+    }
+
+    private func folderSizesFinished(in folder: URL) {
+        guard folder == currentURL, activeSearch == nil else { return }
+        applySort()   // falls nach Größe sortiert ist
     }
 
     // MARK: Suche

@@ -62,24 +62,24 @@ Stand November 2026. ✅ vorhanden · ⬜ fehlt · ✖ technisch nicht möglich
 | Finder-Funktion | Status |
 |---|---|
 | Listen-, Symbol-(Miniaturen-)Ansicht | ✅ |
-| Spaltenansicht (Miller Columns) | ⬜ Stapel B |
-| Galerie-Ansicht | ⬜ Stapel B |
-| Vorschau-Spalte / Inspektor mit Metadaten | ⬜ Stapel B |
+| Spaltenansicht (Miller Columns) | ✅ Stapel B |
+| Galerie-Ansicht | ✅ Stapel B |
+| Vorschau-Spalte / Inspektor mit Metadaten | ✅ Stapel B |
 | Tabs, Seitenleiste, Favoriten, Pfadleiste, Statusleiste | ✅ |
 | Quick Look (Leertaste) | ✅ |
 | Suche, Spotlight | ✅ |
 | Komprimieren / Entpacken | ✅ |
-| Kopieren ⌘C / Einsetzen ⌘V / Bewegen ⌥⌘V | ⬜ Stapel A |
-| Duplizieren ⌘D, Alias erstellen ⌃⌘A | ⬜ Stapel A |
-| Öffnen mit … | ⬜ Stapel A |
-| Informationen ⌘I (Größe inkl. Ordnergröße, Daten, Pfad, Tags, Rechte) | ⬜ Stapel A |
-| Gehe zu Ordner ⇧⌘G | ⬜ Stapel A |
-| Tags & Farben setzen und anzeigen | ⬜ Stapel A |
-| Teilen (inkl. AirDrop, Mail, Nachrichten) | ⬜ Stapel A |
-| Paketinhalt zeigen | ⬜ Stapel A |
-| Pfad kopieren ⌥⌘C | ⬜ Stapel A (bisher nur Kontextmenü) |
-| Widerrufen ⌘Z (Umbenennen, Verschieben, Papierkorb, neuer Ordner) | ⬜ Stapel A |
-| Ordnergrößen berechnen | ⬜ Stapel B |
+| Kopieren ⌘C / Einsetzen ⌘V / Bewegen ⌥⌘V | ✅ Stapel A |
+| Duplizieren ⌘D, Alias erstellen ⌃⌘A | ✅ Stapel A |
+| Öffnen mit … | ✅ Stapel A |
+| Informationen ⌘I (Größe inkl. Ordnergröße, Daten, Pfad, Tags, Rechte) | ✅ Stapel A |
+| Gehe zu Ordner ⇧⌘G | ✅ Stapel A |
+| Tags & Farben setzen und anzeigen | ✅ Stapel A |
+| Teilen (inkl. AirDrop, Mail, Nachrichten) | ✅ Stapel A |
+| Paketinhalt zeigen | ✅ Stapel A |
+| Pfad kopieren ⌥⌘C | ✅ Stapel A |
+| Widerrufen ⌘Z (Umbenennen, Verschieben, Papierkorb, neuer Ordner) | ✅ Stapel A |
+| Ordnergrößen berechnen | ✅ Stapel B |
 | Zuletzt benutzt (Recents) | ⬜ Stapel C |
 | Tags in der Seitenleiste (Dateien je Tag) | ⬜ Stapel C |
 | Intelligente Ordner / gespeicherte Suchen | ⬜ Stapel C |
@@ -94,6 +94,6 @@ Stand November 2026. ✅ vorhanden · ⬜ fehlt · ✖ technisch nicht möglich
 | CDs/DVDs brennen | ✖ veraltet, nicht vorgesehen |
 
 **Stapel A – Alltag** (umgesetzt in v0.9): Kopieren/Einsetzen/Bewegen über die Zwischenablage, Duplizieren, Alias, Öffnen mit, Informationen, Gehe zu Ordner, Tags & Farben, Teilen/AirDrop, Paketinhalt, Pfad kopieren, Widerrufen.
-**Stapel B – Ansichten:** Spaltenansicht, Galerie, Vorschau/Inspektor, Ordnergrößen.
+**Stapel B – Ansichten** (umgesetzt in v0.10): Spaltenansicht, Galerie, Vorschau/Inspektor, Ordnergrößen.
 **Stapel C – Organisieren:** Zuletzt benutzt, Tags in der Seitenleiste, intelligente Ordner, Stapel-Umbenennen.
 **Stapel D – Feinschliff:** Federnde Ordner, Dienste, Symbolleiste, iCloud-Status, Fenster wiederherstellen, Papierkorb.

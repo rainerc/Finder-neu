@@ -39,11 +39,13 @@ Beim ersten Start fragt macOS, ob die App auf das lokale Netzwerk zugreifen darf
 | Tabs pro Fenster | `⌘T` neu, `⌘W` schließen (der letzte Tab bleibt offen), `⌃⇥` / `⌃⇧⇥` wechseln, Kontextmenü „In neuem Tab öffnen“ |
 | Schnellansicht (Quick Look, nutzt installierte Erweiterungen wie XRay) | Leertaste oder `F3` |
 | Suche ab aktuellem Ordner: Name enthält / Platzhalter (`*.jpg; *.png`) / Regex / Spotlight, Groß-/Kleinschreibung, Inhaltssuche mit Kodierung | `⌘F`, Lupe im Fensterkopf |
-| Ansichten Liste, Kurz (mehrspaltig), Miniaturen (Vorschaubilder) | `⌘1` / `⌘2` / `⌘3` oder Umschalter im Fensterkopf |
+| Ansichten Liste, Kurz (mehrspaltig), Miniaturen (Vorschaubilder), Spalten (wie Finder, ←/→ wechselt die Spalte), Galerie | `⌘1` … `⌘5` oder Umschalter im Fensterkopf |
+| Vorschau-Spalte rechts: echte Quick-Look-Vorschau, Metadaten (Abmessungen, Dauer, Herkunft …), Ordnergröße | `⇧⌘P` oder Symbolleiste |
+| Ordnergrößen in der Liste (im Hintergrund, nur lokale Laufwerke) | Einstellungen `⌘,` |
 | Als ZIP komprimieren; entpacken (zip, tar.gz, tar.bz2, tar.xz, 7z, rar …) hierher oder ins andere Fenster | Kontextmenü, Menü „Ablage-Aktionen“ |
 | Archiv wie Ordner öffnen (entpackte Kopie) | Doppelklick auf Archiv |
 | Hookmark (⌃H) auf Dateien und Ordnern – Einrichtung siehe `docs/HOOKMARK.md` | `⌃H` |
-| Zwischenablage wie im Finder: Kopieren ⌘C, Einsetzen ⌘V, Bewegen ⌥⌘V, Alles auswählen ⌘A, Pfad kopieren ⌥⌘C | Bearbeiten-Menü |
+| Zwischenablage wie im Finder: Kopieren ⌘C, Einsetzen ⌘V, Bewegen ⌥⌘V, Alles auswählen ⌘A, Pfad kopieren ⌥⌘C (im Kontextmenü: „Kopieren“ mit gedrückter ⌥-Taste) | Bearbeiten-Menü |
 | Duplizieren ⌘D, Alias ⌃⌘A, Informationen ⌘I (mit Ordnergröße), Gehe zu Ordner ⇧⌘G, Widerrufen ⌘Z | Menü / Kontextmenü |
 | Öffnen mit …, Paketinhalt zeigen, Teilen (AirDrop, Mail …), Farb-Tags setzen und anzeigen | Kontextmenü |
 | Einstellungen: eigene Tastenkürzel, Schriftgröße, Hell/Dunkel, Farben | `⌘,` |

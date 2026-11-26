@@ -8,7 +8,9 @@ struct FileItem: Identifiable, Hashable, Sendable {
     let isDirectory: Bool
     let isPackage: Bool
     let isHidden: Bool
-    let size: Int64
+    /// Bei Ordnern 0, bis die Größe berechnet wurde (Einstellung „Ordnergrößen berechnen“).
+    var size: Int64
+    var folderSizeKnown = false
     let modified: Date
     let kind: String
     let created: Date
@@ -60,7 +62,7 @@ struct FileItem: Identifiable, Hashable, Sendable {
     }
 
     var sizeText: String {
-        isBrowsableFolder ? "--" : size.formatted(.byteCount(style: .file))
+        isBrowsableFolder && !folderSizeKnown ? "--" : size.formatted(.byteCount(style: .file))
     }
 }
 

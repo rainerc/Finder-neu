@@ -29,6 +29,8 @@ private struct AppearanceSettings: View {
             .pickerStyle(.segmented)
             Toggle("Abwechselnde Zeilenfarben", isOn: $settings.alternatingRows)
             Toggle("Unsichtbare Dateien abgeblendet zeigen", isOn: $settings.showHiddenDimmed)
+            Toggle("Ordnergrößen berechnen", isOn: $settings.calculateFolderSizes)
+                .help("Größe von Ordnern in der Liste anzeigen (im Hintergrund, nur auf lokalen Laufwerken)")
 
             Section("Farben") {
                 HStack {

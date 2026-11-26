@@ -64,6 +64,11 @@ final class BrowserState {
     private(set) var flashMessage: String?
     @ObservationIgnored private var flashToken = UUID()
 
+    /// Vorschau-Spalte rechts (⇧⌘P), zeigt das ausgewählte Objekt des aktiven Fensters.
+    var showInspector = UserDefaults.standard.bool(forKey: "showInspector") {
+        didSet { UserDefaults.standard.set(showInspector, forKey: "showInspector") }
+    }
+
     /// Schnellansicht (Quick Look)
     var previewURL: URL?
     var previewItems: [URL] = []
@@ -76,6 +81,7 @@ final class BrowserState {
         let home = FileManager.default.homeDirectoryForCurrentUser
         left = PaneGroup(url: home)
         right = PaneGroup(url: home.appending(path: "Downloads"))
+        settings.onFolderSizeSettingChanged = { [weak self] in self?.reloadAll() }
         operations.onFinish = { [weak self] error in
             if let error { self?.alertMessage = error }
             self?.reloadAll()

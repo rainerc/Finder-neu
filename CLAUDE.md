@@ -18,7 +18,7 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 - `Model/NetworkBrowser` (Bonjour-Suche per NWBrowser nach _smb._tcp/_afpovertcp._tcp)
 - `Services/` `FileSearch` (Name/Regex/Inhalt, `mdfind` für Spotlight), `ArchiveService` (ditto/zip/tar), `ProcessRunner` (Werkzeuge starten, abbrechbar)
 - `Services/` `NetworkMounter` (Einhängen per NetFSMountURLAsync mit macOS-Anmelde-/Freigabedialog), `FileService` (schnelle Dateioperationen), `FileTransfer` (Kopieren/Verschieben mit Fortschritt, läuft per `Task.detached`), `DirectoryWatcher` (Live-Aktualisierung per DispatchSource), `AppLauncher` (Terminal)
-- `Views/` `ContentView` (NavigationSplitView: Seitenleiste + zwei Fenster + Aktionsleiste), `SidebarView` (Favoriten, Cloud, Netzwerk, Orte/Volumes), `TabBar`, `JobsPanel`, `TransferSheet` (F5/F6-Dialog), `SearchBar`, `FileGridView` (Kurz/Miniaturen), `ThumbnailView`, `SettingsView`, `PaneView` (Kopf, Pfadleiste, Tabelle, Statuszeile)
+- `Views/` `ColumnBrowserView`, `GalleryView`, `InspectorView` (Stapel B), `ContentView` (NavigationSplitView: Seitenleiste + zwei Fenster + Aktionsleiste), `SidebarView` (Favoriten, Cloud, Netzwerk, Orte/Volumes), `TabBar`, `JobsPanel`, `TransferSheet` (F5/F6-Dialog), `SearchBar`, `FileGridView` (Kurz/Miniaturen), `ThumbnailView`, `SettingsView`, `PaneView` (Kopf, Pfadleiste, Tabelle, Statuszeile)
 
 ## Konventionen
 - UI-Texte deutsch, Code/Bezeichner englisch
@@ -40,6 +40,8 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 - v0.7 AppleScript-Schnittstelle (`Support/FinderErsatz.sdef`: `selected paths`, `current folder`, per `@objc`-Properties in einer `NSApplication`-Extension, Zugriff über `BrowserState.current`) für Hookmark ⌃H – funktioniert bei Rainer mit dem AppleScript aus `docs/HOOKMARK.md`. Fallstricke: `BrowserState.current` erst in `ContentView.onAppear` setzen (SwiftUI erzeugt `@State`-Startwerte mehrfach); App im Skript per Pfad ansprechen; Diagnose per `get debug info`. Zusätzlich meldet das Fenster das ausgewählte Objekt als `representedURL`
 - v0.8 Spalten wählbar (Rechtsklick auf Spaltenkopf): `TableColumnCustomization` mit `customizationID`, gespeichert per `@AppStorage("tableColumns")` (beide Fenster gemeinsam). Neue `FileItem`-Felder: created, accessed, fileExtension, tags, permissions, owner. Max. 10 Spalten pro TableColumnBuilder-Block
 - v0.9 Finder-Stapel A: Zwischenablage (Bearbeiten-Menü ersetzt; in Textfeldern `NSApp.sendAction` an den First Responder, sonst Dateiaktion), Duplizieren, Alias, Öffnen mit, Paketinhalt, Gehe zu Ordner, Informationen (`InfoSheet`), Farb-Tags (`FinderTags.swift`, `TagDots`), Teilen (`ShareLink`), Widerrufen (`UndoStack.swift`, `browser.recordUndo`). Noch nicht auf dem Mac gebaut
+- v0.9 auf dem Mac bestätigt. ⌥-Kürzel (⌥⌘C) im AppDelegate-Monitor abgefangen, weil das SwiftUI-Menü sie auf deutscher Tastatur nicht erkennt; `browser.flash(...)` zeigt kurze Rückmeldung in der Aktionsleiste; Kontextmenü „als Pfadname kopieren“ per `modifierKeyAlternate(.option)` (bestätigt)
+- v0.10 Stapel B: Spaltenansicht (`ColumnBrowserView`, ⌘4: Klick in eine Spalte macht deren Ordner zum aktuellen Ordner + Auswahl), Galerie (`GalleryView`, ⌘5), Vorschau-Spalte (`InspectorView`, ⇧⌘P, `.inspector`, QLPreviewView + MDItem-Metadaten), Ordnergrößen (`AppSettings.calculateFolderSizes`, `PaneState.applyFolderSizes` mit Cache, nur lokale Volumes). Noch nicht auf dem Mac gebaut
 - v0.1 baut auf Rainers Mac (macOS 26) ohne Fehler mit `swift run`
 
 ## Nächste Schritte

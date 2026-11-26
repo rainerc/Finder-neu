@@ -58,6 +58,24 @@ struct PaneView: View {
                     ContentUnavailableView.search
                 } else if pane.viewMode == .list || pane.activeSearch != nil {
                     keyHandling(fileTable(pane: pane, settings: settings), pane: pane)
+                } else if pane.viewMode == .columns {
+                    keyHandling(
+                        ColumnBrowserView(pane: pane, side: side, onOpen: { open($0, in: pane) }) { ids in
+                            fileMenu(ids, pane: pane)
+                        }
+                        .focusable()
+                        .focusEffectDisabled(),
+                        pane: pane
+                    )
+                } else if pane.viewMode == .gallery {
+                    keyHandling(
+                        GalleryView(pane: pane, onOpen: { open($0, in: pane) }) { ids in
+                            fileMenu(ids, pane: pane)
+                        }
+                        .focusable()
+                        .focusEffectDisabled(),
+                        pane: pane
+                    )
                 } else {
                     keyHandling(
                         FileGridView(pane: pane, mode: pane.viewMode, onOpen: { open($0, in: pane) }) { ids in
@@ -106,7 +124,17 @@ struct PaneView: View {
             }
             .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow]) { press in
                 guard pane.viewMode != .list, pane.activeSearch == nil, press.modifiers.isEmpty else { return .ignored }
-                moveSelection(in: pane, forward: press.key == .rightArrow || press.key == .downArrow)
+                if pane.viewMode == .columns, press.key == .leftArrow {
+                    pane.goUp()   // Spalte nach links: übergeordneter Ordner, bisheriger Ordner bleibt markiert
+                } else if pane.viewMode == .columns, press.key == .rightArrow {
+                    // Spalte nach rechts: in den markierten Ordner, erstes Objekt auswählen
+                    let selected = pane.selectedItems
+                    guard selected.count == 1, selected[0].isBrowsableFolder else { return .handled }
+                    pane.navigate(to: selected[0].url)
+                    if let first = pane.items.first { pane.selection = [first.id] }
+                } else {
+                    moveSelection(in: pane, forward: press.key == .rightArrow || press.key == .downArrow)
+                }
                 return .handled
             }
             .onKeyPress(.delete, phases: .down) { press in
@@ -446,7 +474,7 @@ struct PaneHeader: View {
             .pickerStyle(.segmented)
             .labelsHidden()
             .fixedSize()
-            .help("Ansicht: Liste (⌘1), Kurz (⌘2), Miniaturen (⌘3)")
+            .help("Ansicht: Liste (⌘1), Kurz (⌘2), Miniaturen (⌘3), Spalten (⌘4), Galerie (⌘5)")
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.borderless)

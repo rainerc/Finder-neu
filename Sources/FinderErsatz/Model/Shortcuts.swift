@@ -7,7 +7,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
     case copyFiles, pasteFiles, moveFilesHere, duplicate, makeAlias, copyPath, getInfo, goToFolder, selectAll, undo
     case search, reveal, terminal
     case back, forward, up, switchPane, nextTab, previousTab, syncPanes, swapPanes, addFavorite, connectServer
-    case viewList, viewBrief, viewIcons, toggleHidden, reload
+    case viewList, viewBrief, viewIcons, viewColumns, viewGallery, toggleInspector, toggleHidden, reload
 
     var id: String { rawValue }
 
@@ -49,6 +49,9 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .viewList: "Ansicht: Liste"
         case .viewBrief: "Ansicht: Kurz"
         case .viewIcons: "Ansicht: Miniaturen"
+        case .viewColumns: "Ansicht: Spalten"
+        case .viewGallery: "Ansicht: Galerie"
+        case .toggleInspector: "Vorschau ein/aus"
         case .toggleHidden: "Unsichtbare Dateien ein/aus"
         case .reload: "Aktualisieren"
         }
@@ -92,6 +95,9 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .viewList: Shortcut("1", .command)
         case .viewBrief: Shortcut("2", .command)
         case .viewIcons: Shortcut("3", .command)
+        case .viewColumns: Shortcut("4", .command)
+        case .viewGallery: Shortcut("5", .command)
+        case .toggleInspector: Shortcut("p", [.command, .shift])
         case .toggleHidden: Shortcut(".", [.command, .shift])
         case .reload: Shortcut("r", .command)
         }

@@ -96,7 +96,7 @@ struct FileGridView<Menu: View>: View {
 }
 
 /// Klick = auswählen, ⌘-Klick = hinzufügen/entfernen, ⇧-Klick = Bereich, Doppelklick = öffnen.
-private struct CellInteraction<Menu: View>: ViewModifier {
+struct CellInteraction<Menu: View>: ViewModifier {
     let item: FileItem
     let pane: PaneState
     @Binding var anchor: FileItem.ID?

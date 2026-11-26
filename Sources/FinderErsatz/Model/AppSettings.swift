@@ -61,6 +61,15 @@ final class AppSettings {
     var activeColorHex: String { didSet { defaults.set(activeColorHex, forKey: "activeColorHex") } }
     /// Farbe für Ordnernamen (Hex, leer = Standard).
     var folderColorHex: String { didSet { defaults.set(folderColorHex, forKey: "folderColorHex") } }
+    /// Ordnergrößen in den Listen im Hintergrund berechnen (nur lokale Laufwerke).
+    var calculateFolderSizes: Bool {
+        didSet {
+            defaults.set(calculateFolderSizes, forKey: Self.calculateFolderSizesKey)
+            onFolderSizeSettingChanged?()
+        }
+    }
+    static let calculateFolderSizesKey = "calculateFolderSizes"
+    @ObservationIgnored var onFolderSizeSettingChanged: (() -> Void)?
     /// Eigene Tastenkürzel; fehlt ein Eintrag, gilt der Standard. `nil`-Wert = bewusst ohne Kürzel.
     private(set) var customShortcuts: [ShortcutAction: Shortcut?] = [:]
 
@@ -71,6 +80,7 @@ final class AppSettings {
         showHiddenDimmed = defaults.object(forKey: "showHiddenDimmed") as? Bool ?? true
         activeColorHex = defaults.string(forKey: "activeColorHex") ?? ""
         folderColorHex = defaults.string(forKey: "folderColorHex") ?? ""
+        calculateFolderSizes = defaults.bool(forKey: Self.calculateFolderSizesKey)
         if let data = defaults.data(forKey: "customShortcuts"),
            let stored = try? JSONDecoder().decode([String: Shortcut?].self, from: data) {
             for (key, value) in stored {
