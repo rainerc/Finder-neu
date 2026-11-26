@@ -28,7 +28,17 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 Divider()
                 JobsPanel(queue: browser.operations)
-                ActionBar()
+                if browser.settings.showActionBar {
+                    ActionBar()
+                } else if let message = browser.flashMessage {
+                    Label(message, systemImage: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .inspector(isPresented: $browser.showInspector) {
@@ -51,6 +61,34 @@ struct ContentView: View {
         }
         .onChange(of: browser.activeSide) { _, side in focusedPane = side }
         .toolbar {
+            if browser.settings.compactLayout {
+                // Ruhiges Layout: Navigation und Ansicht für das aktive Fenster in der Fensterleiste
+                ToolbarItemGroup(placement: .navigation) {
+                    Button("Zurück", systemImage: "chevron.left") { browser.activePane.goBack() }
+                        .disabled(!browser.activePane.canGoBack)
+                        .help("Zurück (⌘[)")
+                    Button("Vorwärts", systemImage: "chevron.right") { browser.activePane.goForward() }
+                        .disabled(!browser.activePane.canGoForward)
+                        .help("Vorwärts (⌘])")
+                    Button("Nach oben", systemImage: "arrow.up") { browser.activePane.goUp() }
+                        .disabled(!browser.activePane.canGoUp)
+                        .help("Übergeordneter Ordner (⌘↑)")
+                }
+                ToolbarItemGroup {
+                    Picker("Ansicht", selection: Binding(get: { browser.activePane.viewMode },
+                                                         set: { browser.setViewMode($0) })) {
+                        ForEach(ViewMode.allCases) { mode in
+                            Label(mode.title, systemImage: mode.symbol).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .help("Ansicht des aktiven Fensters (⌘1–⌘5)")
+                    Button("Suchen", systemImage: "magnifyingglass") { browser.activePane.isSearchBarVisible.toggle() }
+                        .help("Im aktiven Fenster suchen (⌘F)")
+                    Button("Neuer Tab", systemImage: "plus.square.on.square") { browser.newTab() }
+                        .help("Neuer Tab im aktiven Fenster (⌘T)")
+                }
+            }
             ToolbarItemGroup {
                 ShareLink(items: browser.activePane.selectedItems.map(\.url)) {
                     Label("Teilen", systemImage: "square.and.arrow.up")

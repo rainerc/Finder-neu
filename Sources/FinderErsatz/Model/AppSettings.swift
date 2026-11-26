@@ -65,6 +65,15 @@ final class AppSettings {
     var folderPreviewUsesQuickLook: Bool {
         didSet { defaults.set(folderPreviewUsesQuickLook, forKey: "folderPreviewUsesQuickLook") }
     }
+    /// Ruhiges Layout: eine gemeinsame Symbolleiste fürs aktive Fenster, schmale Fensterköpfe, keine F-Tasten-Leiste.
+    var compactLayout: Bool {
+        didSet {
+            defaults.set(compactLayout, forKey: "compactLayout")
+            showActionBar = !compactLayout
+        }
+    }
+    /// Leiste mit F2/F3/F5 … unten im Fenster.
+    var showActionBar: Bool { didSet { defaults.set(showActionBar, forKey: "showActionBar") } }
     /// Ordnergrößen in den Listen im Hintergrund berechnen (nur lokale Laufwerke).
     var calculateFolderSizes: Bool {
         didSet {
@@ -85,6 +94,8 @@ final class AppSettings {
         activeColorHex = defaults.string(forKey: "activeColorHex") ?? ""
         folderColorHex = defaults.string(forKey: "folderColorHex") ?? ""
         calculateFolderSizes = defaults.bool(forKey: Self.calculateFolderSizesKey)
+        compactLayout = defaults.bool(forKey: "compactLayout")
+        showActionBar = defaults.object(forKey: "showActionBar") as? Bool ?? true
         folderPreviewUsesQuickLook = defaults.bool(forKey: "folderPreviewUsesQuickLook")
         if let data = defaults.data(forKey: "customShortcuts"),
            let stored = try? JSONDecoder().decode([String: Shortcut?].self, from: data) {

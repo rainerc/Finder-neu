@@ -19,12 +19,18 @@ struct PaneView: View {
                 TabBar(group: group) { browser.activeSide = side }
                 Divider()
             }
-            PaneHeader(pane: pane, showsNewTabButton: group.tabs.count <= 1) {
-                browser.activeSide = side
-                browser.newTab()
+            Group {
+                if settings.compactLayout {
+                    SlimPaneHeader(pane: pane, isActive: isActive)
+                } else {
+                    PaneHeader(pane: pane, showsNewTabButton: group.tabs.count <= 1) {
+                        browser.activeSide = side
+                        browser.newTab()
+                    }
+                }
             }
-                .contentShape(Rectangle())
-                .onTapGesture { browser.activeSide = side }
+            .contentShape(Rectangle())
+            .onTapGesture { browser.activeSide = side }
             Divider()
             if pane.isSearchBarVisible {
                 SearchBar(pane: pane)
@@ -572,7 +578,9 @@ struct PathBar: View {
                 }
             }
         }
-        .defaultScrollAnchor(.trailing)
+        // Links ausgerichtet; ist der Pfad zu lang, steht anfangs das Ende (aktueller Ordner) im Blick
+        .defaultScrollAnchor(.leading, for: .alignment)
+        .defaultScrollAnchor(.trailing, for: .initialOffset)
     }
 }
 
@@ -608,5 +616,29 @@ struct PaneStatusBar: View {
         .foregroundStyle(.secondary)
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
+    }
+}
+
+/// Schmaler Fensterkopf fürs ruhige Layout: nur der Pfad (links ausgerichtet), aktives Fenster farbig.
+struct SlimPaneHeader: View {
+    @Environment(BrowserState.self) private var browser
+    let pane: PaneState
+    let isActive: Bool
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if let search = pane.activeSearch {
+                Image(systemName: search.spotlightQuery != nil ? "sparkle.magnifyingglass" : "magnifyingglass")
+                Text(pane.title).bold().lineLimit(1)
+                Spacer()
+            } else {
+                PathBar(url: pane.currentURL) { pane.navigate(to: $0) }
+            }
+        }
+        .font(.callout)
+        .foregroundStyle(isActive ? .primary : .secondary)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(isActive ? browser.settings.activeColor.opacity(0.08) : .clear)
     }
 }

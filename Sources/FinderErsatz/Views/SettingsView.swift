@@ -27,6 +27,12 @@ private struct AppearanceSettings: View {
                 ForEach(AppSettings.ListSize.allCases) { Text($0.title).tag($0) }
             }
             .pickerStyle(.segmented)
+            Picker("Layout", selection: $settings.compactLayout) {
+                Text("Klassisch (Leisten je Fenster)").tag(false)
+                Text("Ruhig (eine Symbolleiste)").tag(true)
+            }
+            .help("Ruhig: Zurück/Vorwärts, Ansicht und Suche oben in der Fensterleiste für das aktive Fenster; schmale Fensterköpfe")
+            Toggle("Funktionstasten-Leiste unten zeigen (F2, F3, F5 …)", isOn: $settings.showActionBar)
             Toggle("Abwechselnde Zeilenfarben", isOn: $settings.alternatingRows)
             Toggle("Unsichtbare Dateien abgeblendet zeigen", isOn: $settings.showHiddenDimmed)
             Toggle("Leertaste auf Ordnern: Quick Look/XRay statt schneller Vorschau", isOn: $settings.folderPreviewUsesQuickLook)

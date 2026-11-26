@@ -14,6 +14,13 @@ struct SidebarView: View {
     @State private var renaming: Favorite?
     @State private var renameText = ""
     @State private var renamingSmart: SmartFolder?
+    // Auf-/zugeklappte Abschnitte (bleiben gespeichert)
+    @AppStorage("sidebar.favorites") private var showFavorites = true
+    @AppStorage("sidebar.smart") private var showSmart = true
+    @AppStorage("sidebar.tags") private var showTags = true
+    @AppStorage("sidebar.cloud") private var showCloud = true
+    @AppStorage("sidebar.network") private var showNetwork = true
+    @AppStorage("sidebar.places") private var showPlaces = true
 
     private var favorites: FavoritesStore { browser.favorites }
 
@@ -42,7 +49,7 @@ struct SidebarView: View {
 
     var body: some View {
         List(selection: selection) {
-            Section("Favoriten") {
+            Section("Favoriten", isExpanded: $showFavorites) {
                 ForEach(favorites.items) { favorite in
                     Label(favorite.name, systemImage: favorite.symbolName)
                         .opacity(favorite.exists ? 1 : 0.4)
@@ -56,7 +63,7 @@ struct SidebarView: View {
                 }
             }
 
-            Section("Intelligente Ordner") {
+            Section("Intelligente Ordner", isExpanded: $showSmart) {
                 Label("Zuletzt benutzt", systemImage: "clock")
                     .tag(SearchQuery.recentsTag)
                     .help("Dateien, die in den letzten 30 Tagen geöffnet wurden (⇧⌘F)")
@@ -80,7 +87,7 @@ struct SidebarView: View {
                 .onMove { browser.smartFolders.move(fromOffsets: $0, toOffset: $1) }
             }
 
-            Section("Tags") {
+            Section("Tags", isExpanded: $showTags) {
                 ForEach(FinderTag.allCases) { tag in
                     Label {
                         Text(tag.rawValue)
@@ -93,7 +100,7 @@ struct SidebarView: View {
             }
 
             if !cloudFolders.isEmpty {
-                Section("Cloud") {
+                Section("Cloud", isExpanded: $showCloud) {
                     ForEach(cloudFolders, id: \.self) { folder in
                         Label(cloudName(folder), systemImage: cloudSymbol(folder))
                             .help(folder.path)
@@ -106,7 +113,7 @@ struct SidebarView: View {
                 }
             }
 
-            Section("Netzwerk") {
+            Section("Netzwerk", isExpanded: $showNetwork) {
                 ForEach(shares, id: \.self) { share in
                     Label(volumeName(share), systemImage: "server.rack")
                         .help(remoteAddress(share) ?? share.path)
@@ -147,7 +154,7 @@ struct SidebarView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Section("Orte") {
+            Section("Orte", isExpanded: $showPlaces) {
                 ForEach(volumes, id: \.self) { volume in
                     Label(volumeName(volume), systemImage: volume.path == "/" ? "internaldrive" : "externaldrive")
                         .tag(volume.normalizedFileURL)
