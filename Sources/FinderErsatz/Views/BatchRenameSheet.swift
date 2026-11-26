@@ -26,7 +26,7 @@ struct BatchRenameSheet: View {
         var title: String { self == .before ? "vor dem Namen" : "nach dem Namen" }
     }
 
-    @State private var mode: Mode = .replace
+    @State private var mode: Mode
     @State private var find = ""
     @State private var replacement = ""
     @State private var caseSensitive = false
@@ -43,11 +43,17 @@ struct BatchRenameSheet: View {
     @State private var regexCaseSensitive = false
     @State private var showRegexHelper = false
 
+    init(request: BatchRenameRequest) {
+        self.request = request
+        _mode = State(initialValue: request.startWithRegex ? .regex : .replace)
+    }
+
     var body: some View {
         let preview = previewNames
         let problem = validate(preview)
         VStack(alignment: .leading, spacing: 12) {
-            Text("\(request.items.count) Objekte umbenennen").font(.headline)
+            Text(request.items.count == 1 ? "„\(request.items[0].name)“ umbenennen" : "\(request.items.count) Objekte umbenennen")
+                .font(.headline)
             Picker("Art", selection: $mode) {
                 ForEach(Mode.allCases) { Text($0.title).tag($0) }
             }

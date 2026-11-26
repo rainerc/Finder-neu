@@ -342,6 +342,10 @@ struct PaneView: View {
                     browser.beginBatchRename()
                 }
             }
+            Button("Umbenennen mit Regex …") {
+                activate(pane, ids)
+                browser.beginBatchRename(regex: true)
+            }
             Button("Informationen") {
                 activate(pane, ids)
                 browser.showInfo()

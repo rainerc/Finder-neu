@@ -136,6 +136,7 @@ struct ContentView: View {
         ) {
             TextField("Neuer Name", text: $browser.renameText)
             Button("Umbenennen") { browser.commitRename() }
+            Button("Erweitert (Regex, Nummerieren) …") { browser.beginBatchRename(regex: true) }
             Button("Abbrechen", role: .cancel) { browser.renameTarget = nil }
         }
     }

@@ -9,6 +9,8 @@ enum PaneSide: Hashable { case left, right }
 struct BatchRenameRequest: Identifiable {
     let id = UUID()
     let items: [FileItem]
+    /// Direkt im Regex-Modus öffnen (aus dem einfachen Umbenennen-Dialog oder Kontextmenü).
+    var startWithRegex = false
 }
 
 struct TransferRequest: Identifiable {
@@ -557,10 +559,11 @@ final class BrowserState {
 
     // MARK: Stapel-Umbenennen
 
-    func beginBatchRename() {
+    func beginBatchRename(regex: Bool = false) {
         let selected = activePane.selectedItems
         guard !selected.isEmpty else { NSSound.beep(); return }
-        batchRenameRequest = BatchRenameRequest(items: selected)
+        renameTarget = nil
+        batchRenameRequest = BatchRenameRequest(items: selected, startWithRegex: regex)
     }
 
     /// Benennt mehrere Objekte um. Zuerst auf vorläufige Namen, damit sich Ziel- und Quellnamen nicht in die Quere kommen
