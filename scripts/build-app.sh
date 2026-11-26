@@ -40,17 +40,20 @@ else
   echo "⚠︎ AppleScript-Wörterbuch fehlerhaft:"; sdef "$APP" 2>&1 | head -5 || true
 fi
 
-# Mit dem eigenen Apple-Development-Zertifikat signieren (stabile Identität →
-# macOS merkt sich erteilte Berechtigungen auch nach einem Neubau).
-IDENTITY="$(security find-identity -v -p codesigning | grep -m1 -E 'Apple Development|Developer ID Application' | sed -E 's/.*"(.*)"/\1/' || true)"
-if [[ -n "$IDENTITY" ]]; then
-  echo "▸ Signiere mit: $IDENTITY"
-  codesign --force --options runtime --timestamp=none --sign "$IDENTITY" "$APP"
+# Immer dasselbe Zertifikat (per SHA-1 fest gewählt) → gleiche „Designated Requirement“ →
+# macOS behält erteilte Berechtigungen (Netzwerkvolumes, Festplattenvollzugriff) über Neubauten hinweg.
+IDENTITY_LINE="$(security find-identity -v -p codesigning | grep -E 'Apple Development|Developer ID Application' | sort | head -1 || true)"
+IDENTITY_HASH="$(echo "$IDENTITY_LINE" | awk '{print $2}')"
+IDENTITY_NAME="$(echo "$IDENTITY_LINE" | sed -E 's/.*"(.*)"/\1/')"
+if [[ -n "$IDENTITY_HASH" ]]; then
+  echo "▸ Signiere mit: $IDENTITY_NAME ($IDENTITY_HASH)"
+  codesign --force --options runtime --timestamp=none --identifier com.example.FinderErsatz --sign "$IDENTITY_HASH" "$APP"
 else
-  echo "⚠︎ Kein Entwicklerzertifikat gefunden – ad-hoc-Signatur."
+  echo "⚠︎ Kein Entwicklerzertifikat gefunden – ad-hoc-Signatur. Berechtigungen gehen bei jedem Neubau verloren!"
   echo "  (Xcode → Einstellungen → Accounts → Zertifikate verwalten → „Apple Development“ anlegen)"
   codesign --force --sign - "$APP"
 fi
+echo "▸ Designated Requirement: $(codesign -d -r- "$APP" 2>&1 | grep -o 'designated => .*')"
 
 INSTALL=1; OPEN=1
 for arg in "$@"; do
