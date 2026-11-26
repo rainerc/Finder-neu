@@ -325,6 +325,13 @@ struct PaneView: View {
                 activate(pane, ids)
                 browser.toggleQuickLook()
             }
+            if !folderURLs.isEmpty {
+                Button("Quick Look mit XRay") {
+                    activate(pane, ids)
+                    browser.toggleQuickLook(forceSystemPreview: true)
+                }
+            }
+            previewToggles
             Button("Umbenennen …") {
                 activate(pane, ids)
                 browser.beginRename()
@@ -441,7 +448,17 @@ struct PaneView: View {
             }
             Button("Ordner zu Favoriten hinzufügen") { browser.favorites.add([pane.currentURL]) }
             Button("Terminal hier öffnen") { AppLauncher.openTerminal(at: pane.currentURL) }
+            Divider()
+            previewToggles
         }
+    }
+
+    /// Vorschau unten / rechts ein- und ausschalten (mit Häkchen).
+    @ViewBuilder
+    private var previewToggles: some View {
+        @Bindable var browser = browser
+        Toggle("Vorschaubereich unten", isOn: $browser.showPanePreview)
+        Toggle("Vorschau-Spalte rechts", isOn: $browser.showInspector)
     }
 
     /// Kontextmenü-Aktionen wirken auf die angeklickten Objekte in diesem Fenster.

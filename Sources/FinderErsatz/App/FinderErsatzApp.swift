@@ -82,6 +82,12 @@ struct BrowserCommands: Commands {
             .keyboardShortcut(settings.keyboardShortcut(for: action))
     }
 
+    /// Ein-/Aus-Befehl mit Häkchen im Menü.
+    private func toggle(_ action: ShortcutAction, isOn: Binding<Bool>) -> some View {
+        Toggle(action.title, isOn: isOn)
+            .keyboardShortcut(settings.keyboardShortcut(for: action))
+    }
+
     var body: some Commands {
         CommandGroup(after: .newItem) {
             item(.newTab) { browser.newTab() }
@@ -170,8 +176,8 @@ struct BrowserCommands: Commands {
             item(.viewColumns) { browser.setViewMode(.columns) }
             item(.viewGallery) { browser.setViewMode(.gallery) }
             Divider()
-            item(.toggleInspector) { browser.showInspector.toggle() }
-            item(.togglePanePreview) { browser.showPanePreview.toggle() }
+            toggle(.toggleInspector, isOn: Bindable(browser).showInspector)
+            toggle(.togglePanePreview, isOn: Bindable(browser).showPanePreview)
             Divider()
             item(.toggleHidden) { browser.activePane.toggleHidden() }
             item(.reload) { browser.reloadAll() }
