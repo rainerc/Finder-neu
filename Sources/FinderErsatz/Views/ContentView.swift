@@ -3,11 +3,12 @@ import SwiftUI
 struct ContentView: View {
     @Environment(BrowserState.self) private var browser
     @FocusState private var focusedPane: PaneSide?
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
     var body: some View {
         @Bindable var browser = browser
 
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             SidebarView()
                 .navigationSplitViewColumnWidth(min: 160, ideal: 200, max: 320)
         } detail: {
