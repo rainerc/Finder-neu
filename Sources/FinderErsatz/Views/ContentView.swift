@@ -7,15 +7,20 @@ struct ContentView: View {
     var body: some View {
         @Bindable var browser = browser
 
-        VStack(spacing: 0) {
-            HSplitView {
-                PaneView(side: .left, focus: $focusedPane)
-                    .frame(minWidth: 350)
-                PaneView(side: .right, focus: $focusedPane)
-                    .frame(minWidth: 350)
+        NavigationSplitView {
+            SidebarView()
+                .navigationSplitViewColumnWidth(min: 160, ideal: 200, max: 320)
+        } detail: {
+            VStack(spacing: 0) {
+                HSplitView {
+                    PaneView(side: .left, focus: $focusedPane)
+                        .frame(minWidth: 350)
+                    PaneView(side: .right, focus: $focusedPane)
+                        .frame(minWidth: 350)
+                }
+                Divider()
+                ActionBar()
             }
-            Divider()
-            ActionBar()
         }
         .onAppear { focusedPane = browser.activeSide }
         .onChange(of: focusedPane) { _, side in

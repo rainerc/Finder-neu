@@ -60,12 +60,17 @@ struct PaneView: View {
                         Button("In anderes Fenster kopieren") { browser.copyToOtherPane() }
                         Button("In anderes Fenster verschieben") { browser.moveToOtherPane() }
                         Divider()
+                        let folders = pane.items.filter { ids.contains($0.id) && $0.isBrowsableFolder }.map(\.url)
+                        if !folders.isEmpty {
+                            Button("Zu Favoriten hinzufügen") { browser.favorites.add(folders) }
+                        }
                         Button("Pfad kopieren") { copyPaths(ids) }
                         Button("Im Finder zeigen") { browser.revealInFinder() }
                         Divider()
                         Button("In den Papierkorb", role: .destructive) { browser.trashSelection() }
                     } else {
                         Button("Neuer Ordner") { browser.newFolder() }
+                        Button("Ordner zu Favoriten hinzufügen") { browser.favorites.add([pane.currentURL]) }
                     }
                 } primaryAction: { ids in
                     // Doppelklick oder Return
@@ -126,50 +131,12 @@ struct PaneHeader: View {
                 .disabled(!pane.canGoForward)
             Button("Nach oben", systemImage: "arrow.up") { pane.goUp() }
                 .disabled(!pane.canGoUp)
-            FavoritesMenu(pane: pane)
             PathBar(url: pane.currentURL) { pane.navigate(to: $0) }
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.borderless)
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
-    }
-}
-
-struct FavoritesMenu: View {
-    let pane: PaneState
-
-    private struct Favorite: Identifiable {
-        let title: String, icon: String, url: URL
-        var id: String { title }
-        init(_ title: String, _ icon: String, _ url: URL) { self.title = title; self.icon = icon; self.url = url }
-    }
-
-    private var favorites: [Favorite] {
-        let fm = FileManager.default
-        let home = fm.homeDirectoryForCurrentUser
-        return [
-            Favorite("Benutzerordner", "house", home),
-            Favorite("Schreibtisch", "menubar.dock.rectangle", home.appending(path: "Desktop")),
-            Favorite("Dokumente", "doc", home.appending(path: "Documents")),
-            Favorite("Downloads", "arrow.down.circle", home.appending(path: "Downloads")),
-            Favorite("Programme", "square.grid.3x3", URL(filePath: "/Applications")),
-            Favorite("iCloud Drive", "icloud", home.appending(path: "Library/Mobile Documents/com~apple~CloudDocs")),
-            Favorite("Volumes", "externaldrive", URL(filePath: "/Volumes")),
-            Favorite("Startvolume", "internaldrive", URL(filePath: "/")),
-        ]
-    }
-
-    var body: some View {
-        Menu {
-            ForEach(favorites) { fav in
-                Button(fav.title, systemImage: fav.icon) { pane.navigate(to: fav.url) }
-            }
-        } label: {
-            Label("Favoriten", systemImage: "star")
-        }
-        .menuIndicator(.hidden)
-        .fixedSize()
     }
 }
 

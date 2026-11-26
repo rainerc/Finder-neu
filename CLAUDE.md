@@ -12,9 +12,9 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 
 ## Struktur
 - `App/` Einstieg, Menüs, Tastenkürzel (`BrowserCommands`)
-- `Model/` `FileItem`, `PaneState` (ein Fenster: Ordner, Verlauf, Auswahl, Sortierung), `BrowserState` (beide Fenster, aktives Fenster, Dateiaktionen)
+- `Model/` `FileItem`, `FavoritesStore` (Seitenleisten-Favoriten, gespeichert in UserDefaults), `PaneState` (ein Fenster: Ordner, Verlauf, Auswahl, Sortierung), `BrowserState` (beide Fenster, aktives Fenster, Dateiaktionen)
 - `Services/FileService` alle Dateisystem-Zugriffe (nur hier `FileManager` verwenden)
-- `Views/` `ContentView` (Split + Aktionsleiste), `PaneView` (Kopf, Pfadleiste, Tabelle, Statuszeile)
+- `Views/` `ContentView` (NavigationSplitView: Seitenleiste + zwei Fenster + Aktionsleiste), `SidebarView` (Favoriten, Orte/Volumes), `PaneView` (Kopf, Pfadleiste, Tabelle, Statuszeile)
 
 ## Konventionen
 - UI-Texte deutsch, Code/Bezeichner englisch
@@ -23,7 +23,8 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 
 ## Stand
 - v0.1 MVP-Gerüst: Zwei-Fenster-Ansicht, Navigation, Pfadleiste, Favoriten, Sortierung, F5/F6 kopieren/verschieben, F2 umbenennen, neuer Ordner, Papierkorb, Drag & Drop, unsichtbare Dateien
-- Baut auf Rainers Mac (macOS 26) ohne Fehler mit `swift run`
+- v0.2 Seitenleiste: eigene Favoriten (hinzufügen per +, ⌃⌘T, Kontextmenü oder Ordner hineinziehen; umbenennen, entfernen, sortieren per Ziehen), Orte mit Volumes und Auswerfen. Klick öffnet im aktiven Fenster
+- v0.1 baut auf Rainers Mac (macOS 26) ohne Fehler mit `swift run`
 
 ## Nächste Schritte
 Siehe README „Nächste Schritte“. Priorität laut Rainer: Zwei-Fenster-Komfort zuerst.

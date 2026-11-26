@@ -27,7 +27,10 @@ Beim ersten Zugriff auf Schreibtisch, Dokumente usw. fragt macOS nach Erlaubnis.
 |---|---|
 | Zwei Fenster nebeneinander, aktives Fenster farbig markiert | Klick oder `⌃⇥` / `⇥` zum Wechseln |
 | Navigation zurück / vorwärts / hoch | `⌘[` `⌘]` `⌘↑`, Backspace = hoch |
-| Klickbare Pfadleiste, Favoriten-Menü | ★ im Fensterkopf |
+| Seitenleiste mit eigenen Favoriten und Orten (Volumes) | Klick öffnet im aktiven Fenster |
+| Favorit hinzufügen | `+` unten in der Seitenleiste, `⌃⌘T`, Kontextmenü oder Ordner in die Seitenleiste ziehen |
+| Favoriten sortieren, umbenennen, entfernen | Ziehen bzw. Rechtsklick |
+| Klickbare Pfadleiste | Fensterkopf |
 | Sortierbare Spalten (Name, Datum, Größe, Art), Ordner zuerst | Spaltenkopf |
 | Öffnen | Doppelklick / Return |
 | In anderes Fenster kopieren / verschieben | `F5` / `F6` |
@@ -59,5 +62,5 @@ Sources/FinderErsatz/
 4. Ordnergrößen berechnen, Filter/Suche im Fenster
 5. Kopieren mit Fortschrittsanzeige und Warteschlange
 6. Ordnervergleich und -synchronisation zwischen beiden Fenstern
-7. Lesezeichen/Favoriten selbst verwalten, Sidebar
+7. Weitere Seitenleisten-Abschnitte (Tags, zuletzt benutzt, Netzwerk)
 8. Terminal hier öffnen, Tags, Batch-Umbenennen

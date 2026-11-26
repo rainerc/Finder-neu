@@ -11,6 +11,7 @@ final class BrowserState {
     var left: PaneState
     var right: PaneState
     var activeSide: PaneSide = .left
+    let favorites = FavoritesStore()
 
     /// Fehlermeldung für einen Alert im Hauptfenster.
     var alertMessage: String?
@@ -126,6 +127,12 @@ final class BrowserState {
             pane.reload()
             pane.selection = [url.normalizedFileURL]
         }
+    }
+
+    /// Ausgewählte Ordner – oder, ohne Auswahl, den aktuellen Ordner – zu den Favoriten hinzufügen.
+    func addSelectionToFavorites() {
+        let folders = activePane.selectedItems.filter(\.isBrowsableFolder).map(\.url)
+        favorites.add(folders.isEmpty ? [activePane.currentURL] : folders)
     }
 
     func revealInFinder() {

@@ -67,6 +67,9 @@ struct BrowserCommands: Commands {
                 .keyboardShortcut("=", modifiers: .command)
             Button("Fenster tauschen") { browser.swapPanes() }
                 .keyboardShortcut("u", modifiers: .command)
+            Divider()
+            Button("Zu Favoriten hinzufügen") { browser.addSelectionToFavorites() }
+                .keyboardShortcut("t", modifiers: [.control, .command])
         }
         CommandGroup(after: .toolbar) {
             Button("Unsichtbare Dateien ein/aus") { browser.activePane.toggleHidden() }
