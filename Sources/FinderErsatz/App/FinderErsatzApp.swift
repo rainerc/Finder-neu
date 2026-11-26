@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     weak var browser: BrowserState?
     private var keyMonitor: Any?
