@@ -19,6 +19,19 @@ struct RegexHelperSheet: View {
     @State private var exampleName = ""
     @State private var referenceFilter = ""
     @State private var showOnlyMatches = false
+    @State private var tab: Tab = .workshop
+
+    enum Tab: String, CaseIterable, Identifiable {
+        case workshop, wizard, guide
+        var id: String { rawValue }
+        var title: String {
+            switch self {
+            case .workshop: "Werkstatt"
+            case .wizard: "Assistent: Was möchtest du tun?"
+            case .guide: "Anleitung & Beispiele"
+            }
+        }
+    }
 
     init(purpose: Purpose, sampleNames: [String], pattern: String = "", replacement: String = "",
          caseSensitive: Bool = false,
@@ -49,11 +62,37 @@ struct RegexHelperSheet: View {
     var body: some View {
         let results = evaluate()
         VStack(spacing: 0) {
-            HSplitView {
-                leftColumn(results)
-                    .frame(minWidth: 520, maxWidth: .infinity, maxHeight: .infinity)
-                rightColumn(results)
-                    .frame(minWidth: 320, idealWidth: 380, maxWidth: 520, maxHeight: .infinity)
+            Picker("Modus", selection: $tab) {
+                ForEach(Tab.allCases) { Text($0.title).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .fixedSize()
+            .padding(.top, 10)
+            switch tab {
+            case .wizard:
+                RegexWizardView(purpose: purpose, testNames: testNames) { newPattern, newReplacement in
+                    // „Verwenden“: direkt übernehmen
+                    onApply(newPattern, newReplacement, caseSensitive)
+                    dismiss()
+                } onRefine: { newPattern, newReplacement in
+                    pattern = newPattern
+                    replacement = newReplacement
+                    tab = .workshop
+                }
+            case .workshop:
+                HSplitView {
+                    leftColumn(results)
+                        .frame(minWidth: 520, maxWidth: .infinity, maxHeight: .infinity)
+                    rightColumn(results)
+                        .frame(minWidth: 320, idealWidth: 380, maxWidth: 520, maxHeight: .infinity)
+                }
+            case .guide:
+                RegexGuideView(exampleNames: testNames) { example in
+                    pattern = example.pattern
+                    replacement = example.replacement
+                    tab = .workshop
+                }
             }
             Divider()
             HStack {
@@ -69,7 +108,8 @@ struct RegexHelperSheet: View {
                 }
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.borderedProminent)
-                .disabled(regex == nil)
+                .disabled(regex == nil || tab != .workshop)
+                .help(tab == .workshop ? "" : "Im Assistenten „Verwenden“ klicken")
             }
             .padding(12)
         }
@@ -95,9 +135,19 @@ struct RegexHelperSheet: View {
             .background(RoundedRectangle(cornerRadius: 6).strokeBorder(borderColor, lineWidth: 1.5))
             // Muster farbig (Syntaxhervorhebung)
             if !pattern.isEmpty {
-                Text(RegexSyntax.highlighted(pattern))
-                    .font(.body.monospaced())
-                    .textSelection(.enabled)
+                // Jeder Baustein einzeln – Maus darüber zeigt die Erklärung
+                FlowLayout(spacing: 1) {
+                    ForEach(Array(RegexSyntax.tokens(pattern).enumerated()), id: \.offset) { _, token in
+                        Text(token.text)
+                            .font(.body.monospaced())
+                            .foregroundStyle(token.kind.color)
+                            .padding(.horizontal, 1)
+                            .background(RoundedRectangle(cornerRadius: 3).fill(token.kind.color.opacity(0.08)))
+                            .help(token.explanation)
+                    }
+                }
+                Text("Tipp: Maus auf einen farbigen Baustein halten zeigt, was er bedeutet.")
+                    .font(.caption2).foregroundStyle(.tertiary)
             }
             statusLine(results)
 
@@ -156,7 +206,11 @@ struct RegexHelperSheet: View {
             let total = results.reduce(0) { $0 + $1.matches.count }
             Label("\(hits) von \(results.count) Namen passen · \(total) Treffer · \(regex.numberOfCaptureGroups) Gruppen",
                   systemImage: hits > 0 ? "checkmark.circle.fill" : "circle")
-                .font(.caption).foregroundStyle(hits > 0 ? .green : .secondary)
+                .font(.caption).foregroundStyle(hits > 0 ? Color.green : Color.secondary)
+            ForEach(RegexWarnings.check(results: results, regex: regex, replacement: replacement, purpose: purpose), id: \.self) { warning in
+                Label(warning, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption).foregroundStyle(.orange)
+            }
         }
     }
 
@@ -247,9 +301,15 @@ struct RegexHelperSheet: View {
                                             .font(.callout.monospaced())
                                             .foregroundStyle(Color.accentColor)
                                             .frame(width: 130, alignment: .leading)
-                                        Text(block.title + " – " + block.explanation)
-                                            .font(.callout)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                        VStack(alignment: .leading, spacing: 1) {
+                                            Text(block.title + " – " + block.explanation).font(.callout)
+                                            if let sample = RegexBuildingBlock.examples[block.snippet] {
+                                                Text("✓ \(sample.match)   ✗ \(sample.noMatch)")
+                                                    .font(.caption.monospaced())
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                     }
                                     .contentShape(Rectangle())
                                 }
@@ -292,8 +352,12 @@ struct RegexHelperSheet: View {
     }
 
     private func evaluate() -> [MatchResult] {
-        let regex = self.regex   // einmal übersetzen, nicht pro Name
-        return testNames.enumerated().map { index, name in
+        Self.evaluate(names: testNames, regex: regex, replacement: replacement, purpose: purpose)
+    }
+
+    /// Wendet ein Muster auf Namen an: Treffer, Gruppen, farbige Markierung und (beim Umbenennen) das Ergebnis.
+    static func evaluate(names: [String], regex: NSRegularExpression?, replacement: String, purpose: Purpose) -> [MatchResult] {
+        return names.enumerated().map { index, name in
             guard let regex else {
                 return MatchResult(id: index, name: name, matches: [], highlighted: AttributedString(name), substituted: nil)
             }
@@ -541,6 +605,76 @@ struct RegexBuildingBlock: Identifiable {
         .init(title: "Nicht gefolgt von", snippet: "(?!)", explanation: "danach darf … nicht folgen"),
         .init(title: "Gleiche Gruppe nochmal", snippet: "\\1", explanation: "Inhalt von $1 wiederholt"),
     ]
+}
+
+extension RegexBuildingBlock {
+    /// Beispiele: passt ✓ / passt nicht ✗ (jeweils für den Baustein allein).
+    static let examples: [String: (match: String, noMatch: String)] = [
+        "^": ("^IMG passt auf „IMG_1.jpg“", "nicht auf „Foto IMG.jpg“"),
+        "$": ("jpg$ passt auf „a.jpg“", "nicht auf „a.jpg.zip“"),
+        "\\d+": ("„2024“, „7“", "„abc“"),
+        "(\\d+)": ("„IMG_0815“ → $1 = 0815", "„IMG_neu“"),
+        "\\d": ("„7“", "„x“"),
+        "\\D": ("„x“, „_“", "„7“"),
+        "\\w": ("„a“, „Z“, „5“, „_“", "„-“, „ “"),
+        "\\s": ("Leerzeichen", "„_“"),
+        "\\S": ("„a“, „-“", "Leerzeichen"),
+        "\\.": ("der Punkt in „a.pdf“", "„apdf“"),
+        ".*": ("alles, auch nichts", "–"),
+        "(.*)": ("ganzer Rest als $n", "–"),
+        "[abc]": ("„a“, „c“", "„d“"),
+        "[a-z]": ("„k“", "„K“ (mit Aa), „5“"),
+        "[^abc]": ("„d“, „5“", "„a“"),
+        "[_-]": ("„_“, „-“", "„ “"),
+        "*": ("a* → „“, „a“, „aaa“", "–"),
+        "+": ("a+ → „a“, „aaa“", "„“"),
+        "?": ("Fotos? → „Foto“, „Fotos“", "„Fotoss“ nur teilweise"),
+        "{2}": ("\\d{2} → „07“", "„7“"),
+        "{1,3}": ("\\d{1,3} → „7“, „123“", "„1234“ nur teilweise"),
+        "*?": ("(.*?)_ nimmt bis zum ersten _", "–"),
+        "|": ("jpg|png → „a.jpg“, „b.png“", "„c.gif“"),
+        "(\\d{4})-(\\d{2})-(\\d{2})": ("„2024-05-17“", "„17.05.2024“"),
+        "(\\d{2})\\.(\\d{2})\\.(\\d{4})": ("„17.05.2024“", "„2024-05-17“"),
+        "\\.(\\w+)$": ("„bild.jpeg“ → $1 = jpeg", "„ordner“"),
+        "\\b": ("\\bFoto\\b → „Foto 1“", "„Fotos“"),
+        "(?=)": ("Foto(?=_) → „Foto_1“", "„Foto 1“"),
+        "(?!)": ("Foto(?!_) → „Foto 1“", "„Foto_1“"),
+        "\\1": ("(\\d)\\1 → „11“", "„12“"),
+    ]
+}
+
+/// Warnungen für typische Fehler (kein Treffer, doppelte oder leere Namen …).
+enum RegexWarnings {
+    static func check(results: [RegexHelperSheet.MatchResult], regex: NSRegularExpression,
+                      replacement: String, purpose: RegexHelperSheet.Purpose) -> [String] {
+        var warnings: [String] = []
+        if !results.isEmpty, results.allSatisfy({ $0.matches.isEmpty }) {
+            warnings.append("Kein Name passt – Groß-/Kleinschreibung (i) oder Sonderzeichen wie . ( ) prüfen (wörtlich: \\. \\( \\))")
+        }
+        if purpose == .rename {
+            let renamed = results.compactMap { $0.substituted }
+            let changed = results.filter { $0.substituted != nil && $0.substituted != $0.name }
+            var seen = Set<String>(); var duplicates = Set<String>()
+            for name in renamed where !seen.insert(name.lowercased()).inserted { duplicates.insert(name) }
+            if let first = duplicates.first {
+                warnings.append("Mehrere Namen würden gleich heißen, z. B. „\(first)“ – Gruppe ($1) oder Nummer ergänzen")
+            }
+            if renamed.contains(where: { $0.trimmingCharacters(in: .whitespaces).isEmpty }) {
+                warnings.append("Mindestens ein Name wäre leer")
+            }
+            if renamed.contains(where: { $0.contains("/") || $0.contains(":") }) {
+                warnings.append("„/“ und „:“ sind in Dateinamen nicht erlaubt")
+            }
+            let maxGroup = (replacement.matches(of: #/\$(\d)/#).compactMap { Int($0.1) }.max()) ?? 0
+            if maxGroup > regex.numberOfCaptureGroups {
+                warnings.append("Die Ersetzung nutzt $\(maxGroup), das Muster hat aber nur \(regex.numberOfCaptureGroups) Gruppe(n) – Klammern ( ) setzen")
+            }
+            if !results.isEmpty, changed.isEmpty, results.contains(where: { !$0.matches.isEmpty }) {
+                warnings.append("Es passt zwar, aber kein Name ändert sich – Ersetzung prüfen")
+            }
+        }
+        return warnings
+    }
 }
 
 struct RegexPreset: Identifiable {
