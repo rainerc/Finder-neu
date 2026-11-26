@@ -72,6 +72,24 @@ struct SidebarView: View {
                             Button("Trennen") { eject(share) }
                         }
                 }
+                ForEach(browser.network.servers) { server in
+                    Button {
+                        if let url = server.url { browser.connect(to: url) }
+                    } label: {
+                        Label(server.name, systemImage: "network")
+                    }
+                    .buttonStyle(.plain)
+                    .help("Verbinden mit \(server.name) (\(server.kind.rawValue.uppercased()))")
+                    .contextMenu {
+                        Button("Verbinden …") { if let url = server.url { browser.connect(to: url) } }
+                        if let url = server.url {
+                            Button("Adresse kopieren") {
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(url.absoluteString, forType: .string)
+                            }
+                        }
+                    }
+                }
                 Button("Mit Server verbinden …", systemImage: "plus.circle") { showConnect = true }
                     .buttonStyle(.borderless)
                     .foregroundStyle(.secondary)
@@ -107,6 +125,7 @@ struct SidebarView: View {
             .padding(8)
         }
         .onAppear {
+            browser.network.start()
             reloadVolumes()
             reloadCloudFolders()
         }
@@ -189,8 +208,8 @@ struct SidebarView: View {
             browser.alertMessage = "Ungültige Serveradresse „\(address)“."
             return
         }
-        // macOS übernimmt Anmeldung, Freigabeauswahl und Einhängen; die Seitenleiste aktualisiert sich danach.
-        NSWorkspace.shared.open(url)
+        // macOS übernimmt Anmeldung und Freigabeauswahl; danach öffnet sich die Freigabe im aktiven Fenster.
+        browser.connect(to: url)
     }
 
     /// iCloud Drive und alle Cloud-Anbieter, die sich über macOS einbinden (Dropbox, Google Drive, OneDrive, Box …).

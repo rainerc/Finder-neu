@@ -20,5 +20,6 @@ targets:
         ENABLE_APP_SANDBOX: NO           # Dateimanager braucht vollen Dateizugriff
         ENABLE_HARDENED_RUNTIME: YES
         GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Support/Info.plist   # Netzwerk-Berechtigung, Bonjour-Dienste
         INFOPLIST_KEY_CFBundleDisplayName: Finder-Ersatz
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity

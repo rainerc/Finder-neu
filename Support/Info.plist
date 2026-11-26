@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string>com.example.FinderErsatz</string>
+	<key>CFBundleName</key>
+	<string>Finder-Ersatz</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Finder-Ersatz sucht im lokalen Netzwerk nach Servern und Freigaben (z. B. NAS), damit du dich mit ihnen verbinden kannst.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_smb._tcp</string>
+		<string>_afpovertcp._tcp</string>
+	</array>
+</dict>
+</plist>

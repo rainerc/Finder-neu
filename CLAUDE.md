@@ -13,7 +13,8 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 ## Struktur
 - `App/` Einstieg, Menüs, Tastenkürzel (`BrowserCommands`)
 - `Model/` `PaneGroup` (eine Seite mit Tabs), `FileOperationQueue`/`FileJob` (Hintergrund-Aufträge mit Fortschritt), `FileItem`, `FavoritesStore` (Seitenleisten-Favoriten, gespeichert in UserDefaults), `PaneState` (ein Fenster: Ordner, Verlauf, Auswahl, Sortierung), `BrowserState` (beide Fenster, aktives Fenster, Dateiaktionen)
-- `Services/` `FileService` (schnelle Dateioperationen), `FileTransfer` (Kopieren/Verschieben mit Fortschritt, läuft per `Task.detached`), `DirectoryWatcher` (Live-Aktualisierung per DispatchSource), `AppLauncher` (Terminal)
+- `Model/NetworkBrowser` (Bonjour-Suche per NWBrowser nach _smb._tcp/_afpovertcp._tcp)
+- `Services/` `NetworkMounter` (Einhängen per NetFSMountURLAsync mit macOS-Anmelde-/Freigabedialog), `FileService` (schnelle Dateioperationen), `FileTransfer` (Kopieren/Verschieben mit Fortschritt, läuft per `Task.detached`), `DirectoryWatcher` (Live-Aktualisierung per DispatchSource), `AppLauncher` (Terminal)
 - `Views/` `ContentView` (NavigationSplitView: Seitenleiste + zwei Fenster + Aktionsleiste), `SidebarView` (Favoriten, Cloud, Netzwerk, Orte/Volumes), `TabBar`, `JobsPanel`, `TransferSheet` (F5/F6-Dialog), `PaneView` (Kopf, Pfadleiste, Tabelle, Statuszeile)
 
 ## Konventionen
@@ -28,6 +29,7 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 - v0.2 Seitenleiste: eigene Favoriten (hinzufügen per +, ⌃⌘T, Kontextmenü oder Ordner hineinziehen; umbenennen, entfernen, sortieren per Ziehen), Orte mit Volumes und Auswerfen. Klick öffnet im aktiven Fenster
 - v0.3 Paket 1 der Roadmap: Tabs, Kopier-Warteschlange mit Fortschritt/Abbrechen/Konfliktdialog, F5/F6-Dialog mit änderbarem Ziel und Namen, Live-Aktualisierung, Quick Look (Leertaste/F3), Terminal hier öffnen, Cloud-Ordner in der Seitenleiste. Baut auf dem Mac. ⌘W wird per NSEvent-Monitor im AppDelegate abgefangen (Menü-Shortcut kollidierte mit „Fenster schließen“). Offen aus Paket 1: eigener Hex-Viewer
 - v0.4 Netzwerk-Abschnitt in der Seitenleiste (eingehängte Freigaben, `volumeIsLocal == false`), Trennen, Mit Server verbinden (⌘K, öffnet smb://… über NSWorkspace)
+- v0.5 Server im lokalen Netz in „Netzwerk“ (Bonjour), Klick → NetFS-Mount → Freigabe öffnet im aktiven Fenster; ⌘K nutzt ebenfalls NetFS. `Support/Info.plist` (Local-Network-Berechtigung, NSBonjourServices) wird per Linker in die `swift run`-Binary eingebettet und von XcodeGen genutzt
 - v0.1 baut auf Rainers Mac (macOS 26) ohne Fehler mit `swift run`
 
 ## Nächste Schritte

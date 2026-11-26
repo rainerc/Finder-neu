@@ -21,6 +21,8 @@ In Xcode unter *Signing & Capabilities* das eigene Team wählen (oder `DEVELOPME
 Die App-Sandbox ist bewusst aus, weil ein Dateimanager freien Zugriff braucht. Verteilt wird später per Developer ID + Notarisierung, nicht über den App Store.
 Beim ersten Zugriff auf Schreibtisch, Dokumente usw. fragt macOS nach Erlaubnis. Für alles andere ggf. *Systemeinstellungen → Datenschutz → Festplattenvollzugriff*.
 
+Beim ersten Start fragt macOS, ob die App auf das lokale Netzwerk zugreifen darf – das ist für die Serversuche nötig.
+
 ## Funktionen im MVP
 
 | Funktion | Bedienung |
@@ -30,7 +32,7 @@ Beim ersten Zugriff auf Schreibtisch, Dokumente usw. fragt macOS nach Erlaubnis.
 | Schnellansicht (Quick Look) | Leertaste oder `F3` |
 | Ordner aktualisieren sich automatisch | – |
 | Terminal im aktuellen Ordner | `⌥⌘T` oder Kontextmenü |
-| Netzwerkfreigaben in der Seitenleiste „Netzwerk“, Trennen per Rechtsklick | Mit Server verbinden: `⌘K` |
+| Netzwerk: Server im lokalen Netz (Bonjour, SMB/AFP) – Klick verbindet und öffnet die Freigabe; eingehängte Freigaben, Trennen per Rechtsklick | Mit Server verbinden: `⌘K` |
 | Cloud-Ordner (iCloud Drive, Dropbox, Google Drive, OneDrive …) | Seitenleiste „Cloud“ |
 | Navigation zurück / vorwärts / hoch | `⌘[` `⌘]` `⌘↑`, Backspace = hoch |
 | Seitenleiste mit eigenen Favoriten und Orten (Volumes) | Klick öffnet im aktiven Fenster |

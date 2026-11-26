@@ -34,6 +34,7 @@ final class BrowserState {
     var activeSide: PaneSide = .left
     let favorites = FavoritesStore()
     let operations = FileOperationQueue()
+    let network = NetworkBrowser()
 
     /// Fehlermeldung für einen Alert im Hauptfenster.
     var alertMessage: String?
@@ -208,6 +209,20 @@ final class BrowserState {
             return resolved
         }
         operations.enqueue(title: request.title, items: items)
+    }
+
+    // MARK: Netzwerk
+
+    /// Verbindet mit einem Server/einer Freigabe und öffnet sie danach im aktiven Fenster.
+    func connect(to url: URL) {
+        NetworkMounter.mount(url) { [weak self] mounted, error in
+            guard let self else { return }
+            if let error {
+                self.alertMessage = error
+            } else if let first = mounted.first {
+                self.activePane.navigate(to: first)
+            }
+        }
     }
 
     // MARK: Weitere Dateioperationen
