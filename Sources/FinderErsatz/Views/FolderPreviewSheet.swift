@@ -23,24 +23,6 @@ struct FolderPreviewSheet: View {
                     Text(summary).font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("Öffnen") {
-                    browser.activePane.navigate(to: url)
-                    close()
-                }
-                Button("Quick Look") {
-                    close()
-                    QuickLookController.shared.show([url])
-                }
-                .help("Systemvorschau (z. B. XRay) – kann bei großen Ordnern dauern (⇧-Leertaste oder ⌘Y)")
-                Button("Schließen") { close() }
-                    .keyboardShortcut(.cancelAction)   // Esc
-                    .buttonStyle(.borderedProminent)
-                // Leertaste schließt (wie Quick Look) – als Tastenkürzel, damit es auch greift, wenn die Liste den Fokus hat
-                Button("Schließen (Leertaste)") { close() }
-                    .keyboardShortcut(.space, modifiers: [])
-                    .frame(width: 0, height: 0)
-                    .opacity(0)
-                    .accessibilityHidden(true)
             }
             .padding(12)
             Divider()
@@ -74,6 +56,30 @@ struct FolderPreviewSheet: View {
                     .width(min: 80, ideal: 120)
                 }
             }
+            Divider()
+            // Knöpfe unten wie in jedem macOS-Dialog
+            HStack {
+                Button("Quick Look (XRay)") {
+                    close()
+                    QuickLookController.shared.show([url])
+                }
+                .help("Systemvorschau – kann bei großen Ordnern lange dauern (⇧-Leertaste oder ⌘Y)")
+                Spacer()
+                // Leertaste schließt wie bei Quick Look (unsichtbarer Knopf, damit das Kürzel immer greift)
+                Button("Schließen mit Leertaste") { close() }
+                    .keyboardShortcut(.space, modifiers: [])
+                    .opacity(0)
+                    .frame(width: 1, height: 1)
+                    .accessibilityHidden(true)
+                Button("Öffnen") {
+                    browser.activePane.navigate(to: url)
+                    close()
+                }
+                Button("Schließen") { close() }
+                    .keyboardShortcut(.cancelAction)   // Esc
+                    .buttonStyle(.borderedProminent)
+            }
+            .padding(12)
         }
         .frame(width: 720, height: 480)
         .task {
