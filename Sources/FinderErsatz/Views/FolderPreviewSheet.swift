@@ -25,13 +25,22 @@ struct FolderPreviewSheet: View {
                 Spacer()
                 Button("Öffnen") {
                     browser.activePane.navigate(to: url)
-                    dismiss()
+                    close()
                 }
                 Button("Quick Look") {
-                    dismiss()
+                    close()
                     QuickLookController.shared.show([url])
                 }
                 .help("Systemvorschau (z. B. XRay) – kann bei großen Ordnern dauern (⇧-Leertaste oder ⌘Y)")
+                Button("Schließen") { close() }
+                    .keyboardShortcut(.cancelAction)   // Esc
+                    .buttonStyle(.borderedProminent)
+                // Leertaste schließt (wie Quick Look) – als Tastenkürzel, damit es auch greift, wenn die Liste den Fokus hat
+                Button("Schließen (Leertaste)") { close() }
+                    .keyboardShortcut(.space, modifiers: [])
+                    .frame(width: 0, height: 0)
+                    .opacity(0)
+                    .accessibilityHidden(true)
             }
             .padding(12)
             Divider()
@@ -67,10 +76,6 @@ struct FolderPreviewSheet: View {
             }
         }
         .frame(width: 720, height: 480)
-        .onKeyPress(keys: [.space, .escape]) { _ in
-            dismiss()
-            return .handled
-        }
         .task {
             do {
                 let order = KeyPathComparator(\FileItem.name, comparator: .localizedStandard)
@@ -82,6 +87,11 @@ struct FolderPreviewSheet: View {
             }
             folderSize = await FileTransfer.folderSize(of: url)
         }
+    }
+
+    private func close() {
+        browser.folderPreviewURL = nil
+        dismiss()
     }
 
     private var summary: String {
