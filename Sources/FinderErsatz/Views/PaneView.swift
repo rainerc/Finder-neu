@@ -295,9 +295,16 @@ struct PaneView: View {
                 activate(pane, ids)
                 browser.makeAliasForSelection()
             }
-            Button("Kopieren") {
+            Button(selected.count == 1 ? "„\(selected[0].name)“ kopieren" : "\(selected.count) Objekte kopieren") {
                 activate(pane, ids)
                 browser.copySelectionToPasteboard()
+            }
+            // Wie im Finder: mit gedrückter ⌥-Taste wird daraus „… als Pfadname kopieren“.
+            .modifierKeyAlternate(.option) {
+                Button(selected.count == 1 ? "„\(selected[0].name)“ als Pfadname kopieren" : "\(selected.count) Objekte als Pfadnamen kopieren") {
+                    activate(pane, ids)
+                    browser.copyPathsToPasteboard()
+                }
             }
             ShareLink(items: selected.map(\.url)) {
                 Label("Teilen …", systemImage: "square.and.arrow.up")
