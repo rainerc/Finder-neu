@@ -41,7 +41,7 @@ struct BatchRenameSheet: View {
     @State private var regexPattern = ""
     @State private var regexReplacement = ""
     @State private var regexCaseSensitive = false
-    @State private var showRegexHelper = false
+    @State private var regexHelperTab: RegexHelperSheet.Tab?
 
     init(request: BatchRenameRequest) {
         self.request = request
@@ -71,10 +71,17 @@ struct BatchRenameSheet: View {
                         .font(.body.monospaced())
                     TextField("Ersetzen durch ($1, $2 …)", text: $regexReplacement)
                         .font(.body.monospaced())
-                    HStack {
-                        Toggle("Groß-/Kleinschreibung beachten", isOn: $regexCaseSensitive)
-                        Spacer()
-                        Button("Regex-Assistent …", systemImage: "wand.and.stars") { showRegexHelper = true }
+                    Toggle("Groß-/Kleinschreibung beachten", isOn: $regexCaseSensitive)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Hilfe beim Finden des Musters").font(.caption).foregroundStyle(.secondary)
+                        HStack {
+                            Button("Assistent …", systemImage: "wand.and.stars") { regexHelperTab = .wizard }
+                                .help("Ziel wählen (z. B. Datum umstellen, Teile tauschen) – die App baut das Muster")
+                            Button("Werkstatt …", systemImage: "hammer") { regexHelperTab = .workshop }
+                                .help("Muster selbst bauen und live an den Namen testen (wie regex101)")
+                            Button("Anleitung …", systemImage: "book") { regexHelperTab = .guide }
+                                .help("Ausführliche Erklärung mit Beispielen")
+                        }
                     }
                 case .add:
                     TextField("Text", text: $addText)
@@ -128,10 +135,10 @@ struct BatchRenameSheet: View {
         }
         .padding(20)
         .frame(width: 560, height: 620)
-        .sheet(isPresented: $showRegexHelper) {
+        .sheet(item: $regexHelperTab) { tab in
             RegexHelperSheet(purpose: .rename, sampleNames: request.items.map { split($0).0 },
                              pattern: regexPattern, replacement: regexReplacement,
-                             caseSensitive: regexCaseSensitive) { pattern, replacement, caseSensitive in
+                             caseSensitive: regexCaseSensitive, initialTab: tab) { pattern, replacement, caseSensitive in
                 regexPattern = pattern
                 regexReplacement = replacement
                 regexCaseSensitive = caseSensitive

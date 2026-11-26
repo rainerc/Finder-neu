@@ -6,7 +6,7 @@ struct SearchBar: View {
     let pane: PaneState
     @State private var query: SearchQuery
     @FocusState private var termFocused: Bool
-    @State private var showRegexHelper = false
+    @State private var regexHelperTab: RegexHelperSheet.Tab?
 
     init(pane: PaneState) {
         self.pane = pane
@@ -29,10 +29,15 @@ struct SearchBar: View {
                 .labelsHidden()
                 .fixedSize()
                 if query.mode == .regex {
-                    Button("Regex-Assistent", systemImage: "wand.and.stars") { showRegexHelper = true }
-                        .labelStyle(.iconOnly)
-                        .buttonStyle(.borderless)
-                        .help("Regex-Assistent: Bausteine, Vorlagen, Erklärung und Live-Test an den Dateinamen")
+                    Menu {
+                        Button("Assistent: Was suchst du? …", systemImage: "wand.and.stars") { regexHelperTab = .wizard }
+                        Button("Werkstatt (Muster bauen und testen) …", systemImage: "hammer") { regexHelperTab = .workshop }
+                        Button("Anleitung & Beispiele …", systemImage: "book") { regexHelperTab = .guide }
+                    } label: {
+                        Label("Regex-Hilfe", systemImage: "wand.and.stars")
+                    }
+                    .fixedSize()
+                    .help("Regex-Hilfe: Assistent, Werkstatt mit Live-Test, Anleitung")
                 }
                 Toggle("Aa", isOn: $query.caseSensitive)
                     .toggleStyle(.button)
@@ -86,9 +91,9 @@ struct SearchBar: View {
         .padding(.vertical, 6)
         .background(.bar)
         .onAppear { termFocused = true }
-        .sheet(isPresented: $showRegexHelper) {
+        .sheet(item: $regexHelperTab) { tab in
             RegexHelperSheet(purpose: .search, sampleNames: regexSamples, pattern: query.term,
-                             caseSensitive: query.caseSensitive) { pattern, _, caseSensitive in
+                             caseSensitive: query.caseSensitive, initialTab: tab) { pattern, _, caseSensitive in
                 query.term = pattern
                 query.caseSensitive = caseSensitive
             }

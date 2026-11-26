@@ -34,10 +34,11 @@ struct RegexHelperSheet: View {
     }
 
     init(purpose: Purpose, sampleNames: [String], pattern: String = "", replacement: String = "",
-         caseSensitive: Bool = false,
+         caseSensitive: Bool = false, initialTab: Tab = .workshop,
          onApply: @escaping (_ pattern: String, _ replacement: String, _ caseSensitive: Bool) -> Void) {
         self.purpose = purpose
         self.onApply = onApply
+        _tab = State(initialValue: initialTab)
         _pattern = State(initialValue: pattern)
         _replacement = State(initialValue: replacement)
         _caseSensitive = State(initialValue: caseSensitive)
