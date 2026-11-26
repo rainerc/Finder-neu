@@ -19,7 +19,10 @@ struct PaneView: View {
                 TabBar(group: group) { browser.activeSide = side }
                 Divider()
             }
-            PaneHeader(pane: pane)
+            PaneHeader(pane: pane, showsNewTabButton: group.tabs.count <= 1) {
+                browser.activeSide = side
+                browser.newTab()
+            }
                 .contentShape(Rectangle())
                 .onTapGesture { browser.activeSide = side }
             Divider()
@@ -459,6 +462,9 @@ struct PaneView: View {
 
 struct PaneHeader: View {
     let pane: PaneState
+    /// Bei nur einem Tab ist die Tab-Leiste ausgeblendet – dann sitzt der „+“-Knopf hier.
+    var showsNewTabButton = false
+    var onNewTab: () -> Void = {}
 
     var body: some View {
         HStack(spacing: 4) {
@@ -470,6 +476,10 @@ struct PaneHeader: View {
                 .disabled(!pane.canGoUp)
             PathBar(url: pane.currentURL) { pane.navigate(to: $0) }
             Spacer(minLength: 4)
+            if showsNewTabButton {
+                Button("Neuer Tab", systemImage: "plus.square.on.square", action: onNewTab)
+                    .help("Neuer Tab (⌘T)")
+            }
             Button("Suchen", systemImage: "magnifyingglass") { pane.isSearchBarVisible.toggle() }
                 .help("Suchen (⌘F)")
             Picker("Ansicht", selection: Bindable(pane).viewMode) {
