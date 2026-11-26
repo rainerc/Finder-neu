@@ -96,7 +96,6 @@ struct ContentView: View {
             let more = request.conflictNames.count > 5 ? " und \(request.conflictNames.count - 5) weitere" : ""
             Text("Im Ziel gibt es bereits \(names)\(more). Ersetzte Objekte kommen in den Papierkorb.")
         }
-        .quickLookPreview($browser.previewURL, in: browser.previewItems)
         .sheet(item: $browser.batchRenameRequest) { request in
             BatchRenameSheet(request: request)
                 .environment(browser)

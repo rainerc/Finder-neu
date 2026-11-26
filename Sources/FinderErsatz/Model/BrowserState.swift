@@ -83,9 +83,6 @@ final class BrowserState {
         didSet { UserDefaults.standard.set(showPanePreview, forKey: "showPanePreview") }
     }
 
-    /// Schnellansicht (Quick Look)
-    var previewURL: URL?
-    var previewItems: [URL] = []
 
     /// Für AppleScript: das im Fenster angezeigte BrowserState. Wird in `ContentView.onAppear` gesetzt –
     /// nicht im init, weil SwiftUI den `@State`-Startwert mehrfach erzeugen kann (die Extra-Instanzen verschwinden wieder).
@@ -218,14 +215,7 @@ final class BrowserState {
     }
 
     func toggleQuickLook() {
-        if previewURL != nil {
-            previewURL = nil
-            return
-        }
-        let urls = activePane.selectedItems.map(\.url)
-        guard let first = urls.first else { return }
-        previewItems = urls
-        previewURL = first
+        QuickLookController.shared.toggle(activePane.selectedItems.map(\.url))
     }
 
     func openTerminal() {

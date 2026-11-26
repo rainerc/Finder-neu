@@ -108,6 +108,10 @@ struct PaneView: View {
             PaneStatusBar(pane: pane)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .onChange(of: pane.selection) {
+            // Offenes Quick-Look-Fenster folgt der Auswahl im aktiven Fenster (wie im Finder).
+            if isActive { QuickLookController.shared.update(pane.selectedItems.map(\.url)) }
+        }
         .overlay(alignment: .top) {
             // Markierung des aktiven Fensters
             Rectangle()
