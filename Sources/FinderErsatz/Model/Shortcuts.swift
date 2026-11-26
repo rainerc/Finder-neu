@@ -4,6 +4,7 @@ import AppKit
 /// Alle Befehle, deren Tastenkürzel man in den Einstellungen ändern kann.
 enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
     case newTab, newFolder, copy, move, rename, quickLook, trash, compress, extractHere, extractToOther
+    case copyFiles, pasteFiles, moveFilesHere, duplicate, makeAlias, copyPath, getInfo, goToFolder, selectAll, undo
     case search, reveal, terminal
     case back, forward, up, switchPane, nextTab, previousTab, syncPanes, swapPanes, addFavorite, connectServer
     case viewList, viewBrief, viewIcons, toggleHidden, reload
@@ -22,6 +23,16 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .compress: "Als ZIP komprimieren"
         case .extractHere: "Entpacken (hierher)"
         case .extractToOther: "Entpacken ins andere Fenster"
+        case .copyFiles: "Kopieren (Zwischenablage)"
+        case .pasteFiles: "Einsetzen"
+        case .moveFilesHere: "Objekt hierher bewegen"
+        case .duplicate: "Duplizieren"
+        case .makeAlias: "Alias erstellen"
+        case .copyPath: "Pfad kopieren"
+        case .getInfo: "Informationen"
+        case .goToFolder: "Gehe zu Ordner …"
+        case .selectAll: "Alles auswählen"
+        case .undo: "Widerrufen"
         case .search: "Suchen"
         case .reveal: "Im Finder zeigen"
         case .terminal: "Terminal hier öffnen"
@@ -55,6 +66,16 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .compress: nil
         case .extractHere: nil
         case .extractToOther: nil
+        case .copyFiles: Shortcut("c", .command)
+        case .pasteFiles: Shortcut("v", .command)
+        case .moveFilesHere: Shortcut("v", [.command, .option])
+        case .duplicate: Shortcut("d", .command)
+        case .makeAlias: Shortcut("a", [.control, .command])
+        case .copyPath: Shortcut("c", [.command, .option])
+        case .getInfo: Shortcut("i", .command)
+        case .goToFolder: Shortcut("g", [.command, .shift])
+        case .selectAll: Shortcut("a", .command)
+        case .undo: Shortcut("z", .command)
         case .search: Shortcut("f", .command)
         case .reveal: Shortcut("r", [.command, .option])
         case .terminal: Shortcut("t", [.command, .option])

@@ -43,6 +43,9 @@ Beim ersten Start fragt macOS, ob die App auf das lokale Netzwerk zugreifen darf
 | Als ZIP komprimieren; entpacken (zip, tar.gz, tar.bz2, tar.xz, 7z, rar …) hierher oder ins andere Fenster | Kontextmenü, Menü „Ablage-Aktionen“ |
 | Archiv wie Ordner öffnen (entpackte Kopie) | Doppelklick auf Archiv |
 | Hookmark (⌃H) auf Dateien und Ordnern – Einrichtung siehe `docs/HOOKMARK.md` | `⌃H` |
+| Zwischenablage wie im Finder: Kopieren ⌘C, Einsetzen ⌘V, Bewegen ⌥⌘V, Alles auswählen ⌘A, Pfad kopieren ⌥⌘C | Bearbeiten-Menü |
+| Duplizieren ⌘D, Alias ⌃⌘A, Informationen ⌘I (mit Ordnergröße), Gehe zu Ordner ⇧⌘G, Widerrufen ⌘Z | Menü / Kontextmenü |
+| Öffnen mit …, Paketinhalt zeigen, Teilen (AirDrop, Mail …), Farb-Tags setzen und anzeigen | Kontextmenü |
 | Einstellungen: eigene Tastenkürzel, Schriftgröße, Hell/Dunkel, Farben | `⌘,` |
 | Ordner aktualisieren sich automatisch | – |
 | Terminal im aktuellen Ordner | `⌥⌘T` oder Kontextmenü |

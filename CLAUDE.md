@@ -27,6 +27,7 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 - Langsame Aktionen (Kopieren/Verschieben): `TransferItem`s bauen und über `BrowserState.enqueue` (Konfliktprüfung) an `FileOperationQueue` geben
 - `browser.pane(side)` / `activePane` liefern immer den aktiven Tab der Seite
 - Neue Menübefehle: Fall in `ShortcutAction` ergänzen (Titel, Standardkürzel) und in `BrowserCommands` per `item(.fall) { … }` einhängen – dann sind sie automatisch in den Einstellungen umbelegbar
+- Neue Dateiaktionen, die etwas verändern, mit `recordUndo(...)` widerrufbar machen
 - Während einer Suche ersetzt `PaneState.items` den Ordnerinhalt durch die Treffer (`activeSearch != nil`)
 
 ## Stand
@@ -38,6 +39,7 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 - v0.6 Paket 2: Suche (⌘F), ZIP/Archive (packen, entpacken, als Ordner öffnen), Ansichten Liste/Kurz/Miniaturen (⌘1–3), Einstellungen (⌘,) mit eigenen Tastenkürzeln, Schriftgröße, Hell/Dunkel, Farben. Baut auf dem Mac
 - v0.7 AppleScript-Schnittstelle (`Support/FinderErsatz.sdef`: `selected paths`, `current folder`, per `@objc`-Properties in einer `NSApplication`-Extension, Zugriff über `BrowserState.current`) für Hookmark ⌃H – funktioniert bei Rainer mit dem AppleScript aus `docs/HOOKMARK.md`. Fallstricke: `BrowserState.current` erst in `ContentView.onAppear` setzen (SwiftUI erzeugt `@State`-Startwerte mehrfach); App im Skript per Pfad ansprechen; Diagnose per `get debug info`. Zusätzlich meldet das Fenster das ausgewählte Objekt als `representedURL`
 - v0.8 Spalten wählbar (Rechtsklick auf Spaltenkopf): `TableColumnCustomization` mit `customizationID`, gespeichert per `@AppStorage("tableColumns")` (beide Fenster gemeinsam). Neue `FileItem`-Felder: created, accessed, fileExtension, tags, permissions, owner. Max. 10 Spalten pro TableColumnBuilder-Block
+- v0.9 Finder-Stapel A: Zwischenablage (Bearbeiten-Menü ersetzt; in Textfeldern `NSApp.sendAction` an den First Responder, sonst Dateiaktion), Duplizieren, Alias, Öffnen mit, Paketinhalt, Gehe zu Ordner, Informationen (`InfoSheet`), Farb-Tags (`FinderTags.swift`, `TagDots`), Teilen (`ShareLink`), Widerrufen (`UndoStack.swift`, `browser.recordUndo`). Noch nicht auf dem Mac gebaut
 - v0.1 baut auf Rainers Mac (macOS 26) ohne Fehler mit `swift run`
 
 ## Nächste Schritte

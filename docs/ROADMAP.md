@@ -93,7 +93,7 @@ Stand November 2026. ✅ vorhanden · ⬜ fehlt · ✖ technisch nicht möglich
 | Sync-Symbole von Dropbox & Co. (Finder-Sync-Erweiterungen) | ✖ nur im Finder selbst |
 | CDs/DVDs brennen | ✖ veraltet, nicht vorgesehen |
 
-**Stapel A – Alltag:** Kopieren/Einsetzen/Bewegen über die Zwischenablage, Duplizieren, Alias, Öffnen mit, Informationen, Gehe zu Ordner, Tags & Farben, Teilen/AirDrop, Paketinhalt, Pfad kopieren, Widerrufen.
+**Stapel A – Alltag** (umgesetzt in v0.9): Kopieren/Einsetzen/Bewegen über die Zwischenablage, Duplizieren, Alias, Öffnen mit, Informationen, Gehe zu Ordner, Tags & Farben, Teilen/AirDrop, Paketinhalt, Pfad kopieren, Widerrufen.
 **Stapel B – Ansichten:** Spaltenansicht, Galerie, Vorschau/Inspektor, Ordnergrößen.
 **Stapel C – Organisieren:** Zuletzt benutzt, Tags in der Seitenleiste, intelligente Ordner, Stapel-Umbenennen.
 **Stapel D – Feinschliff:** Federnde Ordner, Dienste, Symbolleiste, iCloud-Status, Fenster wiederherstellen, Papierkorb.

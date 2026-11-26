@@ -54,6 +54,7 @@ struct FileGridView<Menu: View>: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .foregroundStyle(nameColor(item))
+            TagDots(tags: item.tagList)
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 4)
@@ -66,6 +67,7 @@ struct FileGridView<Menu: View>: View {
     private func iconCell(_ item: FileItem) -> some View {
         VStack(spacing: 4) {
             ThumbnailView(item: item, size: 72)
+                .overlay(alignment: .bottomTrailing) { TagDots(tags: item.tagList) }
             Text(item.name)
                 .font(.caption)
                 .lineLimit(2)

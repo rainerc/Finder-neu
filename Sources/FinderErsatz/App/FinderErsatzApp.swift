@@ -58,9 +58,15 @@ struct FinderErsatzApp: App {
 }
 
 /// Menübefehle. Tastenkürzel kommen aus den Einstellungen (änderbar unter ⌘, → Tastenkürzel).
+@MainActor
 struct BrowserCommands: Commands {
     let browser: BrowserState
     let settings: AppSettings
+
+    /// Steht der Cursor in einem Textfeld (z. B. Suche, Umbenennen)?
+    private var textEditing: Bool {
+        NSApp.keyWindow?.firstResponder is NSText
+    }
 
     private func item(_ action: ShortcutAction, _ perform: @escaping () -> Void) -> some View {
         Button(action.title, action: perform)
@@ -75,8 +81,42 @@ struct BrowserCommands: Commands {
             Divider()
             item(.newFolder) { browser.newFolder() }
         }
+        // Bearbeiten-Menü: in Textfeldern normales Text-Verhalten, sonst Dateien (wie im Finder).
+        CommandGroup(replacing: .undoRedo) {
+            Button(browser.undoTitle ?? "Widerrufen") {
+                if textEditing { NSApp.sendAction(Selector(("undo:")), to: nil, from: nil) } else { browser.undo() }
+            }
+            .keyboardShortcut(settings.keyboardShortcut(for: .undo))
+            Button("Wiederholen") { NSApp.sendAction(Selector(("redo:")), to: nil, from: nil) }
+                .keyboardShortcut("z", modifiers: [.command, .shift])
+        }
+        CommandGroup(replacing: .pasteboard) {
+            Button("Ausschneiden") { NSApp.sendAction(#selector(NSText.cut(_:)), to: nil, from: nil) }
+                .keyboardShortcut("x", modifiers: .command)
+            Button(ShortcutAction.copyFiles.title) {
+                if textEditing { NSApp.sendAction(#selector(NSText.copy(_:)), to: nil, from: nil) } else { browser.copySelectionToPasteboard() }
+            }
+            .keyboardShortcut(settings.keyboardShortcut(for: .copyFiles))
+            Button(ShortcutAction.pasteFiles.title) {
+                if textEditing { NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: nil) } else { browser.pasteFromPasteboard(move: false) }
+            }
+            .keyboardShortcut(settings.keyboardShortcut(for: .pasteFiles))
+            item(.moveFilesHere) { browser.pasteFromPasteboard(move: true) }
+            Button(ShortcutAction.selectAll.title) {
+                if textEditing { NSApp.sendAction(#selector(NSText.selectAll(_:)), to: nil, from: nil) } else { browser.selectAll() }
+            }
+            .keyboardShortcut(settings.keyboardShortcut(for: .selectAll))
+            Divider()
+            item(.copyPath) { browser.copyPathsToPasteboard() }
+        }
         CommandGroup(after: .textEditing) {
             item(.search) { browser.showSearch() }
+        }
+        CommandGroup(after: .newItem) {
+            Divider()
+            item(.duplicate) { browser.duplicateSelection() }
+            item(.makeAlias) { browser.makeAliasForSelection() }
+            item(.getInfo) { browser.showInfo() }
         }
         CommandMenu("Ablage-Aktionen") {
             item(.copy) { browser.copyToOtherPane() }
@@ -93,6 +133,7 @@ struct BrowserCommands: Commands {
             item(.terminal) { browser.openTerminal() }
         }
         CommandMenu("Gehe zu") {
+            item(.goToFolder) { browser.showGoToFolder() }
             item(.connectServer) {
                 NotificationCenter.default.post(name: .connectToServer, object: nil)
             }

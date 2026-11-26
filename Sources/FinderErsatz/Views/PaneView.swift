@@ -130,9 +130,12 @@ struct PaneView: View {
                         .resizable()
                         .frame(width: settings.listSize.iconSize, height: settings.listSize.iconSize)
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(item.name)
-                            .lineLimit(1)
-                            .foregroundStyle(item.isBrowsableFolder ? (settings.folderColor ?? .primary) : .primary)
+                        HStack(spacing: 4) {
+                            Text(item.name)
+                                .lineLimit(1)
+                                .foregroundStyle(item.isBrowsableFolder ? (settings.folderColor ?? .primary) : .primary)
+                            TagDots(tags: item.tagList)
+                        }
                         if searching {
                             Text(pane.relativeFolder(of: item))
                                 .font(.caption)
@@ -245,6 +248,30 @@ struct PaneView: View {
             if !archives.isEmpty {
                 Button("Mit Standard-App öffnen") { browser.openWithDefaultApp(archives) }
             }
+            let files = selected.filter { !$0.isBrowsableFolder }.map(\.url)
+            if let first = files.first {
+                Menu("Öffnen mit") {
+                    ForEach(Array(browser.applications(toOpen: first).prefix(15).enumerated()), id: \.offset) { index, app in
+                        Button {
+                            browser.open(files, with: app)
+                        } label: {
+                            Label {
+                                Text(FileManager.default.displayName(atPath: app.path) + (index == 0 ? " (Standard)" : ""))
+                            } icon: {
+                                Image(nsImage: NSWorkspace.shared.icon(forFile: app.path))
+                            }
+                        }
+                    }
+                    Divider()
+                    Button("Andere …") { browser.open(files, choosingApplication: true) }
+                }
+            }
+            if selected.count == 1, selected[0].isPackage {
+                Button("Paketinhalt zeigen") {
+                    browser.activeSide = side
+                    browser.showPackageContents(selected[0].url)
+                }
+            }
             if pane.activeSearch != nil, selected.count == 1 {
                 Button("Im Ordner zeigen") { pane.reveal(selected[0]) }
             }
@@ -255,6 +282,41 @@ struct PaneView: View {
             Button("Umbenennen …") {
                 activate(pane, ids)
                 browser.beginRename()
+            }
+            Button("Informationen") {
+                activate(pane, ids)
+                browser.showInfo()
+            }
+            Button("Duplizieren") {
+                activate(pane, ids)
+                browser.duplicateSelection()
+            }
+            Button("Alias erstellen") {
+                activate(pane, ids)
+                browser.makeAliasForSelection()
+            }
+            Button("Kopieren") {
+                activate(pane, ids)
+                browser.copySelectionToPasteboard()
+            }
+            ShareLink(items: selected.map(\.url)) {
+                Label("Teilen …", systemImage: "square.and.arrow.up")
+            }
+            Divider()
+            Menu("Tags") {
+                ForEach(FinderTag.allCases) { tag in
+                    Button {
+                        browser.toggleTag(tag, for: selected)
+                    } label: {
+                        Label {
+                            Text(tag.rawValue + (selected.allSatisfy { tag.isContained(in: $0.tagList) } ? " ✓" : ""))
+                        } icon: {
+                            Image(systemName: "circle.fill").foregroundStyle(tag.color)
+                        }
+                    }
+                }
+                Divider()
+                Button("Alle Tags entfernen") { browser.removeAllTags(for: selected) }
             }
             Divider()
             Button("In anderes Fenster kopieren") {
@@ -302,6 +364,14 @@ struct PaneView: View {
             Button("Neuer Ordner") {
                 browser.activeSide = side
                 browser.newFolder()
+            }
+            Button("Einsetzen") {
+                browser.activeSide = side
+                browser.pasteFromPasteboard(move: false)
+            }
+            Button("Informationen") {
+                browser.activeSide = side
+                browser.showInfo()
             }
             Button("Suchen …") {
                 browser.activeSide = side

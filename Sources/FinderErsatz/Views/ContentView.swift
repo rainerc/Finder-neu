@@ -41,6 +41,11 @@ struct ContentView: View {
         .onChange(of: browser.activeSide) { _, side in focusedPane = side }
         .toolbar {
             ToolbarItemGroup {
+                ShareLink(items: browser.activePane.selectedItems.map(\.url)) {
+                    Label("Teilen", systemImage: "square.and.arrow.up")
+                }
+                .disabled(browser.activePane.selectedItems.isEmpty)
+                .help("Auswahl teilen (AirDrop, Mail, Nachrichten …)")
                 Button("Fenster tauschen", systemImage: "arrow.left.arrow.right") { browser.swapPanes() }
                     .help("Linkes und rechtes Fenster tauschen (⌘U)")
                 Button("Gleicher Ordner", systemImage: "equal.square") { browser.syncOtherPane() }
@@ -80,6 +85,17 @@ struct ContentView: View {
             Text("Im Ziel gibt es bereits \(names)\(more). Ersetzte Objekte kommen in den Papierkorb.")
         }
         .quickLookPreview($browser.previewURL, in: browser.previewItems)
+        .sheet(item: $browser.infoItem) { item in
+            InfoSheet(item: item)
+                .environment(browser)
+        }
+        .alert("Gehe zu Ordner", isPresented: $browser.goToFolderVisible) {
+            TextField("/Pfad/zum/Ordner oder ~/…", text: $browser.goToFolderPath)
+            Button("Öffnen") { browser.commitGoToFolder() }
+            Button("Abbrechen", role: .cancel) {}
+        } message: {
+            Text("Pfad eingeben, z. B. ~/Library oder /Volumes")
+        }
         .alert(
             "Umbenennen",
             isPresented: Binding(get: { browser.renameTarget != nil },

@@ -1,6 +1,7 @@
 import Foundation
 import AppKit
 import Observation
+import UniformTypeIdentifiers
 
 enum PaneSide: Hashable { case left, right }
 
@@ -47,6 +48,17 @@ final class BrowserState {
     /// Kopieren/Verschieben-Dialog und Konfliktabfrage
     var transferRequest: TransferRequest?
     var conflictRequest: ConflictRequest?
+
+    /// Widerrufen (⌘Z)
+    private(set) var undoStack: [UndoableAction] = []
+    var undoTitle: String? { undoStack.last.map { "Widerrufen: \($0.title)" } }
+
+    /// „Gehe zu Ordner“ (⇧⌘G)
+    var goToFolderVisible = false
+    var goToFolderPath = ""
+
+    /// Informationsfenster (⌘I)
+    var infoItem: FileItem?
 
     /// Schnellansicht (Quick Look)
     var previewURL: URL?
@@ -253,7 +265,7 @@ final class BrowserState {
     private func enqueue(title: String, items: [TransferItem]) {
         let conflicts = items.filter { FileManager.default.fileExists(atPath: $0.destination.path) }
         if conflicts.isEmpty {
-            operations.enqueue(title: title, items: items)
+            enqueueRecordingUndo(title: title, items: items)
         } else {
             conflictRequest = ConflictRequest(title: title, items: items,
                                               conflictNames: conflicts.map(\.destination.lastPathComponent))
@@ -280,7 +292,17 @@ final class BrowserState {
             }
             return resolved
         }
-        operations.enqueue(title: request.title, items: items)
+        enqueueRecordingUndo(title: request.title, items: items)
+    }
+
+    /// Startet Kopieren/Bewegen und merkt sich danach, wie es rückgängig zu machen ist.
+    private func enqueueRecordingUndo(title: String, items: [TransferItem]) {
+        operations.enqueue(title: title, items: items, onSuccess: { [weak self] in
+            let moved = items.filter(\.move).map { (from: $0.source, to: $0.destination) }
+            let created = items.filter { !$0.move }.map(\.destination)
+            if !moved.isEmpty { self?.recordUndo(.moved(moved)) }
+            if !created.isEmpty { self?.recordUndo(.created(created)) }
+        })
     }
 
     // MARK: Netzwerk
@@ -297,18 +319,174 @@ final class BrowserState {
         }
     }
 
+    // MARK: Widerrufen
+
+    func recordUndo(_ action: UndoableAction) {
+        undoStack.append(action)
+        if undoStack.count > 50 { undoStack.removeFirst() }
+    }
+
+    func undo() {
+        guard let action = undoStack.popLast() else { NSSound.beep(); return }
+        run { try action.revert() }
+    }
+
+    // MARK: Zwischenablage (wie im Finder)
+
+    /// ⌘C: ausgewählte Objekte als Dateien in die Zwischenablage.
+    func copySelectionToPasteboard() {
+        let urls = activePane.selectedItems.map(\.url)
+        guard !urls.isEmpty else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.writeObjects(urls as [NSURL])
+    }
+
+    /// ⌘V kopiert, ⌥⌘V bewegt die Dateien aus der Zwischenablage in den aktuellen Ordner.
+    func pasteFromPasteboard(move: Bool) {
+        let urls = (NSPasteboard.general.readObjects(forClasses: [NSURL.self],
+                                                     options: [.urlReadingFileURLsOnly: true]) as? [URL]) ?? []
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        let folder = activePane.currentURL
+        let items = urls.map { source -> TransferItem in
+            var destination = folder.appending(path: source.lastPathComponent)
+            // Einsetzen im selben Ordner = Duplikat mit freiem Namen
+            if !move, source.deletingLastPathComponent().normalizedFileURL == folder {
+                destination = FileService.uniqueURL(for: source.lastPathComponent, in: folder)
+            }
+            return TransferItem(source: source, destination: destination, move: move)
+        }.filter { $0.source.normalizedFileURL != $0.destination.normalizedFileURL }
+        guard !items.isEmpty else { return }
+        enqueue(title: move ? "Bewegen nach „\(folder.lastPathComponent)“" : "Einsetzen in „\(folder.lastPathComponent)“", items: items)
+    }
+
+    /// ⌥⌘C: Pfade der Auswahl (oder des Ordners) als Text kopieren.
+    func copyPathsToPasteboard() {
+        let paths = activePane.selectedItems.map(\.url.path)
+        let text = (paths.isEmpty ? [activePane.currentURL.path] : paths).joined(separator: "\n")
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+
+    func selectAll() {
+        activePane.selection = Set(activePane.items.map(\.id))
+    }
+
+    // MARK: Duplizieren, Alias, Öffnen mit, Paketinhalt, Gehe zu
+
+    func duplicateSelection() {
+        let pane = activePane
+        let urls = pane.selectedItems.map(\.url)
+        guard !urls.isEmpty else { return }
+        run {
+            var created: [URL] = []
+            defer { if !created.isEmpty { recordUndo(.created(created)) } }
+            for url in urls { created.append(try FileService.duplicate(url)) }
+            pane.reload()
+            pane.selection = Set(created.map(\.normalizedFileURL))
+        }
+    }
+
+    func makeAliasForSelection() {
+        let pane = activePane
+        let urls = pane.selectedItems.map(\.url)
+        guard !urls.isEmpty else { return }
+        run {
+            var created: [URL] = []
+            defer { if !created.isEmpty { recordUndo(.created(created)) } }
+            for url in urls { created.append(try FileService.makeAlias(url)) }
+            pane.reload()
+            pane.selection = Set(created.map(\.normalizedFileURL))
+        }
+    }
+
+    /// Apps, die die Datei öffnen können; Standard-App zuerst.
+    func applications(toOpen url: URL) -> [URL] {
+        let all = NSWorkspace.shared.urlsForApplications(toOpen: url)
+        guard let preferred = NSWorkspace.shared.urlForApplication(toOpen: url) else { return all }
+        return [preferred] + all.filter { $0.normalizedFileURL != preferred.normalizedFileURL }
+    }
+
+    func open(_ urls: [URL], with application: URL) {
+        NSWorkspace.shared.open(urls, withApplicationAt: application, configuration: NSWorkspace.OpenConfiguration())
+    }
+
+    /// „Andere …“: App per Dialog wählen.
+    func open(_ urls: [URL], choosingApplication: Bool) {
+        let panel = NSOpenPanel()
+        panel.directoryURL = URL(filePath: "/Applications")
+        panel.allowedContentTypes = [.application]
+        panel.prompt = "Öffnen"
+        if panel.runModal() == .OK, let app = panel.url { open(urls, with: app) }
+    }
+
+    func showPackageContents(_ url: URL) {
+        activePane.navigate(to: url)
+    }
+
+    func showGoToFolder() {
+        goToFolderPath = activePane.currentURL.path
+        goToFolderVisible = true
+    }
+
+    func commitGoToFolder() {
+        goToFolderVisible = false
+        let path = (goToFolderPath.trimmingCharacters(in: .whitespaces) as NSString).expandingTildeInPath
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: path, isDirectory: &isDir) else {
+            alertMessage = "„\(path)“ wurde nicht gefunden."
+            return
+        }
+        let url = URL(filePath: path).normalizedFileURL
+        if isDir.boolValue {
+            activePane.navigate(to: url)
+        } else {
+            activePane.navigate(to: url.deletingLastPathComponent())
+            activePane.selection = [url]
+        }
+    }
+
+    // MARK: Informationen, Tags
+
+    func showInfo() {
+        infoItem = activePane.selectedItems.first ?? FileItem(url: activePane.currentURL)
+    }
+
+    /// Schaltet einen Farb-Tag für alle ausgewählten Objekte um.
+    func toggleTag(_ tag: FinderTag, for items: [FileItem]) {
+        guard !items.isEmpty else { return }
+        let add = !items.allSatisfy { tag.isContained(in: $0.tagList) }
+        run {
+            for item in items {
+                var tags = item.tagList.filter { !tag.isContained(in: [$0]) }
+                if add { tags.append(tag.rawValue) }
+                try FileService.setTags(tags, for: item.url)
+            }
+        }
+    }
+
+    func removeAllTags(for items: [FileItem]) {
+        run { for item in items { try FileService.setTags([], for: item.url) } }
+    }
+
     // MARK: Weitere Dateioperationen
 
     func trashSelection() {
         let urls = activePane.selectedItems.map(\.url)
         guard !urls.isEmpty else { return }
-        run { try urls.forEach(FileService.trash) }
+        run {
+            var pairs: [(original: URL, inTrash: URL)] = []
+            defer { if !pairs.isEmpty { recordUndo(.trashed(pairs)) } }
+            for url in urls {
+                if let inTrash = try FileService.trash(url) { pairs.append((original: url, inTrash: inTrash)) }
+            }
+        }
     }
 
     func newFolder() {
         let pane = activePane
         run {
             let url = try FileService.createFolder(in: pane.currentURL)
+            recordUndo(.created([url]))
             pane.reload()
             pane.selection = [url.normalizedFileURL]
         }
@@ -328,6 +506,7 @@ final class BrowserState {
         let pane = activePane
         run {
             let url = try FileService.rename(item.url, to: newName)
+            recordUndo(.rename(from: item.url, to: url))
             pane.reload()
             pane.selection = [url.normalizedFileURL]
         }

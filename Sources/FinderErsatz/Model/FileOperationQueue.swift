@@ -44,9 +44,9 @@ final class FileOperationQueue {
     /// Vorheriger Auftrag – der neue wartet darauf, damit nichts gleichzeitig auf dieselben Dateien zugreift.
     @ObservationIgnored private var lastTask: Task<Void, Never>?
 
-    func enqueue(title: String, items: [TransferItem]) {
+    func enqueue(title: String, items: [TransferItem], onSuccess: (@MainActor @Sendable () -> Void)? = nil) {
         guard !items.isEmpty else { return }
-        enqueue(title: title) { progress in
+        enqueue(title: title, onSuccess: onSuccess) { progress in
             try await FileTransfer.run(items, progress: progress)
         }
     }

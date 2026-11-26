@@ -15,6 +15,7 @@ struct FileItem: Identifiable, Hashable, Sendable {
     let accessed: Date
     let fileExtension: String
     let tags: String
+    let tagList: [String]
     let permissions: String
     let owner: String
 
@@ -40,7 +41,8 @@ struct FileItem: Identifiable, Hashable, Sendable {
         self.created = v.creationDate ?? .distantPast
         self.accessed = v.contentAccessDate ?? .distantPast
         self.fileExtension = (isDirectory && !isPackage) ? "" : url.pathExtension.lowercased()
-        self.tags = (v.tagNames ?? []).joined(separator: ", ")
+        self.tagList = v.tagNames ?? []
+        self.tags = tagList.joined(separator: ", ")
         let attributes = (try? FileManager.default.attributesOfItem(atPath: url.path)) ?? [:]
         let mode = (attributes[.posixPermissions] as? NSNumber)?.intValue ?? 0
         self.permissions = Self.permissionString(mode, isDirectory: isDirectory)
