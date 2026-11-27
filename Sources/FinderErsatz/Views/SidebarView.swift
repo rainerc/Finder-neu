@@ -21,6 +21,12 @@ struct SidebarView: View {
     @AppStorage("sidebar.cloud") private var showCloud = true
     @AppStorage("sidebar.network") private var showNetwork = true
     @AppStorage("sidebar.places") private var showPlaces = true
+    @AppStorage("sidebar.remote") private var showRemote = true
+    /// Gespeicherte FTP/SFTP-Server (gleiche Daten wie im FTP/SFTP-Fenster)
+    @AppStorage("remoteConnections") private var remoteData = Data()
+    private var remoteConnections: [RemoteConnection] {
+        (try? JSONDecoder().decode([RemoteConnection].self, from: remoteData)) ?? []
+    }
 
     private var favorites: FavoritesStore { browser.favorites }
 
@@ -161,6 +167,33 @@ struct SidebarView: View {
                 Button("Mit Server verbinden …", systemImage: "plus.circle") { showConnect = true }
                     .buttonStyle(.borderless)
                     .foregroundStyle(.secondary)
+            }
+
+            Section("FTP/SFTP", isExpanded: $showRemote) {
+                ForEach(remoteConnections) { connection in
+                    let isOpen = browser.activePane.remote?.connection.id == connection.id
+                    Button {
+                        browser.openRemote(connection)
+                    } label: {
+                        Label(connection.label, systemImage: connection.kind == .sftp ? "lock.shield" : "server.rack")
+                            .fontWeight(isOpen ? .semibold : .regular)
+                    }
+                    .buttonStyle(.plain)
+                    .help("\(connection.kind.title): \(connection.user)@\(connection.host) – öffnet im aktiven Fenster")
+                    .contextMenu {
+                        Button("Im aktiven Fenster öffnen") { browser.openRemote(connection) }
+                        Button("Im anderen Fenster öffnen") {
+                            browser.openRemote(connection, side: browser.activeSide == .left ? .right : .left)
+                        }
+                        Divider()
+                        Button("Server verwalten …") { browser.showRemoteConnections = true }
+                    }
+                }
+                Button(remoteConnections.isEmpty ? "Server hinzufügen …" : "Server verwalten …", systemImage: "plus.circle") {
+                    browser.showRemoteConnections = true
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
             }
 
             Section("Orte", isExpanded: $showPlaces) {

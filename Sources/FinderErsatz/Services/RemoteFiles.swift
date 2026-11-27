@@ -23,6 +23,12 @@ struct RemoteConnection: Codable, Identifiable, Hashable, Sendable {
     var user: String
     var path: String = ""
 
+    /// Gespeicherte Verbindungen (dieselben wie im FTP/SFTP-Fenster, UserDefaults „remoteConnections“)
+    static var saved: [RemoteConnection] {
+        guard let data = UserDefaults.standard.data(forKey: "remoteConnections") else { return [] }
+        return (try? JSONDecoder().decode([RemoteConnection].self, from: data)) ?? []
+    }
+
     var keychainAccount: String { "\(kind.rawValue)://\(user)@\(host):\(port)" }
     var label: String { name.isEmpty ? "\(user)@\(host)" : name }
 }
@@ -106,8 +112,17 @@ enum RemoteFiles {
             _ = try await sftp(connection, password: password,
                                commands: ["get \(isDirectory ? "-r " : "")-p \(quote(remotePath)) \(quote(local.path))"])
         case .ftp, .ftps:
-            guard !isDirectory else { throw Failure(message: "Ordner lassen sich per FTP hier nur einzeln Datei für Datei laden.") }
-            _ = try await curl(connection, password: password, arguments: ["-o", local.path, url(connection, remotePath, directory: false)])
+            if isDirectory {
+                // FTP kennt kein rekursives Laden – Ordner selbst durchlaufen
+                try FileManager.default.createDirectory(at: local, withIntermediateDirectories: true)
+                for entry in try await list(connection, path: remotePath, password: password) where !entry.isLink {
+                    try Task.checkCancellation()
+                    try await download(connection, password: password, remotePath: join(remotePath, entry.name),
+                                       isDirectory: entry.isDirectory, to: local.appending(path: entry.name))
+                }
+            } else {
+                _ = try await curl(connection, password: password, arguments: ["-o", local.path, url(connection, remotePath, directory: false)])
+            }
         }
     }
 
@@ -119,9 +134,17 @@ enum RemoteFiles {
             _ = try await sftp(connection, password: password,
                                commands: ["put \(isDirectory ? "-r " : "")-p \(quote(local.path)) \(quote(target))"])
         case .ftp, .ftps:
-            guard !isDirectory else { throw Failure(message: "Ordner lassen sich per FTP hier nicht hochladen – bitte SFTP oder einzelne Dateien.") }
-            _ = try await curl(connection, password: password,
-                               arguments: ["--ftp-create-dirs", "-T", local.path, url(connection, target, directory: false)])
+            if isDirectory {
+                try? await makeFolder(connection, password: password, path: target)   // gibt es ihn schon, ist das kein Fehler
+                let children = try FileManager.default.contentsOfDirectory(at: local, includingPropertiesForKeys: nil)
+                for child in children {
+                    try Task.checkCancellation()
+                    try await upload(connection, password: password, local: child, toFolder: target)
+                }
+            } else {
+                _ = try await curl(connection, password: password,
+                                   arguments: ["--ftp-create-dirs", "-T", local.path, url(connection, target, directory: false)])
+            }
         }
     }
 
@@ -142,6 +165,28 @@ enum RemoteFiles {
         case .ftp, .ftps:
             _ = try await curl(connection, password: password,
                                arguments: ["-Q", "\(isDirectory ? "RMD" : "DELE") \(path)", url(connection, "/", directory: true), "-o", "/dev/null"])
+        }
+    }
+
+    /// Löscht auch nicht leere Ordner (Inhalt zuerst, weil sftp/FTP nur leere Ordner entfernen)
+    static func deleteRecursively(_ connection: RemoteConnection, password: String?, path: String, isDirectory: Bool) async throws {
+        if isDirectory {
+            for entry in try await list(connection, path: path, password: password) {
+                try Task.checkCancellation()
+                try await deleteRecursively(connection, password: password, path: join(path, entry.name),
+                                            isDirectory: entry.isDirectory && !entry.isLink)
+            }
+        }
+        try await delete(connection, password: password, path: path, isDirectory: isDirectory)
+    }
+
+    static func rename(_ connection: RemoteConnection, password: String?, from oldPath: String, to newPath: String) async throws {
+        switch connection.kind {
+        case .sftp:
+            _ = try await sftp(connection, password: password, commands: ["rename \(quote(oldPath)) \(quote(newPath))"])
+        case .ftp, .ftps:
+            _ = try await curl(connection, password: password,
+                               arguments: ["-Q", "RNFR \(oldPath)", "-Q", "RNTO \(newPath)", url(connection, "/", directory: true), "-o", "/dev/null"])
         }
     }
 

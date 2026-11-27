@@ -290,6 +290,7 @@ final class BrowserState {
     func moveToOtherPane() { prepareTransfer(move: true) }
 
     private func prepareTransfer(move: Bool) {
+        if remoteTransfer(move: move) { return }
         activePane.rememberSelection()
         let urls = activePane.selectedItems.map(\.url)
         guard !urls.isEmpty else { return }
@@ -753,6 +754,7 @@ final class BrowserState {
     // MARK: Weitere Dateioperationen
 
     func trashSelection() {
+        if let remote = activePane.remote { remoteDelete(remote); return }
         activePane.rememberSelection()
         let urls = activePane.selectedItems.map(\.url)
         guard !urls.isEmpty else { return }
@@ -766,6 +768,7 @@ final class BrowserState {
     }
 
     func newFolder() {
+        if let remote = activePane.remote { remoteNewFolder(remote); return }
         let pane = activePane
         run {
             let url = try FileService.createFolder(in: pane.currentURL)
@@ -788,6 +791,7 @@ final class BrowserState {
     }
 
     func beginRename() {
+        if let remote = activePane.remote { remoteRename(remote); return }
         let selected = activePane.selectedItems
         if selected.count > 1 {
             beginBatchRename()

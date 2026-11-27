@@ -26,6 +26,28 @@ struct PaneView: View {
                             .onTapGesture { browser.activeSide = side }
                     )
             }
+            if let remote = pane.remote {
+                RemotePaneView(remote: remote, pane: pane, side: side)
+            } else {
+                localContent(pane: pane, group: group, settings: settings)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .onChange(of: pane.selection) {
+            // Offenes Quick-Look-Fenster folgt der Auswahl im aktiven Fenster (wie im Finder).
+            if isActive { QuickLookController.shared.update(pane.selectedItems.map(\.url)) }
+        }
+        .overlay(alignment: .top) {
+            // Markierung des aktiven Fensters
+            Rectangle()
+                .fill(isActive ? settings.activeColor : .clear)
+                .frame(height: 3)
+        }
+    }
+
+    /// Kopf, Leisten, Inhalt und Statuszeile eines Ordners auf dem Mac
+    @ViewBuilder
+    private func localContent(pane: PaneState, group: PaneGroup, settings: AppSettings) -> some View {
             if !browser.debugHideHeader {
                 Group {
                     if settings.compactLayout {
@@ -93,18 +115,6 @@ struct PaneView: View {
                 Divider()
                 PaneStatusBar(pane: pane)
             }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .onChange(of: pane.selection) {
-            // Offenes Quick-Look-Fenster folgt der Auswahl im aktiven Fenster (wie im Finder).
-            if isActive { QuickLookController.shared.update(pane.selectedItems.map(\.url)) }
-        }
-        .overlay(alignment: .top) {
-            // Markierung des aktiven Fensters
-            Rectangle()
-                .fill(isActive ? settings.activeColor : .clear)
-                .frame(height: 3)
-        }
     }
 
     /// Ordnerinhalt (Liste, Raster, Spalten, Galerie) bzw. Fehlermeldung
@@ -865,7 +875,10 @@ struct PaneTitle: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            if let search = pane.activeSearch {
+            if pane.remote != nil {
+                Image(systemName: "server.rack")
+                    .frame(width: 18, height: 18)
+            } else if let search = pane.activeSearch {
                 Image(systemName: search.spotlightQuery != nil ? "sparkle.magnifyingglass" : "magnifyingglass")
                     .frame(width: 18, height: 18)
             } else {
@@ -877,7 +890,7 @@ struct PaneTitle: View {
                 .font(.headline)
                 .lineLimit(1)
                 .truncationMode(.middle)
-            if let git = pane.gitInfo {
+            if pane.remote == nil, let git = pane.gitInfo {
                 Label(git.summary, systemImage: "arrow.triangle.branch")
                     .font(.caption)
                     .foregroundStyle(.secondary)

@@ -68,6 +68,10 @@ struct RemoteSheet: View {
                         Label(connection.label, systemImage: connection.kind == .sftp ? "lock.shield" : "network")
                             .tag(connection.id)
                             .contextMenu {
+                                Button("Im aktiven Fenster öffnen") {
+                                    browser.openRemote(connection)
+                                    dismiss()
+                                }
                                 Button("Bearbeiten …") { edit(connection) }
                                 Button("Entfernen", role: .destructive) { remove(connection) }
                             }
@@ -104,6 +108,11 @@ struct RemoteSheet: View {
                 HStack(spacing: 6) {
                     Button("Nach oben", systemImage: "arrow.up") { Task { await go(to: RemoteFiles.parent(of: path)) } }
                         .disabled(path == "/" || isBusy)
+                    Button("Im Dateifenster öffnen", systemImage: "rectangle.split.2x1") {
+                        browser.openRemote(connection)
+                        dismiss()
+                    }
+                    .help("Server im aktiven Dateifenster zeigen – dann F5/F6 zwischen Mac und Server")
                     Text(connection.label + ":").bold()
                     Text(path).font(.system(.body, design: .monospaced)).lineLimit(1).truncationMode(.head)
                     Spacer()

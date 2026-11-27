@@ -52,6 +52,8 @@ final class PaneState: Identifiable {
     }
     private(set) var showHidden = false
     private(set) var errorMessage: String?
+    /// Gesetzt, wenn das Fenster einen FTP/SFTP-Server zeigt (siehe `RemotePane.swift`)
+    var remote: RemoteBrowser?
     /// Fehler kommt vom macOS-Datenschutz (nicht vom Dateisystem) – dann Knopf zu den Systemeinstellungen zeigen.
     private(set) var errorIsPermission = false
     var viewMode: ViewMode = .list
@@ -73,6 +75,7 @@ final class PaneState: Identifiable {
 
     /// Tab-Titel: Anzeigename des aktuellen Ordners.
     var title: String {
+        if let remote { return remote.connection.label }
         if let title = activeSearch?.title { return title }
         return currentURL.path == "/" ? "Macintosh HD" : FileManager.default.displayName(atPath: currentURL.path)
     }
@@ -116,6 +119,11 @@ final class PaneState: Identifiable {
 
     func navigate(to url: URL) {
         let target = url.normalizedFileURL
+        if remote != nil {
+            // Zurück vom Server zu einem Ordner auf dem Mac
+            remote = nil
+            if target == currentURL { reload(); return }
+        }
         guard target != currentURL else { return }
         stopSearch()
         leaveBranchView()
@@ -130,6 +138,7 @@ final class PaneState: Identifiable {
     }
 
     func goBack() {
+        if let remote { remote.goBack(); return }
         guard let previous = backStack.popLast() else { return }
         stopSearch()
         leaveBranchView()
@@ -154,6 +163,7 @@ final class PaneState: Identifiable {
     }
 
     func goUp() {
+        if let remote { remote.goUp(); return }
         guard canGoUp else { return }
         let child = currentURL
         navigate(to: currentURL.deletingLastPathComponent())
