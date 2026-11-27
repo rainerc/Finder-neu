@@ -5,7 +5,6 @@ struct PaneView: View {
     @Environment(BrowserState.self) private var browser
     let side: PaneSide
     var focus: FocusState<PaneSide?>.Binding
-    @AppStorage("tableColumns") private var columnData = Data()
 
     private var isActive: Bool { browser.activeSide == side }
 
@@ -72,7 +71,7 @@ struct PaneView: View {
                     } else if pane.activeSearch != nil, pane.items.isEmpty, !pane.isSearchRunning {
                         ContentUnavailableView.search
                     } else if pane.viewMode == .list || pane.activeSearch != nil {
-                        keyHandling(fileTable(pane: pane, settings: settings), pane: pane)
+                        fileTable(pane: pane, settings: settings)
                     } else if pane.viewMode == .columns {
                         keyHandling(
                             ColumnBrowserView(pane: pane, side: side, onOpen: { open($0, in: pane) }) { ids in
@@ -175,305 +174,237 @@ struct PaneView: View {
 
     // MARK: Liste
 
-    @ViewBuilder
+    /// Native Liste (NSTableView) – siehe `NativeFileTable` (SwiftUIs Table ruckelte beim Verkleinern).
     private func fileTable(pane: PaneState, settings: AppSettings) -> some View {
         @Bindable var pane = pane
-        let searching = pane.activeSearch != nil
-        Table(of: FileItem.self, selection: $pane.selection, sortOrder: $pane.sortOrder,
-              columnCustomization: columnCustomization) {
-            TableColumn("Name", value: \.name) { item in
-                HStack(spacing: 6) {
-                    Image(nsImage: IconCache.icon(for: item.url))
-                        .resizable()
-                        .frame(width: settings.listSize.iconSize, height: settings.listSize.iconSize)
-                    VStack(alignment: .leading, spacing: 0) {
-                        HStack(spacing: 4) {
-                            Text(item.name)
-                                .lineLimit(1)
-                                .foregroundStyle(item.isBrowsableFolder ? (settings.folderColor ?? .primary) : .primary)
-                            TagDots(tags: item.tagList)
-                        }
-                        if searching {
-                            Text(pane.relativeFolder(of: item))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                                .truncationMode(.head)
-                        }
-                    }
-                    .opacity(item.isHidden && settings.showHiddenDimmed ? 0.55 : 1)
-                }
-            }
-            .width(min: 160, ideal: 260)
-            .customizationID("name")
-            .disabledCustomizationBehavior(.visibility)   // Name lässt sich nicht ausblenden
-            TableColumn("Änderungsdatum", value: \.modified) { item in
-                Text(item.modified, format: .dateTime.day().month().year().hour().minute())
-                    .foregroundStyle(.secondary)
-            }
-            .width(min: 110, ideal: 140)
-            .customizationID("modified")
-            TableColumn("Größe", value: \.size) { item in
-                Text(item.sizeText)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-            .width(min: 60, ideal: 80)
-            .customizationID("size")
-            TableColumn("Art", value: \.kind) { item in
-                Text(item.kind).foregroundStyle(.secondary)
-            }
-            .width(min: 80, ideal: 120)
-            .customizationID("kind")
-            // Zusätzliche Spalten – per Rechtsklick auf den Spaltenkopf einblenden
-            TableColumn("Erstellt", value: \.created) { item in
-                Text(item.created, format: .dateTime.day().month().year().hour().minute())
-                    .foregroundStyle(.secondary)
-            }
-            .width(min: 110, ideal: 140)
-            .customizationID("created")
-            .defaultVisibility(.hidden)
-            TableColumn("Zuletzt geöffnet", value: \.accessed) { item in
-                Text(item.accessed, format: .dateTime.day().month().year().hour().minute())
-                    .foregroundStyle(.secondary)
-            }
-            .width(min: 110, ideal: 140)
-            .customizationID("accessed")
-            .defaultVisibility(.hidden)
-            TableColumn("Erweiterung", value: \.fileExtension) { item in
-                Text(item.fileExtension).foregroundStyle(.secondary)
-            }
-            .width(min: 50, ideal: 70)
-            .customizationID("extension")
-            .defaultVisibility(.hidden)
-            TableColumn("Tags", value: \.tags) { item in
-                Text(item.tags).foregroundStyle(.secondary).lineLimit(1)
-            }
-            .width(min: 60, ideal: 100)
-            .customizationID("tags")
-            .defaultVisibility(.hidden)
-            TableColumn("Rechte", value: \.permissions) { item in
-                Text(item.permissions).monospaced().foregroundStyle(.secondary)
-            }
-            .width(min: 110, ideal: 130)
-            .customizationID("permissions")
-            .defaultVisibility(.hidden)
-            TableColumn("Eigentümer", value: \.owner) { item in
-                Text(item.owner).foregroundStyle(.secondary)
-            }
-            .width(min: 70, ideal: 90)
-            .customizationID("owner")
-            .defaultVisibility(.hidden)
-        } rows: {
-            ForEach(pane.items) { item in
-                TableRow(item).draggable(item.url)
-            }
-        }
-        .font(settings.listSize.font)
-        .alternatingRowBackgrounds(settings.alternatingRows ? .enabled : .disabled)
-        .contextMenu(forSelectionType: FileItem.ID.self) { ids in
-            fileMenu(ids, pane: pane)
-        } primaryAction: { ids in
-            // Doppelklick oder Return
-            open(ids, in: pane)
-        }
+        return NativeFileTable(
+            items: pane.items,
+            selection: $pane.selection,
+            sortOrder: $pane.sortOrder,
+            searching: pane.activeSearch != nil,
+            contentKey: pane.currentURL.path + (pane.activeSearch == nil ? "" : "#suche"),
+            relativeFolder: { pane.relativeFolder(of: $0) },
+            style: NativeFileTable.Style(
+                listSize: settings.listSize,
+                alternatingRows: settings.alternatingRows,
+                folderColor: settings.folderColor.map { NSColor($0) },
+                dimHidden: settings.showHiddenDimmed
+            ),
+            isActive: isActive,
+            onActivate: { if browser.activeSide != side { browser.activeSide = side } },
+            onOpen: { open($0, in: pane) },
+            menu: { fileMenuEntries($0, pane: pane) },
+            onKey: { key, modifiers in handleTableKey(key, modifiers: modifiers, pane: pane) }
+        )
     }
 
-    /// Sichtbarkeit, Reihenfolge und Breite der Spalten – für beide Fenster gemeinsam gespeichert.
-    private var columnCustomization: Binding<TableColumnCustomization<FileItem>> {
-        Binding(
-            get: { (try? JSONDecoder().decode(TableColumnCustomization<FileItem>.self, from: columnData)) ?? TableColumnCustomization() },
-            set: { columnData = (try? JSONEncoder().encode($0)) ?? Data() }
-        )
+    private func handleTableKey(_ key: NativeFileTable.Key, modifiers: NSEvent.ModifierFlags, pane: PaneState) -> Bool {
+        switch key {
+        case .tab:
+            browser.toggleActivePane()
+            return true
+        case .space:
+            // Leertaste = Schnellansicht; ⇧-Leertaste = immer Quick Look, auch bei Ordnern (XRay)
+            browser.toggleQuickLook(forceSystemPreview: modifiers.contains(.shift))
+            return true
+        case .returnKey:
+            guard !pane.selection.isEmpty else { return false }
+            open(pane.selection, in: pane)
+            return true
+        case .backspace:
+            pane.goUp()   // Backspace = übergeordneter Ordner
+            return true
+        }
     }
 
     // MARK: Kontextmenü (Liste und Raster)
 
-    @ViewBuilder
+    /// SwiftUI-Darstellung des Kontextmenüs (Kurz, Miniaturen, Spalten, Galerie)
     private func fileMenu(_ ids: Set<FileItem.ID>, pane: PaneState) -> some View {
+        MenuEntriesView(entries: fileMenuEntries(ids, pane: pane))
+    }
+
+    /// Inhalt des Kontextmenüs – gemeinsam für die native Liste (NSMenu) und die SwiftUI-Ansichten.
+    private func fileMenuEntries(_ ids: Set<FileItem.ID>, pane: PaneState) -> [MenuEntry] {
         let selected = pane.items.filter { ids.contains($0.id) }
-        if !selected.isEmpty {
-            Button("Öffnen") { open(ids, in: pane) }
-            let folderURLs = selected.filter(\.isBrowsableFolder).map(\.url)
-            if !folderURLs.isEmpty {
-                Button("In neuem Tab öffnen") {
+        var entries: [MenuEntry] = []
+        guard !selected.isEmpty else {
+            entries += [
+                .action("Neuer Ordner") {
                     browser.activeSide = side
-                    folderURLs.forEach { browser.openInNewTab($0) }
-                }
-            }
-            let archives = selected.map(\.url).filter(ArchiveService.isArchive)
-            if !archives.isEmpty {
-                Button("Mit Standard-App öffnen") { browser.openWithDefaultApp(archives) }
-            }
-            let files = selected.filter { !$0.isBrowsableFolder }.map(\.url)
-            if let first = files.first {
-                Menu("Öffnen mit") {
-                    ForEach(Array(browser.applications(toOpen: first).prefix(15).enumerated()), id: \.offset) { index, app in
-                        Button {
-                            browser.open(files, with: app)
-                        } label: {
-                            Label {
-                                Text(FileManager.default.displayName(atPath: app.path) + (index == 0 ? " (Standard)" : ""))
-                            } icon: {
-                                Image(nsImage: NSWorkspace.shared.icon(forFile: app.path))
-                            }
-                        }
-                    }
-                    Divider()
-                    Button("Andere …") { browser.open(files, choosingApplication: true) }
-                }
-            }
-            if selected.count == 1, selected[0].isPackage {
-                Button("Paketinhalt zeigen") {
+                    browser.newFolder()
+                },
+                .action("Einsetzen") {
                     browser.activeSide = side
-                    browser.showPackageContents(selected[0].url)
-                }
+                    browser.pasteFromPasteboard(move: false)
+                },
+                .action("Informationen") {
+                    browser.activeSide = side
+                    browser.showInfo()
+                },
+                .action("Suchen …") {
+                    browser.activeSide = side
+                    browser.showSearch()
+                },
+                .action("Ordner zu Favoriten hinzufügen") { browser.favorites.add([pane.currentURL]) },
+                .action("Terminal hier öffnen") { AppLauncher.openTerminal(at: pane.currentURL) },
+                .divider,
+            ]
+            entries += previewToggleEntries
+            return entries
+        }
+
+        entries.append(.action("Öffnen") { open(ids, in: pane) })
+        let folderURLs = selected.filter(\.isBrowsableFolder).map(\.url)
+        if !folderURLs.isEmpty {
+            entries.append(.action("In neuem Tab öffnen") {
+                browser.activeSide = side
+                folderURLs.forEach { browser.openInNewTab($0) }
+            })
+        }
+        let archives = selected.map(\.url).filter(ArchiveService.isArchive)
+        if !archives.isEmpty {
+            entries.append(.action("Mit Standard-App öffnen") { browser.openWithDefaultApp(archives) })
+        }
+        let files = selected.filter { !$0.isBrowsableFolder }.map(\.url)
+        if let first = files.first {
+            var apps: [MenuEntry] = []
+            for (index, app) in browser.applications(toOpen: first).prefix(15).enumerated() {
+                let title = FileManager.default.displayName(atPath: app.path) + (index == 0 ? " (Standard)" : "")
+                apps.append(.action(title, image: MenuEntry.icon(forFile: app.path)) { browser.open(files, with: app) })
             }
-            if pane.activeSearch != nil, selected.count == 1 {
-                Button("Im Ordner zeigen") { pane.reveal(selected[0]) }
-            }
-            Button("Schnellansicht") {
+            apps += [.divider, .action("Andere …") { browser.open(files, choosingApplication: true) }]
+            entries.append(.submenu("Öffnen mit", apps))
+        }
+        if selected.count == 1, selected[0].isPackage {
+            entries.append(.action("Paketinhalt zeigen") {
+                browser.activeSide = side
+                browser.showPackageContents(selected[0].url)
+            })
+        }
+        if pane.activeSearch != nil, selected.count == 1 {
+            entries.append(.action("Im Ordner zeigen") { pane.reveal(selected[0]) })
+        }
+        entries.append(.action("Schnellansicht") {
+            activate(pane, ids)
+            browser.toggleQuickLook()
+        })
+        if !folderURLs.isEmpty {
+            entries.append(.action("Quick Look mit XRay") {
                 activate(pane, ids)
-                browser.toggleQuickLook()
-            }
-            if !folderURLs.isEmpty {
-                Button("Quick Look mit XRay") {
-                    activate(pane, ids)
-                    browser.toggleQuickLook(forceSystemPreview: true)
-                }
-            }
-            previewToggles
-            Button("Umbenennen …") {
+                browser.toggleQuickLook(forceSystemPreview: true)
+            })
+        }
+        entries += previewToggleEntries
+        entries.append(.action("Umbenennen …") {
+            activate(pane, ids)
+            browser.beginRename()
+        })
+        if selected.count > 1 {
+            entries.append(.action("\(selected.count) Objekte umbenennen …") {
                 activate(pane, ids)
-                browser.beginRename()
-            }
-            if selected.count > 1 {
-                Button("\(selected.count) Objekte umbenennen …") {
-                    activate(pane, ids)
-                    browser.beginBatchRename()
-                }
-            }
-            Button("Umbenennen mit Regex …") {
+                browser.beginBatchRename()
+            })
+        }
+        entries += [
+            .action("Umbenennen mit Regex …") {
                 activate(pane, ids)
                 browser.beginBatchRename(regex: true)
-            }
-            Button("Informationen") {
+            },
+            .action("Informationen") {
                 activate(pane, ids)
                 browser.showInfo()
-            }
-            Button("Duplizieren") {
+            },
+            .action("Duplizieren") {
                 activate(pane, ids)
                 browser.duplicateSelection()
-            }
-            Button("Alias erstellen") {
+            },
+            .action("Alias erstellen") {
                 activate(pane, ids)
                 browser.makeAliasForSelection()
-            }
-            Button(selected.count == 1 ? "„\(selected[0].name)“ kopieren" : "\(selected.count) Objekte kopieren") {
-                activate(pane, ids)
-                browser.copySelectionToPasteboard()
-            }
+            },
             // Wie im Finder: mit gedrückter ⌥-Taste wird daraus „… als Pfadname kopieren“.
-            .modifierKeyAlternate(.option) {
-                Button(selected.count == 1 ? "„\(selected[0].name)“ als Pfadname kopieren" : "\(selected.count) Objekte als Pfadnamen kopieren") {
+            .withAlternate(
+                .action(selected.count == 1 ? "„\(selected[0].name)“ kopieren" : "\(selected.count) Objekte kopieren") {
+                    activate(pane, ids)
+                    browser.copySelectionToPasteboard()
+                },
+                alternate: .action(selected.count == 1 ? "„\(selected[0].name)“ als Pfadname kopieren" : "\(selected.count) Objekte als Pfadnamen kopieren") {
                     activate(pane, ids)
                     browser.copyPathsToPasteboard()
                 }
+            ),
+            .share(selected.map(\.url)),
+            .divider,
+        ]
+        var tagEntries: [MenuEntry] = FinderTag.allCases.map { tag in
+            let isSet = selected.allSatisfy { tag.isContained(in: $0.tagList) }
+            return .action(tag.rawValue + (isSet ? " ✓" : ""), image: MenuEntry.symbol("circle.fill", color: NSColor(tag.color))) {
+                browser.toggleTag(tag, for: selected)
             }
-            ShareLink(items: selected.map(\.url)) {
-                Label("Teilen …", systemImage: "square.and.arrow.up")
-            }
-            Divider()
-            Menu("Tags") {
-                ForEach(FinderTag.allCases) { tag in
-                    Button {
-                        browser.toggleTag(tag, for: selected)
-                    } label: {
-                        Label {
-                            Text(tag.rawValue + (selected.allSatisfy { tag.isContained(in: $0.tagList) } ? " ✓" : ""))
-                        } icon: {
-                            Image(systemName: "circle.fill").foregroundStyle(tag.color)
-                        }
-                    }
-                }
-                Divider()
-                Button("Alle Tags entfernen") { browser.removeAllTags(for: selected) }
-            }
-            Divider()
-            Button("In anderes Fenster kopieren") {
+        }
+        tagEntries += [.divider, .action("Alle Tags entfernen") { browser.removeAllTags(for: selected) }]
+        entries += [
+            .submenu("Tags", tagEntries),
+            .divider,
+            .action("In anderes Fenster kopieren") {
                 activate(pane, ids)
                 browser.copyToOtherPane()
-            }
-            Button("In anderes Fenster verschieben") {
+            },
+            .action("In anderes Fenster verschieben") {
                 activate(pane, ids)
                 browser.moveToOtherPane()
-            }
-            Divider()
-            Button("Als ZIP komprimieren") {
+            },
+            .divider,
+            .action("Als ZIP komprimieren") {
                 activate(pane, ids)
                 browser.compressSelection()
-            }
-            if !archives.isEmpty {
-                Button("Entpacken (hierher)") {
+            },
+        ]
+        if !archives.isEmpty {
+            entries += [
+                .action("Entpacken (hierher)") {
                     activate(pane, ids)
                     browser.extractSelection(toOtherPane: false)
-                }
-                Button("Entpacken ins andere Fenster") {
+                },
+                .action("Entpacken ins andere Fenster") {
                     activate(pane, ids)
                     browser.extractSelection(toOtherPane: true)
-                }
-            }
-            Divider()
-            if !folderURLs.isEmpty {
-                Button("Zu Favoriten hinzufügen") { browser.favorites.add(folderURLs) }
-            }
-            Button("Pfad kopieren") {
+                },
+            ]
+        }
+        entries.append(.divider)
+        if !folderURLs.isEmpty {
+            entries.append(.action("Zu Favoriten hinzufügen") { browser.favorites.add(folderURLs) })
+        }
+        entries += [
+            .action("Pfad kopieren") {
                 activate(pane, ids)
                 browser.copyPathsToPasteboard()
-            }
-            Button("Terminal hier öffnen") {
+            },
+            .action("Terminal hier öffnen") {
                 activate(pane, ids)
                 browser.openTerminal()
-            }
-            Button("Im Finder zeigen") {
+            },
+            .action("Im Finder zeigen") {
                 activate(pane, ids)
                 browser.revealInFinder()
-            }
-            Divider()
-            Button("In den Papierkorb", role: .destructive) {
+            },
+            .divider,
+            .action("In den Papierkorb", destructive: true) {
                 activate(pane, ids)
                 browser.trashSelection()
-            }
-        } else {
-            Button("Neuer Ordner") {
-                browser.activeSide = side
-                browser.newFolder()
-            }
-            Button("Einsetzen") {
-                browser.activeSide = side
-                browser.pasteFromPasteboard(move: false)
-            }
-            Button("Informationen") {
-                browser.activeSide = side
-                browser.showInfo()
-            }
-            Button("Suchen …") {
-                browser.activeSide = side
-                browser.showSearch()
-            }
-            Button("Ordner zu Favoriten hinzufügen") { browser.favorites.add([pane.currentURL]) }
-            Button("Terminal hier öffnen") { AppLauncher.openTerminal(at: pane.currentURL) }
-            Divider()
-            previewToggles
-        }
+            },
+        ]
+        return entries
     }
 
     /// Vorschau unten / rechts ein- und ausschalten (mit Häkchen).
-    @ViewBuilder
-    private var previewToggles: some View {
-        @Bindable var browser = browser
-        Toggle("Vorschaubereich unten", isOn: $browser.showPanePreview)
-        Toggle("Vorschau-Spalte rechts", isOn: $browser.showInspector)
+    private var previewToggleEntries: [MenuEntry] {
+        [
+            .toggle("Vorschaubereich unten", isOn: browser.showPanePreview) { browser.showPanePreview.toggle() },
+            .toggle("Vorschau-Spalte rechts", isOn: browser.showInspector) { browser.showInspector.toggle() },
+        ]
     }
 
     /// Kontextmenü-Aktionen wirken auf die angeklickten Objekte in diesem Fenster.
