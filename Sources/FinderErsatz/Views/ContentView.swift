@@ -55,7 +55,11 @@ struct ContentView: View {
             focusedPane = browser.activeSide
             updateRepresentedURL(browser.focusedItemURL)
         }
-        .onChange(of: browser.focusedItemURL) { _, url in updateRepresentedURL(url) }
+        .task(id: browser.focusedItemURL) {
+            // Titelleisten-Symbol erst setzen, wenn die Auswahl kurz stehen bleibt (spart Arbeit beim Durchklicken)
+            try? await Task.sleep(for: .milliseconds(300))
+            if !Task.isCancelled { updateRepresentedURL(browser.focusedItemURL) }
+        }
         .onChange(of: focusedPane) { _, side in
             if let side { browser.activeSide = side }
         }

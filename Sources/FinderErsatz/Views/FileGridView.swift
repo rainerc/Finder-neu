@@ -46,7 +46,7 @@ struct FileGridView<Menu: View>: View {
 
     private func briefCell(_ item: FileItem) -> some View {
         HStack(spacing: 6) {
-            Image(nsImage: NSWorkspace.shared.icon(forFile: item.url.path))
+            Image(nsImage: IconCache.icon(for: item.url))
                 .resizable()
                 .frame(width: settings.listSize.iconSize, height: settings.listSize.iconSize)
             Text(item.name)

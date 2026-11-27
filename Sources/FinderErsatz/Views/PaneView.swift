@@ -183,7 +183,7 @@ struct PaneView: View {
               columnCustomization: columnCustomization) {
             TableColumn("Name", value: \.name) { item in
                 HStack(spacing: 6) {
-                    Image(nsImage: NSWorkspace.shared.icon(forFile: item.url.path))
+                    Image(nsImage: IconCache.icon(for: item.url))
                         .resizable()
                         .frame(width: settings.listSize.iconSize, height: settings.listSize.iconSize)
                     VStack(alignment: .leading, spacing: 0) {
@@ -598,7 +598,7 @@ private struct PathCrumb: View {
 
     var body: some View {
         HStack(spacing: 3) {
-            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+            Image(nsImage: IconCache.icon(for: url))
                 .resizable()
                 .frame(width: 14, height: 14)
             Text(name)

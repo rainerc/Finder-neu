@@ -23,7 +23,7 @@ struct ThumbnailView: View {
     @State private var image: NSImage?
 
     var body: some View {
-        Image(nsImage: image ?? NSWorkspace.shared.icon(forFile: item.url.path))
+        Image(nsImage: image ?? IconCache.icon(for: item.url))
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: size, height: size)

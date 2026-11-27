@@ -15,7 +15,7 @@ struct FolderPreviewSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                Image(nsImage: IconCache.icon(for: url))
                     .resizable()
                     .frame(width: 40, height: 40)
                 VStack(alignment: .leading, spacing: 2) {
@@ -32,7 +32,7 @@ struct FolderPreviewSheet: View {
                 Table(items) {
                     TableColumn("Name") { item in
                         HStack(spacing: 6) {
-                            Image(nsImage: NSWorkspace.shared.icon(forFile: item.url.path))
+                            Image(nsImage: IconCache.icon(for: item.url))
                                 .resizable()
                                 .frame(width: 16, height: 16)
                             Text(item.name).lineLimit(1)

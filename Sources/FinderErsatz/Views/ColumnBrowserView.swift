@@ -185,7 +185,7 @@ private struct ColumnRow: View {
     var body: some View {
         let settings = browser.settings
         HStack(spacing: 6) {
-            Image(nsImage: NSWorkspace.shared.icon(forFile: item.url.path))
+            Image(nsImage: IconCache.icon(for: item.url))
                 .resizable()
                 .frame(width: settings.listSize.iconSize, height: settings.listSize.iconSize)
             Text(item.name)

@@ -34,7 +34,7 @@ private struct InspectorContent: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            QuickLookPreview(url: item.url)
+            DeferredQuickLook(item: item)
                 .frame(minHeight: 180, idealHeight: 260, maxHeight: 360)
             Divider()
             ScrollView {
@@ -77,6 +77,9 @@ private struct InspectorContent: View {
             }
         }
         .task {
+            // Erst laden, wenn die Auswahl kurz stehen bleibt – beim Durchklicken nicht jedes Objekt auswerten.
+            try? await Task.sleep(for: .milliseconds(250))
+            guard !Task.isCancelled else { return }
             metadata = SpotlightMetadata.entries(for: item.url)
             guard item.isBrowsableFolder else { return }
             folderSize = await FileTransfer.folderSize(of: item.url)
@@ -140,6 +143,34 @@ enum SpotlightMetadata {
     }
 }
 
+/// Quick-Look-Vorschau, die erst startet, wenn die Auswahl kurz stehen bleibt. Bei Ordnern nur das Symbol:
+/// Quick Look würde dort XRay starten, das den ganzen Ordnerbaum durchsucht (sehr träge).
+struct DeferredQuickLook: View {
+    @Environment(BrowserState.self) private var browser
+    let item: FileItem
+    @State private var ready = false
+
+    var body: some View {
+        Group {
+            if ready, !item.isBrowsableFolder || browser.settings.folderPreviewUsesQuickLook {
+                QuickLookPreview(url: item.url)
+            } else {
+                Image(nsImage: IconCache.icon(for: item.url))
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: 128, maxHeight: 128)
+                    .padding(12)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .task(id: item.url) {
+            ready = false
+            try? await Task.sleep(for: .milliseconds(250))
+            if !Task.isCancelled { ready = true }
+        }
+    }
+}
+
 /// Echte Quick-Look-Vorschau (blättern in PDFs, Videos abspielen usw.).
 struct QuickLookPreview: NSViewRepresentable {
     let url: URL
@@ -192,7 +223,7 @@ private struct PanePreviewContent: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            QuickLookPreview(url: item.url)
+            DeferredQuickLook(item: item)
                 .frame(minWidth: 160, maxWidth: .infinity, maxHeight: .infinity)
             Divider()
             ScrollView {
@@ -229,6 +260,9 @@ private struct PanePreviewContent: View {
             .frame(width: 240)
         }
         .task {
+            // Erst laden, wenn die Auswahl kurz stehen bleibt – beim Durchklicken nicht jedes Objekt auswerten.
+            try? await Task.sleep(for: .milliseconds(250))
+            guard !Task.isCancelled else { return }
             metadata = SpotlightMetadata.entries(for: item.url)
             guard item.isBrowsableFolder else { return }
             folderSize = await FileTransfer.folderSize(of: item.url)
