@@ -112,6 +112,8 @@ if [[ $INSTALL == 1 ]]; then
   "$LSREGISTER" -u "$PWD/$APP" >/dev/null 2>&1 || true
   "$LSREGISTER" -f "$TARGET" >/dev/null 2>&1 || true
   touch "$TARGET"   # Dock/Finder zeigen das neue Icon sofort
+  # Spotlight sofort neu einlesen lassen – nach dem Löschen und Neukopieren fehlte die App sonst im Index
+  mdimport "$TARGET" >/dev/null 2>&1 || true
   echo "✓ Installiert: $TARGET"
 fi
 echo "✓ Fertig (Commit $COMMIT)"

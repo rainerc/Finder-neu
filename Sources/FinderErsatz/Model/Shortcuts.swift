@@ -8,6 +8,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
     case selectPattern, deselectPattern, deselectAll, invertSelection, selectSameExtension
     case search, newSmartFolder, saveSearch, reveal, terminal, batchRename, recents
     case back, forward, up, switchPane, nextTab, previousTab, syncPanes, swapPanes, addFavorite, connectServer
+    case compareFolders, markDifferences
     case viewList, viewBrief, viewIcons, viewColumns, viewGallery, toggleSidebar, toggleInspector, togglePanePreview, toggleHidden, reload
 
     var id: String { rawValue }
@@ -57,6 +58,8 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .previousTab: "Vorheriger Tab"
         case .syncPanes: "Anderes Fenster auf gleichen Ordner"
         case .swapPanes: "Fenster tauschen"
+        case .compareFolders: "Verzeichnisse vergleichen …"
+        case .markDifferences: "Unterschiede markieren"
         case .addFavorite: "Zu Favoriten hinzufügen"
         case .connectServer: "Mit Server verbinden"
         case .viewList: "Ansicht: Liste"
@@ -117,6 +120,8 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .previousTab: Shortcut("\t", [.control, .shift])
         case .syncPanes: Shortcut("=", .command)
         case .swapPanes: Shortcut("u", .command)
+        case .compareFolders: Shortcut("d", [.command, .shift])
+        case .markDifferences: Shortcut("d", [.command, .control])
         case .addFavorite: Shortcut("t", [.control, .command])
         case .connectServer: Shortcut("k", .command)
         case .viewList: Shortcut("1", .command)

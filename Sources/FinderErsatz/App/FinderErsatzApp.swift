@@ -180,6 +180,8 @@ struct BrowserCommands: Commands {
             item(.previousTab) { browser.previousTab() }
             item(.syncPanes) { browser.syncOtherPane() }
             item(.swapPanes) { browser.swapPanes() }
+            item(.compareFolders) { browser.showCompare() }
+            item(.markDifferences) { browser.markDifferences() }
             Divider()
             item(.addFavorite) { browser.addSelectionToFavorites() }
         }

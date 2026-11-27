@@ -13,6 +13,13 @@ struct BatchRenameRequest: Identifiable {
     var startWithRegex = false
 }
 
+/// „Verzeichnisse vergleichen“: die beiden Ordner der Fenster
+struct CompareRequest: Identifiable {
+    let id = UUID()
+    let left: URL
+    let right: URL
+}
+
 struct TransferRequest: Identifiable {
     let id = UUID()
     let sources: [URL]
@@ -355,6 +362,52 @@ final class BrowserState {
             if !moved.isEmpty { self?.recordUndo(.moved(moved)) }
             if !created.isEmpty { self?.recordUndo(.created(created)) }
         })
+    }
+
+    // MARK: Verzeichnisse vergleichen
+
+    var compareRequest: CompareRequest?
+
+    func showCompare() {
+        let left = pane(.left), right = pane(.right)
+        guard left.currentURL != right.currentURL else {
+            alertMessage = "Beide Fenster zeigen denselben Ordner – zum Vergleichen im anderen Fenster einen anderen Ordner öffnen."
+            return
+        }
+        compareRequest = CompareRequest(left: left.currentURL, right: right.currentURL)
+    }
+
+    /// Schnellvergleich wie im Total Commander: in beiden Fenstern alles auswählen, was sich unterscheidet
+    /// (eine Ebene, Datum und Größe).
+    func markDifferences() {
+        let left = pane(.left), right = pane(.right)
+        let leftURL = left.currentURL, rightURL = right.currentURL
+        guard leftURL != rightURL else { NSSound.beep(); return }
+        Task { @MainActor in
+            let entries = await Task.detached {
+                FolderCompare.compare(left: leftURL, right: rightURL, options: CompareOptions())
+            }.value
+            guard left.currentURL == leftURL, right.currentURL == rightURL else { return }
+            let differing = entries.filter { $0.status != .same }
+            left.selection = Set(differing.compactMap(\.left?.url))
+            right.selection = Set(differing.compactMap(\.right?.url))
+            let onlyLeft = entries.filter { $0.status == .leftOnly }.count
+            let onlyRight = entries.filter { $0.status == .rightOnly }.count
+            flash(differing.isEmpty ? "Keine Unterschiede" :
+                    "\(differing.count) Unterschiede (nur links \(onlyLeft), nur rechts \(onlyRight)) – ausgewählt")
+        }
+    }
+
+    /// Aus dem Vergleichsfenster kopieren; vorhandene Ziele werden ersetzt (alte Version in den Papierkorb).
+    func copyCompared(_ entries: [CompareEntry], toRight: Bool, leftRoot: URL, rightRoot: URL) {
+        let items: [TransferItem] = entries.compactMap { entry in
+            guard let source = toRight ? entry.left : entry.right else { return nil }
+            let destination = (toRight ? rightRoot : leftRoot).appending(path: entry.relativePath)
+            return TransferItem(source: source.url, destination: destination, move: false,
+                                replaceExisting: FileManager.default.fileExists(atPath: destination.path))
+        }
+        guard !items.isEmpty else { return }
+        enqueueRecordingUndo(title: "Abgleich \(toRight ? "nach rechts" : "nach links") (\(items.count))", items: items)
     }
 
     // MARK: Netzwerk

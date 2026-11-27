@@ -152,6 +152,9 @@ struct ContentView: View {
         } message: {
             Text("* steht für beliebige Zeichen, ? für genau eines. Mehrere Muster mit ; trennen, z. B. *.jpg; *.png")
         }
+        .sheet(item: $browser.compareRequest) { request in
+            CompareSheet(request: request).environment(browser)
+        }
         .sheet(item: $browser.renameTarget) { item in
             RenameSheet(item: item).environment(browser)
         }
