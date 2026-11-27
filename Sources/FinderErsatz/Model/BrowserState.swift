@@ -13,6 +13,19 @@ struct BatchRenameRequest: Identifiable {
     var startWithRegex = false
 }
 
+/// „Dateien nach Inhalt vergleichen“
+struct FileCompareRequest: Identifiable {
+    let id = UUID()
+    let left: URL
+    let right: URL
+}
+
+/// „Doppelte Dateien suchen“: Startordner
+struct DuplicatesRequest: Identifiable {
+    let id = UUID()
+    let folders: [URL]
+}
+
 /// „Verzeichnisse vergleichen“: die beiden Ordner der Fenster
 struct CompareRequest: Identifiable {
     let id = UUID()
@@ -38,7 +51,7 @@ struct ConflictRequest: Identifiable {
     let conflictNames: [String]
 }
 
-enum ConflictResolution { case replace, skip, keepBoth }
+enum ConflictResolution: Hashable { case replace, skip, keepBoth }
 
 /// Gesamtzustand: zwei Seiten mit Tabs, eine davon aktiv.
 @MainActor
@@ -332,13 +345,18 @@ final class BrowserState {
     }
 
     func resolveConflicts(_ resolution: ConflictResolution) {
+        resolveConflicts { _ in resolution }
+    }
+
+    /// Je Konflikt eigene Entscheidung (Überschreiben-Dialog: pro Zeile wählbar)
+    func resolveConflicts(_ choice: (TransferItem) -> ConflictResolution) {
         guard let request = conflictRequest else { return }
         conflictRequest = nil
         let fm = FileManager.default
         let items: [TransferItem] = request.items.compactMap { item in
             guard fm.fileExists(atPath: item.destination.path) else { return item }
             var resolved = item
-            switch resolution {
+            switch choice(item) {
             case .replace:
                 resolved.replaceExisting = true
             case .skip:
@@ -375,6 +393,51 @@ final class BrowserState {
             return
         }
         compareRequest = CompareRequest(left: left.currentURL, right: right.currentURL)
+    }
+
+    var fileCompareRequest: FileCompareRequest?
+    var duplicatesRequest: DuplicatesRequest?
+
+    /// Zwei Dateien nebeneinander vergleichen: zwei ausgewählte im aktiven Fenster, sonst je eine pro Fenster,
+    /// sonst die ausgewählte Datei und die gleichnamige im anderen Fenster.
+    func showFileCompare() {
+        let active = activePane.selectedItems.filter { !$0.isBrowsableFolder }
+        let other = otherPane.selectedItems.filter { !$0.isBrowsableFolder }
+        var pair: (URL, URL)?
+        if active.count == 2 {
+            pair = (active[0].url, active[1].url)
+        } else if active.count == 1, other.count == 1 {
+            pair = activeSide == .left ? (active[0].url, other[0].url) : (other[0].url, active[0].url)
+        } else if active.count == 1 {
+            let twin = otherPane.currentURL.appending(path: active[0].name)
+            if FileManager.default.fileExists(atPath: twin.path) {
+                pair = activeSide == .left ? (active[0].url, twin) : (twin, active[0].url)
+            }
+        }
+        guard let pair else {
+            alertMessage = "Zum Vergleichen zwei Dateien auswählen – beide im aktiven Fenster oder je eine links und rechts."
+            return
+        }
+        fileCompareRequest = FileCompareRequest(left: pair.0, right: pair.1)
+    }
+
+    /// Doppelte Dateien im aktiven Fenster suchen (bei unterschiedlichen Ordnern auch im anderen)
+    func showDuplicates() {
+        var folders = [activePane.currentURL]
+        if otherPane.currentURL != activePane.currentURL { folders.append(otherPane.currentURL) }
+        duplicatesRequest = DuplicatesRequest(folders: folders)
+    }
+
+    /// Ausgewählte Dateien in den Papierkorb (widerrufbar) – z. B. aus „Doppelte Dateien“
+    func trash(_ urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        run {
+            var pairs: [(original: URL, inTrash: URL)] = []
+            defer { if !pairs.isEmpty { recordUndo(.trashed(pairs)) } }
+            for url in urls {
+                if let inTrash = try FileService.trash(url) { pairs.append((original: url, inTrash: inTrash)) }
+            }
+        }
     }
 
     /// Schnellvergleich wie im Total Commander: in beiden Fenstern alles auswählen, was sich unterscheidet

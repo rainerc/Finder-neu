@@ -8,7 +8,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
     case selectPattern, deselectPattern, deselectAll, invertSelection, selectSameExtension
     case search, newSmartFolder, saveSearch, reveal, terminal, batchRename, recents
     case back, forward, up, switchPane, nextTab, previousTab, syncPanes, swapPanes, addFavorite, connectServer
-    case compareFolders, markDifferences
+    case compareFolders, markDifferences, quickFilter, branchView, compareFiles, findDuplicates
     case viewList, viewBrief, viewIcons, viewColumns, viewGallery, toggleSidebar, toggleInspector, togglePanePreview, toggleHidden, reload
 
     var id: String { rawValue }
@@ -60,6 +60,10 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .swapPanes: "Fenster tauschen"
         case .compareFolders: "Verzeichnisse vergleichen …"
         case .markDifferences: "Unterschiede markieren"
+        case .quickFilter: "Schnellfilter"
+        case .branchView: "Zweigansicht (alle Dateien aus Unterordnern)"
+        case .compareFiles: "Dateien nach Inhalt vergleichen …"
+        case .findDuplicates: "Doppelte Dateien suchen …"
         case .addFavorite: "Zu Favoriten hinzufügen"
         case .connectServer: "Mit Server verbinden"
         case .viewList: "Ansicht: Liste"
@@ -122,6 +126,10 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .swapPanes: Shortcut("u", .command)
         case .compareFolders: Shortcut("d", [.command, .shift])
         case .markDifferences: Shortcut("d", [.command, .control])
+        case .quickFilter: Shortcut("j", .command)
+        case .branchView: Shortcut("b", [.command, .control])
+        case .compareFiles: Shortcut("d", [.command, .control, .shift])
+        case .findDuplicates: nil
         case .addFavorite: Shortcut("t", [.control, .command])
         case .connectServer: Shortcut("k", .command)
         case .viewList: Shortcut("1", .command)

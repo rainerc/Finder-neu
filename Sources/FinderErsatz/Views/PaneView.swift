@@ -54,6 +54,15 @@ struct PaneView: View {
                 Divider()
             }
 
+            if pane.isBranchView {
+                BranchViewBanner(pane: pane)
+                Divider()
+            }
+            if pane.isQuickFilterVisible {
+                QuickFilterBar(pane: pane)
+                Divider()
+            }
+
             if browser.debugNoVSplit && !browser.showPanePreview {
                 // Layout-Test: ohne VSplitView
                 listArea(pane: pane, settings: settings)
@@ -197,8 +206,8 @@ struct PaneView: View {
             items: pane.items,
             selection: $pane.selection,
             sortOrder: $pane.sortOrder,
-            searching: pane.activeSearch != nil,
-            contentKey: pane.currentURL.path + (pane.activeSearch == nil ? "" : "#suche"),
+            searching: pane.activeSearch != nil || pane.isBranchView,
+            contentKey: pane.currentURL.path + (pane.activeSearch == nil ? "" : "#suche") + (pane.isBranchView ? "#zweig" : ""),
             relativeFolder: { pane.relativeFolder(of: $0) },
             style: NativeFileTable.Style(
                 listSize: settings.listSize,
@@ -416,6 +425,10 @@ struct PaneView: View {
             .action(ids.count > 1 ? "Namen kopieren" : "Name kopieren") {
                 activate(pane, ids)
                 browser.copyNamesToPasteboard()
+            },
+            .action("Inhalt vergleichen …") {
+                activate(pane, ids)
+                browser.showFileCompare()
             },
             .action("Terminal hier öffnen") {
                 activate(pane, ids)
@@ -686,6 +699,66 @@ struct PaneStatusBar: View {
 }
 
 /// Schmaler Fensterkopf fürs ruhige Layout: nur der Pfad (links ausgerichtet), aktives Fenster farbig.
+/// Schnellfilter über der Liste (wie Strg+S im Total Commander): Tippen schränkt die Liste ein, Esc schließt.
+struct QuickFilterBar: View {
+    @Bindable var pane: PaneState
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "line.3.horizontal.decrease.circle").foregroundStyle(.secondary)
+            TextField("Filter – Name enthält … (auch * und ?)", text: $pane.quickFilter)
+                .textFieldStyle(.plain)
+                .focused($focused)
+                .onSubmit { focused = false }
+                .onExitCommand { pane.closeQuickFilter() }
+            if !pane.quickFilter.isEmpty {
+                Text("\(pane.items.count) von \(pane.allItems.count)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+            Button("Filter schließen", systemImage: "xmark.circle.fill") { pane.closeQuickFilter() }
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .help("Filter schließen (Esc)")
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .background(Color.accentColor.opacity(0.08))
+        .onAppear { focused = true }
+    }
+}
+
+/// Hinweis über der Liste, solange die Zweigansicht aktiv ist.
+struct BranchViewBanner: View {
+    let pane: PaneState
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "list.bullet.indent")
+            Text("Zweigansicht: alle Dateien aus „\(pane.currentURL.lastPathComponent)“ und Unterordnern")
+                .lineLimit(1)
+                .truncationMode(.middle)
+            if pane.isBranchLoading {
+                ProgressView().controlSize(.small)
+            } else {
+                Text("(\(pane.allItems.count)\(pane.allItems.count >= 20_000 ? "+, gekürzt" : ""))")
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 4)
+            Button("Zweigansicht beenden", systemImage: "xmark.circle.fill") { pane.toggleBranchView() }
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .help("Zurück zur normalen Ansicht (⌃⌘B)")
+        }
+        .font(.caption)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .background(Color.purple.opacity(0.10))
+    }
+}
+
 /// Menü „Zuletzt besuchte Ordner“ neben der Pfadleiste (wie in Commander One); aktueller Ordner mit Häkchen.
 struct RecentFoldersMenu: View {
     let pane: PaneState

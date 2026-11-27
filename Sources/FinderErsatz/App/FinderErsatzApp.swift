@@ -182,6 +182,8 @@ struct BrowserCommands: Commands {
             item(.swapPanes) { browser.swapPanes() }
             item(.compareFolders) { browser.showCompare() }
             item(.markDifferences) { browser.markDifferences() }
+            item(.compareFiles) { browser.showFileCompare() }
+            item(.findDuplicates) { browser.showDuplicates() }
             Divider()
             item(.addFavorite) { browser.addSelectionToFavorites() }
         }
@@ -197,6 +199,11 @@ struct BrowserCommands: Commands {
             toggle(.togglePanePreview, isOn: Bindable(browser).showPanePreview)
             Divider()
             item(.toggleHidden) { browser.activePane.toggleHidden() }
+            item(.quickFilter) {
+                let pane = browser.activePane
+                if pane.isQuickFilterVisible { pane.closeQuickFilter() } else { pane.isQuickFilterVisible = true }
+            }
+            item(.branchView) { browser.activePane.toggleBranchView() }
             item(.reload) { browser.reloadAll() }
         }
         CommandGroup(after: .help) {

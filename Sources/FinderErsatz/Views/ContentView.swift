@@ -93,20 +93,8 @@ struct ContentView: View {
             TransferSheet(request: request)
                 .environment(browser)
         }
-        .alert(
-            "Objekte bereits vorhanden",
-            isPresented: Binding(get: { browser.conflictRequest != nil },
-                                 set: { if !$0 { browser.conflictRequest = nil } }),
-            presenting: browser.conflictRequest
-        ) { _ in
-            Button("Ersetzen", role: .destructive) { browser.resolveConflicts(.replace) }
-            Button("Beide behalten") { browser.resolveConflicts(.keepBoth) }
-            Button("Überspringen") { browser.resolveConflicts(.skip) }
-            Button("Abbrechen", role: .cancel) { browser.conflictRequest = nil }
-        } message: { request in
-            let names = request.conflictNames.prefix(5).map { "„\($0)“" }.joined(separator: ", ")
-            let more = request.conflictNames.count > 5 ? " und \(request.conflictNames.count - 5) weitere" : ""
-            Text("Im Ziel gibt es bereits \(names)\(more). Ersetzte Objekte kommen in den Papierkorb.")
+        .sheet(item: $browser.conflictRequest) { request in
+            ConflictSheet(request: request).environment(browser)
         }
         .sheet(isPresented: Binding(get: { browser.folderPreviewURL != nil },
                                     set: { if !$0 { browser.folderPreviewURL = nil } })) {
@@ -151,6 +139,12 @@ struct ContentView: View {
             Button("Abbrechen", role: .cancel) { browser.selectPatternMode = nil }
         } message: {
             Text("* steht für beliebige Zeichen, ? für genau eines. Mehrere Muster mit ; trennen, z. B. *.jpg; *.png")
+        }
+        .sheet(item: $browser.fileCompareRequest) { request in
+            FileCompareSheet(request: request)
+        }
+        .sheet(item: $browser.duplicatesRequest) { request in
+            DuplicatesSheet(request: request).environment(browser)
         }
         .sheet(item: $browser.compareRequest) { request in
             CompareSheet(request: request).environment(browser)

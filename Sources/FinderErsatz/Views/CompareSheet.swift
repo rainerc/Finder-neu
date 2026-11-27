@@ -18,6 +18,7 @@ struct CompareSheet: View {
     @State private var runToken = UUID()
     @State private var selection = Set<CompareEntry.ID>()
     @State private var pendingCopy: PendingCopy?
+    @State private var fileCompare: FileCompareRequest?
 
     /// Rückfrage vor dem Kopieren
     struct PendingCopy: Identifiable {
@@ -55,6 +56,7 @@ struct CompareSheet: View {
         .padding(16)
         .frame(minWidth: 820, idealWidth: 960, minHeight: 480, idealHeight: 620)
         .task(id: TaskKey(options: options, token: runToken)) { await run() }
+        .sheet(item: $fileCompare) { request in FileCompareSheet(request: request) }
         .confirmationDialog(pendingCopy?.title ?? "", isPresented: Binding(
             get: { pendingCopy != nil }, set: { if !$0 { pendingCopy = nil } }
         ), presenting: pendingCopy) { pending in
@@ -154,6 +156,10 @@ struct CompareSheet: View {
                 .disabled(chosen.allSatisfy { $0.left == nil })
             Button("Nach links kopieren") { askCopy(chosen, toRight: false) }
                 .disabled(chosen.allSatisfy { $0.right == nil })
+            if chosen.count == 1, let left = chosen[0].left, let right = chosen[0].right,
+               !left.isDirectory, !right.isDirectory {
+                Button("Inhalt vergleichen …") { fileCompare = FileCompareRequest(left: left.url, right: right.url) }
+            }
             Divider()
             Button("In den Fenstern zeigen") { reveal(chosen) }
         }

@@ -34,6 +34,11 @@ final class PaneState: Identifiable {
     private(set) var currentURL: URL {
         didSet { if currentURL != oldValue { RecentFolders.shared.record(currentURL) } }
     }
+    /// Alle Objekte des Ordners (bzw. der Suche/Zweigansicht) – ungefiltert
+    private(set) var allItems: [FileItem] = [] {
+        didSet { applyQuickFilter() }
+    }
+    /// Angezeigte Objekte: `allItems`, eingeschränkt durch den Schnellfilter
     private(set) var items: [FileItem] = []
     var selection = Set<FileItem.ID>()
     var sortOrder: [KeyPathComparator<FileItem>] = [KeyPathComparator(\.name, comparator: .localizedStandard)] {
@@ -77,7 +82,7 @@ final class PaneState: Identifiable {
     var canGoForward: Bool { !forwardStack.isEmpty }
     var canGoUp: Bool { currentURL.path != "/" }
 
-    var selectedItems: [FileItem] { items.filter { selection.contains($0.id) } }
+    var selectedItems: [FileItem] { allItems.filter { selection.contains($0.id) } }
 
     init(url: URL) {
         self.currentURL = url.normalizedFileURL
@@ -90,6 +95,8 @@ final class PaneState: Identifiable {
         let target = url.normalizedFileURL
         guard target != currentURL else { return }
         stopSearch()
+        leaveBranchView()
+        closeQuickFilter()
         backStack.append(currentURL)
         forwardStack.removeAll()
         currentURL = target
@@ -100,6 +107,8 @@ final class PaneState: Identifiable {
     func goBack() {
         guard let previous = backStack.popLast() else { return }
         stopSearch()
+        leaveBranchView()
+        closeQuickFilter()
         forwardStack.append(currentURL)
         currentURL = previous
         selection.removeAll()
@@ -109,6 +118,8 @@ final class PaneState: Identifiable {
     func goForward() {
         guard let next = forwardStack.popLast() else { return }
         stopSearch()
+        leaveBranchView()
+        closeQuickFilter()
         backStack.append(currentURL)
         currentURL = next
         selection.removeAll()
@@ -122,6 +133,87 @@ final class PaneState: Identifiable {
         selection = [child]
     }
 
+    // MARK: Schnellfilter (wie Total Commander, Strg+S)
+
+    /// Eingetippter Filter – zeigt nur Namen, die ihn enthalten (Groß/klein egal; * und ? als Platzhalter)
+    var quickFilter = "" {
+        didSet { if quickFilter != oldValue { applyQuickFilter() } }
+    }
+    var isQuickFilterVisible = false
+
+    func closeQuickFilter() {
+        isQuickFilterVisible = false
+        quickFilter = ""
+    }
+
+    private func applyQuickFilter() {
+        let text = quickFilter.trimmingCharacters(in: .whitespaces)
+        guard !text.isEmpty else {
+            items = allItems
+            return
+        }
+        let filtered: [FileItem]
+        if text.contains("*") || text.contains("?") {
+            let predicate = NSPredicate(format: "SELF LIKE[cd] %@", text)
+            filtered = allItems.filter { predicate.evaluate(with: $0.name) }
+        } else {
+            filtered = allItems.filter { $0.name.localizedStandardContains(text) }
+        }
+        items = filtered
+        let visible = Set(filtered.map(\.id))
+        if !selection.isSubset(of: visible) { selection.formIntersection(visible) }
+    }
+
+    // MARK: Zweigansicht (wie Total Commander, Strg+B)
+
+    /// Alle Dateien aus dem Ordner und seinen Unterordnern in einer flachen Liste
+    private(set) var isBranchView = false
+    private(set) var isBranchLoading = false
+    @ObservationIgnored private var branchTask: Task<Void, Never>?
+    @ObservationIgnored private var branchToken = UUID()
+
+    func toggleBranchView() {
+        guard activeSearch == nil else { return }
+        isBranchView.toggle()
+        selection.removeAll()
+        if !isBranchView {
+            branchTask?.cancel()
+            isBranchLoading = false
+        }
+        reload()
+    }
+
+    private func leaveBranchView() {
+        guard isBranchView else { return }
+        isBranchView = false
+        isBranchLoading = false
+        branchTask?.cancel()
+    }
+
+    private func loadBranch() {
+        let folder = currentURL, hidden = showHidden, token = UUID()
+        branchToken = token
+        branchTask?.cancel()
+        isBranchLoading = true
+        branchTask = Task.detached(priority: .userInitiated) { [weak self] in
+            let loaded = FileService.branchContents(of: folder, includeHidden: hidden)
+            guard !Task.isCancelled else { return }
+            await self?.finishBranch(loaded, token: token)
+        }
+    }
+
+    private func finishBranch(_ loaded: [FileItem], token: UUID) {
+        guard token == branchToken, isBranchView else { return }
+        isBranchLoading = false
+        errorMessage = nil
+        if !isUnchanged(loaded) {
+            allItems = loaded
+            applySort()
+            selection.formIntersection(Set(allItems.map(\.id)))
+        }
+        watchCurrentFolder()
+    }
+
     func toggleHidden() {
         showHidden.toggle()
         reload()
@@ -132,7 +224,11 @@ final class PaneState: Identifiable {
     func reload() {
         if activeSearch != nil {
             // Während einer Suche: nur gelöschte/verschobene Treffer entfernen.
-            items.removeAll { !FileManager.default.fileExists(atPath: $0.url.path) }
+            allItems.removeAll { !FileManager.default.fileExists(atPath: $0.url.path) }
+            return
+        }
+        if isBranchView {
+            loadBranch()
             return
         }
         do {
@@ -143,14 +239,14 @@ final class PaneState: Identifiable {
                 watchCurrentFolder()
                 return
             }
-            items = loaded
+            allItems = loaded
             errorMessage = nil
             errorIsPermission = false
             applyFolderSizes()
             applySort()
-            selection.formIntersection(Set(items.map(\.id)))
+            selection.formIntersection(Set(allItems.map(\.id)))
         } catch {
-            items = []
+            allItems = []
             errorMessage = Self.describe(error, for: currentURL)
             errorIsPermission = Self.isPermissionError(error)
         }
@@ -159,8 +255,8 @@ final class PaneState: Identifiable {
 
     /// Gleiche Objekte mit gleichen angezeigten Werten wie bisher? (Ordnergrößen bleiben unberücksichtigt.)
     private func isUnchanged(_ loaded: [FileItem]) -> Bool {
-        guard !items.isEmpty, loaded.count == items.count else { return false }
-        let current = Dictionary(items.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        guard !allItems.isEmpty, loaded.count == allItems.count else { return false }
+        let current = Dictionary(allItems.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         return loaded.allSatisfy { new in
             guard let old = current[new.id] else { return false }
             return old.name == new.name && old.modified == new.modified && old.tagList == new.tagList
@@ -207,12 +303,12 @@ final class PaneState: Identifiable {
         // Auf Netzlaufwerken wäre das sehr langsam.
         guard (try? currentURL.resourceValues(forKeys: [.volumeIsLocalKey]).volumeIsLocal) != false else { return }
         var missing: [URL] = []
-        for index in items.indices where items[index].isBrowsableFolder {
-            if let cached = folderSizeCache[items[index].url], cached.modified == items[index].modified {
-                items[index].size = cached.size
-                items[index].folderSizeKnown = true
+        for index in allItems.indices where allItems[index].isBrowsableFolder {
+            if let cached = folderSizeCache[allItems[index].url], cached.modified == allItems[index].modified {
+                allItems[index].size = cached.size
+                allItems[index].folderSizeKnown = true
             } else {
-                missing.append(items[index].url)
+                missing.append(allItems[index].url)
             }
         }
         guard !missing.isEmpty else { return }
@@ -230,11 +326,11 @@ final class PaneState: Identifiable {
 
     private func setFolderSize(_ size: Int64, for url: URL, in folder: URL) {
         guard folder == currentURL, activeSearch == nil,
-              let index = items.firstIndex(where: { $0.id == url }) else { return }
-        folderSizeCache[url] = (items[index].modified, size)
-        guard !items[index].folderSizeKnown || items[index].size != size else { return }
-        items[index].size = size
-        items[index].folderSizeKnown = true
+              let index = allItems.firstIndex(where: { $0.id == url }) else { return }
+        folderSizeCache[url] = (allItems[index].modified, size)
+        guard !allItems[index].folderSizeKnown || allItems[index].size != size else { return }
+        allItems[index].size = size
+        allItems[index].folderSizeKnown = true
     }
 
     private func folderSizesFinished(in folder: URL) {
@@ -275,7 +371,7 @@ final class PaneState: Identifiable {
         searchToken = token
         lastSearch = query
         activeSearch = query
-        items = []
+        allItems = []
         selection = []
         errorMessage = nil
         isSearchRunning = true
@@ -320,8 +416,8 @@ final class PaneState: Identifiable {
 
     private func appendSearchResults(_ batch: [FileItem], token: UUID) {
         guard token == searchToken else { return }
-        items += batch
-        if items.count <= 2000 { applySort() }
+        allItems += batch
+        if allItems.count <= 2000 { applySort() }
     }
 
     private func searchFinished(token: UUID, error: String?) {
@@ -329,7 +425,7 @@ final class PaneState: Identifiable {
             logSearch("Suche beendet, aber veraltet (abgelöst)")
             return
         }
-        logSearch("Suche fertig: \(items.count) Treffer\(error.map { ", Fehler: \($0)" } ?? "")")
+        logSearch("Suche fertig: \(allItems.count) Treffer\(error.map { ", Fehler: \($0)" } ?? "")")
         isSearchRunning = false
         searchTask = nil
         applySort()
@@ -338,7 +434,7 @@ final class PaneState: Identifiable {
 
     /// Pfad eines Treffers relativ zum Suchordner (für die Anzeige).
     func relativeFolder(of item: FileItem) -> String {
-        guard let root = activeSearch?.root.path else { return "" }
+        guard let root = activeSearch?.root.path ?? (isBranchView ? currentURL.path : nil) else { return "" }
         let parent = item.url.deletingLastPathComponent().path
         guard parent.hasPrefix(root) else { return parent }
         let rest = String(parent.dropFirst(root.count)).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
@@ -374,12 +470,12 @@ final class PaneState: Identifiable {
 
     private func applySort() {
         // Ordner immer zuerst, danach nach gewählter Spalte.
-        let folders = items.filter(\.isBrowsableFolder).sorted(using: sortOrder)
-        let files = items.filter { !$0.isBrowsableFolder }.sorted(using: sortOrder)
+        let folders = allItems.filter(\.isBrowsableFolder).sorted(using: sortOrder)
+        let files = allItems.filter { !$0.isBrowsableFolder }.sorted(using: sortOrder)
         let sorted = folders + files
         // Nur neu setzen, wenn sich die Reihenfolge ändert (jede Zuweisung lässt die Tabelle neu aufbauen).
-        if sorted.map(\.id) != items.map(\.id) || sorted.count != items.count {
-            items = sorted
+        if sorted.map(\.id) != allItems.map(\.id) || sorted.count != allItems.count {
+            allItems = sorted
         }
     }
 }

@@ -13,6 +13,24 @@ enum FileService {
         return urls.compactMap(FileItem.init(url:))
     }
 
+    /// Zweigansicht: alle Dateien aus dem Ordner und allen Unterordnern (ohne die Ordner selbst, Pakete als Datei).
+    /// Läuft im Hintergrund; höchstens `limit` Objekte.
+    static func branchContents(of directory: URL, includeHidden: Bool, limit: Int = 20_000) -> [FileItem] {
+        var options: FileManager.DirectoryEnumerationOptions = [.skipsPackageDescendants]
+        if !includeHidden { options.insert(.skipsHiddenFiles) }
+        guard let enumerator = FileManager.default.enumerator(
+            at: directory, includingPropertiesForKeys: FileItem.resourceKeys, options: options,
+            errorHandler: { _, _ in true }
+        ) else { return [] }
+        var result: [FileItem] = []
+        while let url = enumerator.nextObject() as? URL {
+            if Task.isCancelled || result.count >= limit { break }
+            guard let item = FileItem(url: url), !item.isBrowsableFolder else { continue }
+            result.append(item)
+        }
+        return result
+    }
+
     static func copy(_ source: URL, into directory: URL) throws {
         let target = uniqueURL(for: source.lastPathComponent, in: directory)
         try FileManager.default.copyItem(at: source, to: target)
