@@ -174,6 +174,16 @@ struct ActionBar: View {
             Button("F5 Kopieren →") { browser.copyToOtherPane() }
             Button("F6 Verschieben →") { browser.moveToOtherPane() }
             Button("⇧⌘N Neuer Ordner") { browser.newFolder() }
+            // Klick legt eine Textdatei an, der Pfeil bietet die anderen Typen
+            Menu("⌃⇧⌘N Neue Datei") {
+                ForEach(NewFileType.allCases, id: \.self) { type in
+                    Button(type.title) { browser.newFile(type) }
+                }
+            } primaryAction: {
+                browser.newFile()
+            }
+            .menuStyle(.button)
+            .fixedSize()
             Button("⌘⌫ Papierkorb") { browser.trashSelection() }
             Spacer()
             if let message = browser.flashMessage {
