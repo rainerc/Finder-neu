@@ -21,16 +21,21 @@ struct PaneView: View {
             }
             Group {
                 if settings.compactLayout {
-                    SlimPaneHeader(pane: pane, isActive: isActive)
+                    SlimPaneHeader(pane: pane, isActive: isActive, onActivate: { browser.activeSide = side })
                 } else {
-                    PaneHeader(pane: pane, showsNewTabButton: group.tabs.count <= 1) {
+                    PaneHeader(pane: pane, showsNewTabButton: group.tabs.count <= 1, onNewTab: {
                         browser.activeSide = side
                         browser.newTab()
-                    }
+                    }, onActivate: { browser.activeSide = side })
                 }
             }
-            // Gleichzeitig statt exklusiv: sonst schluckt der Tipp die Klicks auf die Pfad-Elemente.
-            .simultaneousGesture(TapGesture().onEnded { browser.activeSide = side })
+            // Klick auf freie Fläche aktiviert das Fenster. Als Hintergrund, damit Knöpfe und
+            // Pfad-Elemente ihre Klicks selbst bekommen (ein Gesten-Modifier darüber schluckte sie).
+            .background(
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture { browser.activeSide = side }
+            )
             Divider()
             if pane.isSearchBarVisible {
                 SearchBar(pane: pane)
@@ -507,6 +512,8 @@ struct PaneHeader: View {
     /// Bei nur einem Tab ist die Tab-Leiste ausgeblendet – dann sitzt der „+“-Knopf hier.
     var showsNewTabButton = false
     var onNewTab: () -> Void = {}
+    /// Fenster aktivieren (Klick in die Pfadleiste)
+    var onActivate: () -> Void = {}
 
     var body: some View {
         HStack(spacing: 4) {
@@ -516,7 +523,10 @@ struct PaneHeader: View {
                 .disabled(!pane.canGoForward)
             Button("Nach oben", systemImage: "arrow.up") { pane.goUp() }
                 .disabled(!pane.canGoUp)
-            PathBar(url: pane.currentURL) { pane.navigate(to: $0) }
+            PathBar(url: pane.currentURL) { url in
+                pane.navigate(to: url)
+                onActivate()
+            }
             Spacer(minLength: 4)
             if showsNewTabButton {
                 Button("Neuer Tab", systemImage: "plus.square.on.square", action: onNewTab)
@@ -662,6 +672,7 @@ struct SlimPaneHeader: View {
     @Environment(BrowserState.self) private var browser
     let pane: PaneState
     let isActive: Bool
+    var onActivate: () -> Void = {}
 
     var body: some View {
         HStack(spacing: 6) {
@@ -670,7 +681,10 @@ struct SlimPaneHeader: View {
                 Text(pane.title).bold().lineLimit(1)
                 Spacer()
             } else {
-                PathBar(url: pane.currentURL) { pane.navigate(to: $0) }
+                PathBar(url: pane.currentURL) { url in
+                    pane.navigate(to: url)
+                    onActivate()
+                }
             }
         }
         .font(.callout)
