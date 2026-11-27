@@ -245,8 +245,21 @@ final class PaneState: Identifiable {
     /// Sortierung vor einer Abfrage mit eigener Sortierung (z. B. „Zuletzt benutzt“), wird danach wiederhergestellt.
     @ObservationIgnored private var sortOrderBeforeSearch: [KeyPathComparator<FileItem>]?
 
+    /// Protokoll der letzten Such-Schritte (Hilfe → Such-Diagnose kopieren)
+    @ObservationIgnored private(set) var searchLog: [String] = []
+
+    private func logSearch(_ text: String) {
+        let time = Date().formatted(.dateTime.hour().minute().second())
+        searchLog.append("\(time) \(text)")
+        if searchLog.count > 30 { searchLog.removeFirst(searchLog.count - 30) }
+    }
+
     func startSearch(_ query: SearchQuery, sortOrder customSort: [KeyPathComparator<FileItem>]? = nil) {
-        guard !query.isEmpty else { return }
+        guard !query.isEmpty else {
+            logSearch("startSearch abgelehnt: Abfrage leer („\(query.title ?? "-")“)")
+            return
+        }
+        logSearch("startSearch „\(query.title ?? query.term)“")
         cancelSearchTask()
         sizeTask?.cancel()
         if let customSort {
@@ -286,6 +299,7 @@ final class PaneState: Identifiable {
     /// Beendet die Suche und zeigt wieder den Ordnerinhalt.
     func stopSearch() {
         guard activeSearch != nil || isSearchRunning else { return }
+        logSearch("stopSearch (Ordner: \(currentURL.path))")
         cancelSearchTask()
         searchToken = UUID()
         activeSearch = nil
@@ -309,7 +323,11 @@ final class PaneState: Identifiable {
     }
 
     private func searchFinished(token: UUID, error: String?) {
-        guard token == searchToken else { return }
+        guard token == searchToken else {
+            logSearch("Suche beendet, aber veraltet (abgelöst)")
+            return
+        }
+        logSearch("Suche fertig: \(items.count) Treffer\(error.map { ", Fehler: \($0)" } ?? "")")
         isSearchRunning = false
         searchTask = nil
         applySort()

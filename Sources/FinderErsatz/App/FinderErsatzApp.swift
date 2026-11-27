@@ -201,6 +201,11 @@ struct BrowserCommands: Commands {
                 Toggle("HStack statt HSplitView", isOn: Bindable(browser).debugPlainPaneStack)
                 Toggle("Ohne VSplitView (Vorschau unten aus)", isOn: Bindable(browser).debugNoVSplit)
             }
+            Button("Such-Diagnose kopieren") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(browser.searchDiagnosticReport(), forType: .string)
+                browser.flash("Such-Diagnose in der Zwischenablage")
+            }
             Button("Layout-Diagnose kopieren") {
                 let report = MainSplitViewController.diagnosticReport()
                 NSPasteboard.general.clearContents()

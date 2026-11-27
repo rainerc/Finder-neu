@@ -129,6 +129,30 @@ enum FileSearch {
     /// eine Abfrage; Platzhalter und reguläre Ausdrücke werden danach an den Namen geprüft.
     private static func spotlight(_ query: SearchQuery, criteria: [SearchCriterion],
                                   onBatch: @Sendable ([FileItem]) -> Void) throws {
+        let arguments = spotlightArguments(query, criteria: criteria)
+        let term = query.term.trimmingCharacters(in: .whitespaces)
+        let output = try ProcessRunner.run("/usr/bin/mdfind", arguments)
+
+        let needsNameCheck = !term.isEmpty && (query.mode == .wildcard || query.mode == .regex)
+        let matchesName: (String) -> Bool = try needsNameCheck ? nameMatcher(for: query) : { _ in true }
+        var batch: [FileItem] = []
+        var total = 0
+        for line in output.split(separator: "\n") {
+            if Task.isCancelled { break }
+            let path = String(line)
+            if !query.includeHidden, path.contains("/.") { continue }
+            let url = URL(filePath: path)
+            guard matchesName(url.lastPathComponent), let item = FileItem(url: url) else { continue }
+            batch.append(item)
+            total += 1
+            if batch.count >= 200 { onBatch(batch); batch.removeAll() }
+            if total >= maxResults { break }
+        }
+        if !batch.isEmpty { onBatch(batch) }
+    }
+
+    /// Argumente für `mdfind` (auch für die Such-Diagnose).
+    static func spotlightArguments(_ query: SearchQuery, criteria: [SearchCriterion]) -> [String] {
         let flags = query.caseSensitive ? "" : "cd"
         let term = SearchCriterion.escape(query.term.trimmingCharacters(in: .whitespaces))
         var parts: [String] = []
@@ -154,24 +178,21 @@ enum FileSearch {
         var arguments: [String] = []
         if !query.searchesEverywhere { arguments += ["-onlyin", query.root.path] }
         arguments.append(parts.joined(separator: " && "))
-        let output = try ProcessRunner.run("/usr/bin/mdfind", arguments)
+        return arguments
+    }
 
-        let needsNameCheck = !term.isEmpty && (query.mode == .wildcard || query.mode == .regex)
-        let matchesName: (String) -> Bool = try needsNameCheck ? nameMatcher(for: query) : { _ in true }
-        var batch: [FileItem] = []
-        var total = 0
-        for line in output.split(separator: "\n") {
-            if Task.isCancelled { break }
-            let path = String(line)
-            if !query.includeHidden, path.contains("/.") { continue }
-            let url = URL(filePath: path)
-            guard matchesName(url.lastPathComponent), let item = FileItem(url: url) else { continue }
-            batch.append(item)
-            total += 1
-            if batch.count >= 200 { onBatch(batch); batch.removeAll() }
-            if total >= maxResults { break }
+    /// Beschreibt, wie eine Abfrage ausgeführt würde (Hilfe → Such-Diagnose).
+    static func describe(_ query: SearchQuery) -> String {
+        if let raw = query.spotlightQuery {
+            let root = query.searchesEverywhere ? [] : ["-onlyin", query.root.path]
+            return "mdfind " + (root + [raw]).map { "'\($0)'" }.joined(separator: " ")
         }
-        if !batch.isEmpty { onBatch(batch) }
+        let criteria = query.criteria.filter(\.isComplete)
+        if query.mode == .spotlight
+            || ((!criteria.isEmpty || query.scope == .thisMac) && canUseSpotlight(query)) {
+            return "mdfind " + spotlightArguments(query, criteria: criteria).map { "'\($0)'" }.joined(separator: " ")
+        }
+        return "Ordner durchsuchen ab \(query.root.path) (ohne Spotlight), Bedingungen: \(criteria.count)"
     }
 
     /// Fertige Spotlight-Abfrage (Zuletzt benutzt, Tags, intelligente Ordner).

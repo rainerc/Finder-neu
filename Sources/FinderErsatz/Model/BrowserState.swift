@@ -670,6 +670,35 @@ final class BrowserState {
         smartFolders.add(name: name.isEmpty ? "Suche" : name, query: query)
     }
 
+    /// Hilfe → „Such-Diagnose kopieren“: aktuelle/letzte Suche, mdfind-Aufruf, Protokoll, gesicherte intelligente Ordner.
+    func searchDiagnosticReport() -> String {
+        let pane = activePane
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        func json(_ query: SearchQuery?) -> String {
+            guard let query, let data = try? encoder.encode(query) else { return "–" }
+            return String(decoding: data, as: UTF8.self)
+        }
+        var lines: [String] = []
+        lines.append("Such-Diagnose (Commit \(Bundle.main.object(forInfoDictionaryKey: "FEGitCommit") as? String ?? "?"))")
+        lines.append("Ordner: \(pane.currentURL.path)")
+        lines.append("Treffer angezeigt: \(pane.items.count), läuft: \(pane.isSearchRunning), Fehler: \(pane.errorMessage ?? "–")")
+        lines.append("Suchleiste sichtbar: \(pane.isSearchBarVisible), bearbeitet: \(pane.editingSmartFolder?.uuidString ?? "–")")
+        lines.append("\nAktive Suche:\n\(json(pane.activeSearch))")
+        if let active = pane.activeSearch { lines.append("Ausführung: \(FileSearch.describe(active))") }
+        lines.append("\nLetzte Suche:\n\(json(pane.lastSearch))")
+        if let last = pane.lastSearch { lines.append("Ausführung: \(FileSearch.describe(last))") }
+        lines.append("\nProtokoll:")
+        lines += pane.searchLog
+        lines.append("\nIntelligente Ordner:")
+        for folder in smartFolders.items {
+            lines.append("• \(folder.name) – leer: \(folder.query.isEmpty)")
+            lines.append("  Ausführung: \(FileSearch.describe(folder.query))")
+            lines.append(json(folder.query))
+        }
+        return lines.joined(separator: "\n")
+    }
+
     func showSmartFolder(_ folder: SmartFolder) {
         showQuery(folder.displayQuery)
     }
