@@ -9,6 +9,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
     case search, newSmartFolder, saveSearch, reveal, terminal, batchRename, recents
     case back, forward, up, switchPane, nextTab, previousTab, syncPanes, swapPanes, addFavorite, connectServer
     case compareFolders, markDifferences, quickFilter, branchView, compareFiles, findDuplicates
+    case favoritesMenu, restoreSelection, syncBrowsing, checksums, viewer, packageContents
     case viewList, viewBrief, viewIcons, viewColumns, viewGallery, toggleSidebar, toggleInspector, togglePanePreview, toggleHidden, reload
 
     var id: String { rawValue }
@@ -64,6 +65,12 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .branchView: "Zweigansicht (alle Dateien aus Unterordnern)"
         case .compareFiles: "Dateien nach Inhalt vergleichen …"
         case .findDuplicates: "Doppelte Dateien suchen …"
+        case .favoritesMenu: "Favoriten-Menü"
+        case .restoreSelection: "Auswahl wiederherstellen"
+        case .syncBrowsing: "Synchrones Blättern"
+        case .checksums: "Prüfsummen …"
+        case .viewer: "Betrachter (Text/Hex)"
+        case .packageContents: "Paketinhalt anzeigen"
         case .addFavorite: "Zu Favoriten hinzufügen"
         case .connectServer: "Mit Server verbinden"
         case .viewList: "Ansicht: Liste"
@@ -130,6 +137,12 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .branchView: Shortcut("b", [.command, .control])
         case .compareFiles: Shortcut("d", [.command, .control, .shift])
         case .findDuplicates: nil
+        case .favoritesMenu: Shortcut("g", [.command, .control])
+        case .restoreSelection: Shortcut("r", [.command, .control])
+        case .syncBrowsing: Shortcut("l", [.command, .control])
+        case .checksums: Shortcut("k", [.command, .control])
+        case .viewer: Shortcut(functionKey: 3, .shift)
+        case .packageContents: Shortcut("o", [.command, .control])
         case .addFavorite: Shortcut("t", [.control, .command])
         case .connectServer: Shortcut("k", .command)
         case .viewList: Shortcut("1", .command)

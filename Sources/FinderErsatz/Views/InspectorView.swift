@@ -81,14 +81,14 @@ private struct InspectorContent: View {
             try? await Task.sleep(for: .milliseconds(250))
             guard !Task.isCancelled else { return }
             metadata = SpotlightMetadata.entries(for: item.url)
-            guard item.isBrowsableFolder else { return }
+            guard item.isDirectory else { return }   // Ordner und Pakete
             folderSize = await FileTransfer.folderSize(of: item.url)
             folderSizeSkipped = folderSize == nil && !Task.isCancelled
         }
     }
 
     private var sizeText: String {
-        guard item.isBrowsableFolder else { return item.size.formatted(.byteCount(style: .file)) }
+        guard item.isDirectory else { return item.size.formatted(.byteCount(style: .file)) }
         if folderSizeSkipped { return "– (Netzlaufwerk, siehe ⌘I)" }
         guard let folderSize else { return "Wird berechnet …" }
         return folderSize.formatted(.byteCount(style: .file))
@@ -267,14 +267,14 @@ private struct PanePreviewContent: View {
             try? await Task.sleep(for: .milliseconds(250))
             guard !Task.isCancelled else { return }
             metadata = SpotlightMetadata.entries(for: item.url)
-            guard item.isBrowsableFolder else { return }
+            guard item.isDirectory else { return }   // Ordner und Pakete
             folderSize = await FileTransfer.folderSize(of: item.url)
             folderSizeSkipped = folderSize == nil && !Task.isCancelled
         }
     }
 
     private var sizeText: String {
-        guard item.isBrowsableFolder else { return item.size.formatted(.byteCount(style: .file)) }
+        guard item.isDirectory else { return item.size.formatted(.byteCount(style: .file)) }
         if folderSizeSkipped { return "– (Netzlaufwerk, siehe ⌘I)" }
         return folderSize.map { $0.formatted(.byteCount(style: .file)) } ?? "Wird berechnet …"
     }

@@ -32,7 +32,11 @@ final class PaneState: Identifiable {
     let id = UUID()
 
     private(set) var currentURL: URL {
-        didSet { if currentURL != oldValue { RecentFolders.shared.record(currentURL) } }
+        didSet {
+            guard currentURL != oldValue else { return }
+            RecentFolders.shared.record(currentURL)
+            BrowserState.current?.paneDidChangeFolder(self, from: oldValue)
+        }
     }
     /// Alle Objekte des Ordners (bzw. der Suche/Zweigansicht) – ungefiltert
     private(set) var allItems: [FileItem] = [] {
@@ -89,6 +93,23 @@ final class PaneState: Identifiable {
         reload()
     }
 
+    // MARK: Auswahl merken (Total Commander: „Auswahl wiederherstellen“)
+
+    /// Zuletzt gemerkte Auswahl – vor Kopieren, Löschen, Abwählen, Ordnerwechsel usw.
+    @ObservationIgnored private var savedSelection = Set<FileItem.ID>()
+
+    func rememberSelection() {
+        if !selection.isEmpty { savedSelection = selection }
+    }
+
+    /// Stellt die gemerkte Auswahl wieder her (nur Objekte, die es hier noch gibt). Liefert deren Anzahl.
+    @discardableResult
+    func restoreSelection() -> Int {
+        let available = savedSelection.intersection(allItems.map(\.id))
+        if !available.isEmpty { selection = available }
+        return available.count
+    }
+
     // MARK: Navigation
 
     func navigate(to url: URL) {
@@ -99,6 +120,7 @@ final class PaneState: Identifiable {
         closeQuickFilter()
         backStack.append(currentURL)
         forwardStack.removeAll()
+        rememberSelection()
         currentURL = target
         selection.removeAll()
         reload()
@@ -299,11 +321,14 @@ final class PaneState: Identifiable {
     /// Setzt bekannte Größen sofort und berechnet die übrigen im Hintergrund.
     private func applyFolderSizes() {
         sizeTask?.cancel()
-        guard UserDefaults.standard.bool(forKey: AppSettings.calculateFolderSizesKey) else { return }
+        // Pakete (z. B. DEVONthink-Datenbanken, Apps) zeigen wie im Finder immer ihre Größe,
+        // normale Ordner nur mit der Einstellung „Ordnergrößen berechnen“.
+        let includeFolders = UserDefaults.standard.bool(forKey: AppSettings.calculateFolderSizesKey)
         // Auf Netzlaufwerken wäre das sehr langsam.
         guard (try? currentURL.resourceValues(forKeys: [.volumeIsLocalKey]).volumeIsLocal) != false else { return }
         var missing: [URL] = []
-        for index in allItems.indices where allItems[index].isBrowsableFolder {
+        for index in allItems.indices
+        where allItems[index].isDirectory && (includeFolders || allItems[index].isPackage) {
             if let cached = folderSizeCache[allItems[index].url], cached.modified == allItems[index].modified {
                 allItems[index].size = cached.size
                 allItems[index].folderSizeKnown = true

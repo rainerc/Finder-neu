@@ -222,6 +222,7 @@ final class BrowserState {
 
     /// Komprimiert die Auswahl als ZIP in den aktuellen Ordner.
     func compressSelection() {
+        activePane.rememberSelection()
         let pane = activePane
         let sources = pane.selectedItems.map(\.url)
         guard !sources.isEmpty else { return }
@@ -288,6 +289,7 @@ final class BrowserState {
     func moveToOtherPane() { prepareTransfer(move: true) }
 
     private func prepareTransfer(move: Bool) {
+        activePane.rememberSelection()
         let urls = activePane.selectedItems.map(\.url)
         guard !urls.isEmpty else { return }
         transferRequest = TransferRequest(
@@ -531,6 +533,7 @@ final class BrowserState {
         guard !urls.isEmpty else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.writeObjects(urls as [NSURL])
+        activePane.rememberSelection()
     }
 
     /// ⌘V kopiert, ⌥⌘V bewegt die Dateien aus der Zwischenablage in den aktuellen Ordner.
@@ -577,39 +580,30 @@ final class BrowserState {
 
     // MARK: Auswahl (wie Commander One)
 
-    /// Dialog „Auswählen …“ / „Auswahl aufheben …“ mit Muster (true = auswählen, false = abwählen)
-    var selectPatternMode: Bool?
+    /// Dialog „Auswählen …“ / „Auswahl aufheben …“ (Muster, Größe, Datum, Inhalt – `SelectSheet`)
+    var selectRequest: SelectRequest?
+    /// Vorschlag für das Muster im Dialog (Endung der aktuellen Auswahl)
     var selectPatternText = "*"
+    /// Synchrones Blättern: Wechselt das aktive Fenster in einen Unterordner oder nach oben, folgt das andere.
+    var syncBrowsing = false
+    var checksumRequest: ChecksumRequest?
+    var viewerRequest: ViewerRequest?
 
     func showSelectPattern(select: Bool) {
         if let ext = activePane.selectedItems.first?.fileExtension, !ext.isEmpty {
             selectPatternText = "*.\(ext)"
         }
-        selectPatternMode = select
-    }
-
-    func commitSelectPattern() {
-        guard let select = selectPatternMode else { return }
-        selectPatternMode = nil
-        let patterns = selectPatternText.split(separator: ";").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        guard !patterns.isEmpty else { return }
-        let pane = activePane
-        let predicates = patterns.map { NSPredicate(format: "SELF LIKE[cd] %@", $0) }
-        let matching = Set(pane.items.filter { item in predicates.contains { $0.evaluate(with: item.name) } }.map(\.id))
-        if select {
-            pane.selection.formUnion(matching)
-        } else {
-            pane.selection.subtract(matching)
-        }
-        flash("\(matching.count) Objekt(e) passen zu „\(selectPatternText)“")
+        selectRequest = SelectRequest(select: select)
     }
 
     func deselectAll() {
+        activePane.rememberSelection()
         activePane.selection.removeAll()
     }
 
     func invertSelection() {
         let pane = activePane
+        pane.rememberSelection()
         pane.selection = Set(pane.items.map(\.id)).subtracting(pane.selection)
     }
 
@@ -635,6 +629,7 @@ final class BrowserState {
     // MARK: Duplizieren, Alias, Öffnen mit, Paketinhalt, Gehe zu
 
     func duplicateSelection() {
+        activePane.rememberSelection()
         let pane = activePane
         let urls = pane.selectedItems.map(\.url)
         guard !urls.isEmpty else { return }
@@ -682,6 +677,16 @@ final class BrowserState {
 
     func showPackageContents(_ url: URL) {
         activePane.navigate(to: url)
+    }
+
+    /// Menü/Tastatur (⌃⌘O): ausgewähltes Paket (z. B. .app, .dtBase2) wie einen Ordner öffnen
+    func showSelectedPackageContents() {
+        guard let package = activePane.selectedItems.first(where: \.isPackage) else {
+            NSSound.beep()
+            flash("Bitte ein Paket auswählen (z. B. eine App oder DEVONthink-Datenbank)")
+            return
+        }
+        showPackageContents(package.url)
     }
 
     func showGoToFolder() {
@@ -732,6 +737,7 @@ final class BrowserState {
     // MARK: Weitere Dateioperationen
 
     func trashSelection() {
+        activePane.rememberSelection()
         let urls = activePane.selectedItems.map(\.url)
         guard !urls.isEmpty else { return }
         run {
@@ -793,6 +799,7 @@ final class BrowserState {
     // MARK: Stapel-Umbenennen
 
     func beginBatchRename(regex: Bool = false) {
+        activePane.rememberSelection()
         let selected = activePane.selectedItems
         guard !selected.isEmpty else { NSSound.beep(); return }
         renameTarget = nil

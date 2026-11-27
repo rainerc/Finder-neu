@@ -133,6 +133,7 @@ struct BrowserCommands: Commands {
             item(.deselectPattern) { browser.showSelectPattern(select: false) }
             item(.invertSelection) { browser.invertSelection() }
             item(.selectSameExtension) { browser.selectSameExtension() }
+            item(.restoreSelection) { browser.restoreSelection() }
             Divider()
             item(.copyPath) { browser.copyPathsToPasteboard() }
             item(.copyNames) { browser.copyNamesToPasteboard() }
@@ -155,6 +156,9 @@ struct BrowserCommands: Commands {
             item(.batchRename) { browser.beginBatchRename() }
             item(.quickLook) { browser.toggleQuickLook() }
             item(.systemQuickLook) { browser.toggleQuickLook(forceSystemPreview: true) }
+            item(.packageContents) { browser.showSelectedPackageContents() }
+            item(.viewer) { browser.showViewer() }
+            item(.checksums) { browser.showChecksums() }
             item(.trash) { browser.trashSelection() }
             Divider()
             item(.compress) { browser.compressSelection() }
@@ -179,12 +183,15 @@ struct BrowserCommands: Commands {
             item(.nextTab) { browser.nextTab() }
             item(.previousTab) { browser.previousTab() }
             item(.syncPanes) { browser.syncOtherPane() }
+            toggle(.syncBrowsing, isOn: Binding(get: { browser.syncBrowsing },
+                                                set: { _ in browser.toggleSyncBrowsing() }))
             item(.swapPanes) { browser.swapPanes() }
             item(.compareFolders) { browser.showCompare() }
             item(.markDifferences) { browser.markDifferences() }
             item(.compareFiles) { browser.showFileCompare() }
             item(.findDuplicates) { browser.showDuplicates() }
             Divider()
+            item(.favoritesMenu) { browser.showFavoritesMenu() }
             item(.addFavorite) { browser.addSelectionToFavorites() }
         }
         CommandGroup(after: .toolbar) {

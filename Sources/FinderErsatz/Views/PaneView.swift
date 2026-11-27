@@ -325,7 +325,7 @@ struct PaneView: View {
             entries.append(.submenu("Öffnen mit", apps))
         }
         if selected.count == 1, selected[0].isPackage {
-            entries.append(.action("Paketinhalt zeigen") {
+            entries.append(.action("Paketinhalt anzeigen") {
                 browser.activeSide = side
                 browser.showPackageContents(selected[0].url)
             })
@@ -822,6 +822,13 @@ struct PaneTitle: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer(minLength: 0)
+            if browser.syncBrowsing {
+                Button("Synchron", systemImage: "link") { browser.toggleSyncBrowsing() }
+                    .buttonStyle(.borderless)
+                    .font(.caption)
+                    .foregroundStyle(Color.accentColor)
+                    .help("Synchrones Blättern ist an – Klick schaltet es aus (⌃⌘L)")
+            }
         }
         .foregroundStyle(isActive ? .primary : .secondary)
         .padding(.horizontal, 10)

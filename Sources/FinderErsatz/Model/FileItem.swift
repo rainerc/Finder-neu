@@ -62,7 +62,7 @@ struct FileItem: Identifiable, Hashable, Sendable {
     }
 
     var sizeText: String {
-        isBrowsableFolder && !folderSizeKnown ? "--" : size.formatted(.byteCount(style: .file))
+        isDirectory && !folderSizeKnown ? "--" : size.formatted(.byteCount(style: .file))
     }
 }
 
