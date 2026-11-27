@@ -75,6 +75,10 @@ final class BrowserState {
     private(set) var flashMessage: String?
     @ObservationIgnored private var flashToken = UUID()
 
+    /// Mindestbreite des Fensterinhalts (Seitenleiste + 500 + Vorschau-Spalte), gesetzt von `MainSplitViewController`.
+    /// Läuft über SwiftUI (`ContentView.frame(minWidth:)`), weil SwiftUI `contentMinSize` sonst mit eigenem Wert überschreibt.
+    var layoutMinWidth: CGFloat = 660
+
     /// Vorschau-Spalte rechts (⇧⌘P), zeigt das ausgewählte Objekt des aktiven Fensters.
     var showInspector = UserDefaults.standard.bool(forKey: "showInspector") {
         didSet { UserDefaults.standard.set(showInspector, forKey: "showInspector") }

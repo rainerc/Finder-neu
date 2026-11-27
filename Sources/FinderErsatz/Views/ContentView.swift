@@ -11,7 +11,7 @@ struct ContentView: View {
         // Seitenleiste | zwei Fenster | Vorschau-Spalte als AppKit-Split-View (siehe MainSplitView):
         // beim Verkleinern wird wie in Mail nur der Inhalt schmaler.
         MainSplitView(browser: browser, inspectorVisible: browser.showInspector)
-            .frame(minWidth: 660, minHeight: 500)
+            .frame(minWidth: browser.layoutMinWidth, minHeight: 500)
         .preferredColorScheme(browser.settings.appearance.colorScheme)
         // Fenstertitel wie im Finder: Ordner des aktiven Fensters, darunter der volle Pfad
         .navigationTitle(browser.activePane.title)

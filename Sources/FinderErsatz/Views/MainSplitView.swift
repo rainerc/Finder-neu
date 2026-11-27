@@ -19,6 +19,13 @@ struct MainSplitView: NSViewControllerRepresentable {
     func updateNSViewController(_ controller: MainSplitViewController, context: Context) {
         controller.setInspectorVisible(inspectorVisible)
     }
+
+    /// Billige Größenauskunft: Ohne diese Methode fragt SwiftUI bei jedem Frame des Live-Resize die
+    /// `fittingSize` der ganzen AppKit-Hierarchie ab (Auto Layout über drei NSHostingViews) → Ruckeln.
+    /// Die Mindestbreite kommt stattdessen über `browser.layoutMinWidth`.
+    func sizeThatFits(_ proposal: ProposedViewSize, nsViewController: MainSplitViewController, context: Context) -> CGSize? {
+        CGSize(width: proposal.width ?? 1200, height: proposal.height ?? 720)
+    }
 }
 
 @MainActor
@@ -35,6 +42,10 @@ final class MainSplitViewController: NSSplitViewController {
     private let contentItem: NSSplitViewItem
     private let inspectorItem: NSSplitViewItem
     private var didSetInitialWidths = false
+    private weak var observedWindow: NSWindow?
+    /// Zeitpunkte der Fenster-Größenänderungen während des Ziehens (für die Diagnose)
+    private var resizeStamps: [TimeInterval] = []
+    static var lastResizeStats = "noch keine Messung (einmal am Fensterrand ziehen)"
 
     init(browser: BrowserState, inspectorVisible: Bool) {
         self.browser = browser
@@ -97,6 +108,40 @@ final class MainSplitViewController: NSSplitViewController {
                 splitView.setPosition(splitView.bounds.width - 300 - splitView.dividerThickness, ofDividerAt: 1)
             }
         }
+        observeWindow()
+        updateWindowMinSize()
+    }
+
+    private func observeWindow() {
+        guard let window = view.window, window !== observedWindow else { return }
+        let center = NotificationCenter.default
+        if let old = observedWindow {
+            for name in [NSWindow.willStartLiveResizeNotification, NSWindow.didResizeNotification, NSWindow.didEndLiveResizeNotification] {
+                center.removeObserver(self, name: name, object: old)
+            }
+        }
+        observedWindow = window
+        center.addObserver(self, selector: #selector(windowWillStartLiveResize(_:)), name: NSWindow.willStartLiveResizeNotification, object: window)
+        center.addObserver(self, selector: #selector(windowDidResize(_:)), name: NSWindow.didResizeNotification, object: window)
+        center.addObserver(self, selector: #selector(windowDidEndLiveResize(_:)), name: NSWindow.didEndLiveResizeNotification, object: window)
+    }
+
+    @objc private func windowWillStartLiveResize(_ note: Notification) {
+        resizeStamps = [ProcessInfo.processInfo.systemUptime]
+    }
+
+    @objc private func windowDidResize(_ note: Notification) {
+        if view.window?.inLiveResize == true { resizeStamps.append(ProcessInfo.processInfo.systemUptime) }
+    }
+
+    @objc private func windowDidEndLiveResize(_ note: Notification) {
+        let intervals = zip(resizeStamps.dropFirst(), resizeStamps).map { ($0 - $1) * 1000 }
+        if !intervals.isEmpty {
+            let average = intervals.reduce(0, +) / Double(intervals.count)
+            let slow = intervals.filter { $0 > 33 }.count
+            Self.lastResizeStats = "\(intervals.count) Schritte, Ø \(Int(average)) ms, max \(Int(intervals.max() ?? 0)) ms, \(slow) über 33 ms"
+        }
+        resizeStamps = []
         updateWindowMinSize()
     }
 
@@ -114,6 +159,7 @@ final class MainSplitViewController: NSSplitViewController {
                     frame.origin.x = max(screen.minX, screen.maxX - frame.width)
                 }
                 window.contentMinSize.width = needed
+                publishMinWidth(needed)
                 window.setFrame(frame, display: true, animate: false)
             }
         }
@@ -151,6 +197,15 @@ final class MainSplitViewController: NSSplitViewController {
         guard let window = view.window, !window.inLiveResize else { return }
         let size = NSSize(width: ceil(Self.contentMinWidth + sideWidth(includingInspector: true)), height: Self.minHeight)
         if window.contentMinSize != size { window.contentMinSize = size }
+        publishMinWidth(size.width)
+    }
+
+    /// An SwiftUI weitergeben (asynchron – kann während eines Layout-/Update-Durchgangs aufgerufen werden)
+    private func publishMinWidth(_ width: CGFloat) {
+        guard browser.layoutMinWidth != width else { return }
+        Task { @MainActor [browser] in
+            if browser.layoutMinWidth != width { browser.layoutMinWidth = width }
+        }
     }
 
     // MARK: Diagnose
@@ -166,6 +221,7 @@ final class MainSplitViewController: NSSplitViewController {
             lines.append("Kein Hauptfenster gefunden")
             return lines.joined(separator: "\n")
         }
+        lines.append("Letztes Ziehen am Fensterrand: \(lastResizeStats)")
         lines.append("Fenster: \(format(window.frame.size)), contentMinSize: \(format(window.contentMinSize)), minSize: \(format(window.minSize)), inLiveResize: \(window.inLiveResize)")
         let names = ["Seitenleiste", "Inhalt", "Vorschau-Spalte"]
         for (index, item) in controller.splitViewItems.enumerated() {
