@@ -200,7 +200,9 @@ struct PanePreview: View {
 
     var body: some View {
         let selected = pane.selectedItems
-        Group {
+        // ZStack statt Group: Eine Group mit if/else reicht ihre wechselnden Kinder direkt an die VSplitView
+        // weiter. Die baut dann beim Auswählen ihre Bereiche neu auf, und die Dateiliste springt nach oben.
+        ZStack {
             if let item = selected.last {
                 PanePreviewContent(item: item, selectionCount: selected.count)
                     .id(item.url)
@@ -210,6 +212,7 @@ struct PanePreview: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(nsColor: .controlBackgroundColor))
     }
 }
