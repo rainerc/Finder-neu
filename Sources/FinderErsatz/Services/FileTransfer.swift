@@ -35,24 +35,39 @@ enum FileTransfer {
                     NSLocalizedDescriptionKey: "„\(item.source.lastPathComponent)“ kann nicht in sich selbst kopiert werden.",
                 ])
             }
+            let log = TransferLog.shared
+            log.add("  \(item.move ? "Bewegen" : "Kopieren"): \(item.source.path) → \(item.destination.path)\(item.replaceExisting ? " (ersetzen)" : "")")
             if item.replaceExisting, fm.fileExists(atPath: item.destination.path) {
-                guard item.source.standardizedFileURL.path != item.destination.standardizedFileURL.path else { continue }
+                guard item.source.standardizedFileURL.path != item.destination.standardizedFileURL.path else {
+                    log.add("    übersprungen: Quelle = Ziel")
+                    continue
+                }
                 do {
                     try fm.trashItem(at: item.destination, resultingItemURL: nil)
+                    log.add("    altes Ziel in den Papierkorb")
                 } catch {
                     // Netzwerkvolumes/USB-Sticks haben oft keinen Papierkorb → direkt löschen (wie der Finder)
+                    log.add("    Papierkorb ging nicht (\(error.localizedDescription)) → lösche direkt")
                     try fm.removeItem(at: item.destination)
                 }
+            } else if fm.fileExists(atPath: item.destination.path) {
+                log.add("    Ziel existiert, aber „ersetzen“ ist nicht gesetzt")
             }
             if fast {
                 try fm.moveItem(at: item.source, to: item.destination)
                 await progress(counter.done, counter.total, item.source.lastPathComponent)
                 continue
             }
-            try await copyTree(item.source, to: item.destination, counter: counter, progress: progress)
+            do {
+                try await copyTree(item.source, to: item.destination, counter: counter, progress: progress)
+            } catch {
+                log.add("    Fehler: \(error.localizedDescription)")
+                throw error
+            }
             if item.move {
                 try fm.removeItem(at: item.source)
             }
+            log.add("    fertig: \(TransferLog.describe(item.destination))")
         }
     }
 

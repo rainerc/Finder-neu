@@ -140,6 +140,7 @@ final class BrowserState {
         right = PaneGroup(url: home.appending(path: "Downloads"))
         settings.onFolderSizeSettingChanged = { [weak self] in self?.reloadAll() }
         operations.onFinish = { [weak self] error in
+            TransferLog.shared.add("Auftrag beendet: \(error ?? "ohne Fehler")")
             if let error { self?.alertMessage = error }
             self?.reloadAll()
         }
@@ -338,19 +339,23 @@ final class BrowserState {
     /// Prüft auf Namenskonflikte und startet den Auftrag – oder fragt vorher nach.
     private func enqueue(title: String, items: [TransferItem], afterSheet: Bool = false) {
         let conflicts = items.filter { FileManager.default.fileExists(atPath: $0.destination.path) }
+        let log = TransferLog.shared
+        log.add("Auftrag „\(title)“: \(items.count) Objekt(e), \(conflicts.count) Konflikt(e)")
         if conflicts.isEmpty {
             enqueueRecordingUndo(title: title, items: items)
             return
         }
+        for item in conflicts {
+            log.add("  Konflikt: neu \(TransferLog.describe(item.source)) → vorhanden \(TransferLog.describe(item.destination))")
+        }
         let request = ConflictRequest(title: title, items: items,
                                       conflictNames: conflicts.map(\.destination.lastPathComponent))
-        if afterSheet {
-            Task { @MainActor [weak self] in
-                try? await Task.sleep(for: .milliseconds(450))
-                self?.conflictRequest = request
-            }
-        } else {
-            conflictRequest = request
+        // Immer einen Moment später zeigen: direkt nach einem anderen Sheet (F5/F6-Dialog) oder
+        // während eines Drag & Drop verwirft SwiftUI das Sheet sonst.
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(afterSheet ? 450 : 80))
+            log.add("  Überschreiben-Dialog wird gezeigt")
+            self?.conflictRequest = request
         }
     }
 
@@ -360,13 +365,18 @@ final class BrowserState {
 
     /// Je Konflikt eigene Entscheidung (Überschreiben-Dialog: pro Zeile wählbar)
     func resolveConflicts(_ choice: (TransferItem) -> ConflictResolution) {
-        guard let request = conflictRequest else { return }
+        guard let request = conflictRequest else {
+            TransferLog.shared.add("  Fortfahren ohne offenen Auftrag – nichts zu tun")
+            return
+        }
         conflictRequest = nil
         let fm = FileManager.default
         let items: [TransferItem] = request.items.compactMap { item in
             guard fm.fileExists(atPath: item.destination.path) else { return item }
             var resolved = item
-            switch choice(item) {
+            let decision = choice(item)
+            TransferLog.shared.add("  Entscheidung \(item.destination.lastPathComponent): \(decision)")
+            switch decision {
             case .replace:
                 resolved.replaceExisting = true
             case .skip:

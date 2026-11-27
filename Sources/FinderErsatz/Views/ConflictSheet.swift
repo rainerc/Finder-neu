@@ -80,12 +80,14 @@ struct ConflictSheet: View {
                 Text(summary(conflicts)).font(.caption).foregroundStyle(.secondary)
                 Spacer()
                 Button("Abbrechen", role: .cancel) {
+                    TransferLog.shared.add("  Überschreiben-Dialog abgebrochen")
                     browser.conflictRequest = nil
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
                 Button("Fortfahren") {
                     let current = choices
+                    TransferLog.shared.add("  Fortfahren gedrückt: \(summary(conflicts))")
                     browser.resolveConflicts { current[$0.destination] ?? .skip }
                     dismiss()
                 }

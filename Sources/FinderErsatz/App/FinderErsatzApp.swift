@@ -221,6 +221,11 @@ struct BrowserCommands: Commands {
                 NSPasteboard.general.setString(browser.searchDiagnosticReport(), forType: .string)
                 browser.flash("Such-Diagnose in der Zwischenablage")
             }
+            Button("Kopier-Diagnose kopieren") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(TransferLog.shared.report, forType: .string)
+                browser.flash("Kopier-Diagnose in der Zwischenablage")
+            }
             Button("Layout-Diagnose kopieren") {
                 let report = MainSplitViewController.diagnosticReport()
                 NSPasteboard.general.clearContents()
