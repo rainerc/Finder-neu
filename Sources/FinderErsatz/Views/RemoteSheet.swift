@@ -84,6 +84,8 @@ struct RemoteSheet: View {
                 Button("Neu", systemImage: "plus") {
                     edit(RemoteConnection(name: "", kind: .sftp, host: "", port: 22, user: NSUserName()))
                 }
+                Button("Aus FileZilla …", systemImage: "square.and.arrow.down") { importFileZilla() }
+                    .help("Server aus dem FileZilla-Server-Manager übernehmen")
                 Spacer()
                 Button("Schließen") { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -173,6 +175,13 @@ struct RemoteSheet: View {
                 Label("Keine Verbindung", systemImage: "server.rack")
             } description: {
                 Text("Links einen Server wählen oder mit „Neu“ anlegen. SFTP nutzt deine SSH-Schlüssel, sonst das Passwort aus dem Schlüsselbund. FTP und FTPS laufen über curl.")
+            } actions: {
+                if let errorText {
+                    Text(errorText).foregroundStyle(.red).font(.callout)
+                } else if !status.isEmpty {
+                    Text(status).font(.callout).foregroundStyle(.secondary)
+                }
+                Button("Server aus FileZilla übernehmen") { importFileZilla() }
             }
         }
     }
@@ -202,6 +211,42 @@ struct RemoteSheet: View {
         connections.removeAll { $0.id == connection.id }
         if connected?.id == connection.id { connected = nil }
         persist()
+    }
+
+    /// Server aus FileZilla übernehmen: zuerst ~/.config/filezilla/sitemanager.xml, sonst Datei wählen
+    private func importFileZilla() {
+        var file = FileZillaImport.defaultFile
+        if !FileManager.default.fileExists(atPath: file.path) {
+            let panel = NSOpenPanel()
+            panel.message = "FileZilla-Servermanager nicht gefunden – bitte die exportierte XML-Datei wählen (FileZilla: Datei → Exportieren …)"
+            panel.allowedContentTypes = [.xml]
+            panel.canChooseDirectories = false
+            guard panel.runModal() == .OK, let chosen = panel.url else { return }
+            file = chosen
+        }
+        do {
+            let sites = try FileZillaImport.sites(from: file)
+            var added = 0, skipped = 0, withoutPassword = 0
+            for site in sites {
+                let account = site.connection.keychainAccount
+                if connections.contains(where: { $0.keychainAccount == account }) { skipped += 1; continue }
+                connections.append(site.connection)
+                if let password = site.password, !password.isEmpty {
+                    KeychainStore.setPassword(password, for: account)
+                } else if site.connection.user != "anonymous" {
+                    withoutPassword += 1
+                }
+                added += 1
+            }
+            persist()
+            var parts = ["\(added) Server aus FileZilla übernommen"]
+            if skipped > 0 { parts.append("\(skipped) schon vorhanden") }
+            if withoutPassword > 0 { parts.append("\(withoutPassword) ohne Passwort (wird beim Verbinden abgefragt)") }
+            status = parts.joined(separator: ", ")
+            if sites.isEmpty { errorText = "In „\(file.lastPathComponent)“ wurden keine Server gefunden." }
+        } catch {
+            errorText = "FileZilla-Datei ließ sich nicht lesen: \(error.localizedDescription)"
+        }
     }
 
     private func load() {
