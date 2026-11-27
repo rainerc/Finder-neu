@@ -252,7 +252,7 @@ enum RemoteFiles {
 
     // MARK: Verzeichnisliste
 
-    nonisolated(unsafe) private static let listingPattern = try! NSRegularExpression(
+    private static let listingPattern = try! NSRegularExpression(
         pattern: #"^([\-dlbcps])\S*\s+\d+\s+\S+\s+\S+\s+(\d+)\s+(\w{3}\s+\d{1,2}\s+(?:\d{1,2}:\d{2}|\d{4}))\s(.+)$"#)
 
     /// Unix-„ls -l“-Format (sftp und die meisten FTP-Server)

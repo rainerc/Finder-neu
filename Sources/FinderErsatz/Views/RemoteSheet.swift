@@ -222,7 +222,14 @@ struct RemoteSheet: View {
         isBusy = true
         defer { isBusy = false }
         do {
-            let start = startPath ?? (connection.path.isEmpty ? try await RemoteFiles.home(connection, password: password) : connection.path)
+            let start: String
+            if let startPath {
+                start = startPath
+            } else if connection.path.isEmpty {
+                start = try await RemoteFiles.home(connection, password: password)
+            } else {
+                start = connection.path
+            }
             path = start
             entries = try await RemoteFiles.list(connection, path: start, password: password)
             status = "\(entries.count) Objekte"

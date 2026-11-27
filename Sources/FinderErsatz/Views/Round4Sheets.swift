@@ -156,15 +156,15 @@ struct SplitSheet: View {
                     .frame(width: 90)
                 Text("MB")
                 Menu("Vorgaben") {
-                    ForEach(Self.presets, id: \.0) { preset in
-                        Button(preset.0) { sizeMB = preset.1 }
+                    ForEach(Self.presets.indices, id: \.self) { index in
+                        Button(Self.presets[index].0) { sizeMB = Self.presets[index].1 }
                     }
                 }
                 .fixedSize()
             }
             Text("Ergibt \(partCount) Teile: \(request.file.lastPathComponent).001 … .\(String(format: "%03lld", partCount))")
                 .font(.callout)
-                .foregroundStyle(partCount > 999 ? .orange : .secondary)
+                .foregroundStyle(partCount > 999 ? Color.orange : Color.secondary)
             Picker("Ziel:", selection: $toOtherPane) {
                 Text("Anderes Fenster (\(browser.otherPane.currentURL.lastPathComponent))").tag(true)
                 Text("Gleicher Ordner").tag(false)
