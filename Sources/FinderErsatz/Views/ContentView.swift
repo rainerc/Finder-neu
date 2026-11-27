@@ -21,9 +21,9 @@ struct ContentView: View {
                 }
                 HSplitView {
                     PaneView(side: .left, focus: $focusedPane)
-                        .frame(minWidth: 350, maxWidth: .infinity, maxHeight: .infinity)
+                        .frame(minWidth: 240, maxWidth: .infinity, maxHeight: .infinity)
                     PaneView(side: .right, focus: $focusedPane)
-                        .frame(minWidth: 350, maxWidth: .infinity, maxHeight: .infinity)
+                        .frame(minWidth: 240, maxWidth: .infinity, maxHeight: .infinity)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 Divider()
@@ -46,6 +46,8 @@ struct ContentView: View {
                     .inspectorColumnWidth(min: 220, ideal: 300, max: 480)
             }
         }
+        // Mindestgröße wie im Finder: Seitenleiste (bis 320) + zwei Fenster (je 240) + ggf. Vorschau-Spalte (220)
+        .frame(minWidth: browser.showInspector ? 1060 : 840, minHeight: 500)
         .preferredColorScheme(browser.settings.appearance.colorScheme)
         // Fenstertitel wie im Finder: Ordner des aktiven Fensters, darunter der volle Pfad
         .navigationTitle(browser.activePane.title)

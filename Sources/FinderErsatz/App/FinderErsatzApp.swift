@@ -54,9 +54,11 @@ struct FinderErsatzApp: App {
             ContentView()
                 .environment(browser)
                 .onAppear { appDelegate.browser = browser }
-                .frame(minWidth: 900, minHeight: 500)
         }
         .defaultSize(width: 1200, height: 720)
+        // Fenster nicht kleiner als der Inhalt (Seitenleiste + zwei Fenster + ggf. Vorschau-Spalte) –
+        // sonst wurden Seitenleiste und Vorschau links/rechts abgeschnitten.
+        .windowResizability(.contentMinSize)
         .commands { BrowserCommands(browser: browser, settings: browser.settings) }
 
         Settings {
