@@ -568,19 +568,19 @@ struct PathBar: View {
     }
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 2) {
-                ForEach(Array(components.enumerated()), id: \.offset) { index, component in
-                    if index > 0 {
-                        Image(systemName: "chevron.compact.right").foregroundStyle(.tertiary)
-                    }
-                    PathCrumb(url: component, isCurrent: index == components.count - 1, navigate: navigate)
+        // Ohne ScrollView: Die horizontale ScrollView hat Klicks auf die Elemente nicht weitergegeben.
+        // Bei Platzmangel werden die mittleren Ordnernamen gekürzt, der aktuelle Ordner bleibt lesbar.
+        HStack(spacing: 2) {
+            ForEach(Array(components.enumerated()), id: \.offset) { index, component in
+                if index > 0 {
+                    Image(systemName: "chevron.compact.right").foregroundStyle(.tertiary)
                 }
+                let isCurrent = index == components.count - 1
+                PathCrumb(url: component, isCurrent: isCurrent, navigate: navigate)
+                    .layoutPriority(isCurrent ? 2 : (index == 0 ? 1 : 0))
             }
         }
-        // Links ausgerichtet; ist der Pfad zu lang, steht anfangs das Ende (aktueller Ordner) im Blick
-        .defaultScrollAnchor(.leading, for: .alignment)
-        .defaultScrollAnchor(.trailing, for: .initialOffset)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -603,6 +603,7 @@ private struct PathCrumb: View {
                 .frame(width: 14, height: 14)
             Text(name)
                 .lineLimit(1)
+                .truncationMode(.middle)
                 .fontWeight(isCurrent ? .semibold : .regular)
         }
         .padding(.horizontal, 4)
