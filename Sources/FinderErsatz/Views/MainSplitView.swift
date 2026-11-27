@@ -386,6 +386,10 @@ struct PanesArea: View {
                 UnbundledBanner()
                 Divider()
             }
+            if browser.settings.showButtonBar {
+                ButtonBarView()
+                Divider()
+            }
             if browser.debugPlainPaneStack {
                 // Layout-Test: zwei gleich breite Fenster ohne SwiftUI-HSplitView
                 HStack(spacing: 0) {
@@ -406,6 +410,14 @@ struct PanesArea: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             Divider()
+            if let output = browser.commandOutput {
+                CommandOutputPanel(output: output)
+                Divider()
+            }
+            if browser.settings.showCommandLine {
+                CommandLineBar()
+                Divider()
+            }
             if !browser.debugHideBottomBars {
                 JobsPanel(queue: browser.operations)
             }

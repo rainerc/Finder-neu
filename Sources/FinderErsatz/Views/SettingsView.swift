@@ -34,6 +34,8 @@ private struct AppearanceSettings: View {
             .help("Ruhig: Zurück/Vorwärts, Ansicht und Suche oben in der Fensterleiste für das aktive Fenster; schmale Fensterköpfe")
             Toggle("Funktionstasten-Leiste unten zeigen (F2, F3, F5 …)", isOn: $settings.showActionBar)
             Toggle("Ordnername über jedem Fenster zeigen", isOn: $settings.showPaneTitles)
+            Toggle("Knopfleiste für Programme und Skripte zeigen", isOn: $settings.showButtonBar)
+            Toggle("Befehlszeile unter den Fenstern zeigen", isOn: $settings.showCommandLine)
             Toggle("Abwechselnde Zeilenfarben", isOn: $settings.alternatingRows)
             Toggle("Unsichtbare Dateien abgeblendet zeigen", isOn: $settings.showHiddenDimmed)
             Toggle("Leertaste auf Ordnern: Quick Look/XRay statt schneller Vorschau", isOn: $settings.folderPreviewUsesQuickLook)

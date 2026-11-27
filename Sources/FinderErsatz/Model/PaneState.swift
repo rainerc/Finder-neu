@@ -3,7 +3,7 @@ import Observation
 
 /// Darstellung der Dateiliste.
 enum ViewMode: String, CaseIterable, Identifiable {
-    case list, brief, icons, columns, gallery
+    case list, brief, icons, columns, gallery, tree
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -12,6 +12,7 @@ enum ViewMode: String, CaseIterable, Identifiable {
         case .icons: "Miniaturen"
         case .columns: "Spalten"
         case .gallery: "Galerie"
+        case .tree: "Ordnerbaum"
         }
     }
     var symbol: String {
@@ -21,6 +22,7 @@ enum ViewMode: String, CaseIterable, Identifiable {
         case .icons: "square.grid.2x2"
         case .columns: "rectangle.split.3x1"
         case .gallery: "photo.on.rectangle"
+        case .tree: "list.bullet.indent"
         }
     }
 }
@@ -259,14 +261,16 @@ final class PaneState: Identifiable {
             // Liste nicht neu setzen – sonst baut die Tabelle neu auf und die Markierung kann unter dem Mauszeiger springen.
             if errorMessage == nil, isUnchanged(loaded) {
                 watchCurrentFolder()
+                applyGitStatus()
                 return
             }
-            allItems = loaded
+            allItems = Self.withGitStatus(loaded, gitInfo, folder: currentURL)
             errorMessage = nil
             errorIsPermission = false
             applyFolderSizes()
             applySort()
             selection.formIntersection(Set(allItems.map(\.id)))
+            applyGitStatus()
         } catch {
             allItems = []
             errorMessage = Self.describe(error, for: currentURL)
@@ -361,6 +365,46 @@ final class PaneState: Identifiable {
     private func folderSizesFinished(in folder: URL) {
         guard folder == currentURL, activeSearch == nil else { return }
         applySort()   // falls nach Größe sortiert ist
+    }
+
+    // MARK: Git
+
+    /// Git-Repository des aktuellen Ordners (Branch, Status je Datei) – nil außerhalb von Repos
+    private(set) var gitInfo: GitRepoInfo?
+    @ObservationIgnored private var gitTask: Task<Void, Never>?
+
+    /// Git-Status im Hintergrund neu ermitteln (nach jedem Laden des Ordners)
+    private func applyGitStatus() {
+        gitTask?.cancel()
+        guard activeSearch == nil, GitStatusService.gitPath != nil else {
+            if gitInfo != nil { gitInfo = nil }
+            return
+        }
+        let folder = currentURL
+        gitTask = Task.detached(priority: .utility) { [weak self] in
+            let info = GitStatusService.repositoryRoot(for: folder).flatMap { GitStatusService.load(root: $0) }
+            guard !Task.isCancelled else { return }
+            await self?.setGitInfo(info, for: folder)
+        }
+    }
+
+    private func setGitInfo(_ info: GitRepoInfo?, for folder: URL) {
+        guard folder == currentURL, activeSearch == nil else { return }
+        gitInfo = info
+        let updated = Self.withGitStatus(allItems, info, folder: folder)
+        if updated.map(\.gitStatus) != allItems.map(\.gitStatus) { allItems = updated }
+    }
+
+    /// Objekte mit Git-Status versehen (nur wenn `info` zum Ordner gehört)
+    private static func withGitStatus(_ items: [FileItem], _ info: GitRepoInfo?, folder: URL) -> [FileItem] {
+        guard let info, folder.standardizedFileURL.path.hasPrefix(info.root.standardizedFileURL.path) else {
+            return items.contains { $0.gitStatus != nil } ? items.map { var item = $0; item.gitStatus = nil; return item } : items
+        }
+        return items.map { item in
+            var item = item
+            item.gitStatus = GitStatusService.status(for: item.url, isDirectory: item.isDirectory, in: info)
+            return item
+        }
     }
 
     // MARK: Suche

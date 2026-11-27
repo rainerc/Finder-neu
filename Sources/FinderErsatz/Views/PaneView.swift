@@ -123,10 +123,12 @@ struct PaneView: View {
                 }
             } else if pane.activeSearch != nil, pane.items.isEmpty, !pane.isSearchRunning {
                 ContentUnavailableView.search
-            } else if pane.viewMode == .list || (pane.viewMode == .columns && pane.activeSearch != nil) {
+            } else if pane.viewMode == .list || ((pane.viewMode == .columns || pane.viewMode == .tree) && pane.activeSearch != nil) {
                 // Suchergebnisse kommen aus vielen Ordnern – die Spaltenansicht passt dafür nicht, dann Liste.
                 // Symbole, Miniaturen und Galerie zeigen die Treffer wie einen Ordner.
                 fileTable(pane: pane, settings: settings)
+            } else if pane.viewMode == .tree {
+                FolderTreePane(pane: pane, side: side)
             } else if pane.viewMode == .columns {
                 keyHandling(
                     ColumnBrowserView(pane: pane, side: side, onOpen: { open($0, in: pane) }) { ids in
@@ -358,6 +360,10 @@ struct PaneView: View {
             .action("Umbenennen mit Regex …") {
                 activate(pane, ids)
                 browser.beginBatchRename(regex: true)
+            },
+            .action("Im Texteditor umbenennen …") {
+                activate(pane, ids)
+                browser.showRenameEditor()
             },
             .action("Informationen") {
                 activate(pane, ids)
@@ -821,6 +827,14 @@ struct PaneTitle: View {
                 .font(.headline)
                 .lineLimit(1)
                 .truncationMode(.middle)
+            if let git = pane.gitInfo {
+                Label(git.summary, systemImage: "arrow.triangle.branch")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .help("Git-Repository \(git.root.path) – Branch \(git.branch)")
+            }
             Spacer(minLength: 0)
             // Synchrones Blättern ein/aus – immer sichtbar, eingeschaltet farbig mit Beschriftung
             Button {

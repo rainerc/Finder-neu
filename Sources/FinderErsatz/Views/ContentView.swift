@@ -138,6 +138,15 @@ struct ContentView: View {
         .sheet(item: $browser.viewerRequest) { request in
             ViewerSheet(request: request)
         }
+        .sheet(item: $browser.renameEditorRequest) { request in
+            RenameEditorSheet(request: request).environment(browser)
+        }
+        .sheet(item: $browser.buttonEditorRequest) { request in
+            ButtonEditorSheet(request: request)
+        }
+        .sheet(isPresented: $browser.showActionLog) {
+            ActionLogSheet().environment(browser)
+        }
         .sheet(item: $browser.fileCompareRequest) { request in
             FileCompareSheet(request: request)
         }

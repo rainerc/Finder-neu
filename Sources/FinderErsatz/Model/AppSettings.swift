@@ -76,6 +76,10 @@ final class AppSettings {
     var showActionBar: Bool { didSet { defaults.set(showActionBar, forKey: "showActionBar") } }
     /// Ordnername als Überschrift über jedem Fenster (der Fenstertitel zeigt nur das aktive)
     var showPaneTitles: Bool { didSet { defaults.set(showPaneTitles, forKey: "showPaneTitles") } }
+    /// Befehlszeile unter den Fenstern (wie im Total Commander)
+    var showCommandLine: Bool { didSet { defaults.set(showCommandLine, forKey: "showCommandLine") } }
+    /// Eigene Knopfleiste für Programme und Skripte über den Fenstern
+    var showButtonBar: Bool { didSet { defaults.set(showButtonBar, forKey: "showButtonBar") } }
     /// Ordnergrößen in den Listen im Hintergrund berechnen (nur lokale Laufwerke).
     var calculateFolderSizes: Bool {
         didSet {
@@ -101,6 +105,8 @@ final class AppSettings {
         compactLayout = defaults.bool(forKey: "compactLayout")
         showActionBar = defaults.object(forKey: "showActionBar") as? Bool ?? true
         showPaneTitles = defaults.object(forKey: "showPaneTitles") as? Bool ?? true
+        showCommandLine = defaults.object(forKey: "showCommandLine") as? Bool ?? true
+        showButtonBar = defaults.object(forKey: "showButtonBar") as? Bool ?? true
         folderPreviewUsesQuickLook = defaults.bool(forKey: "folderPreviewUsesQuickLook")
         if let data = defaults.data(forKey: "customShortcuts"),
            let stored = try? JSONDecoder().decode([String: Shortcut?].self, from: data) {

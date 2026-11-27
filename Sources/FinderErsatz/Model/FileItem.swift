@@ -11,6 +11,8 @@ struct FileItem: Identifiable, Hashable, Sendable {
     /// Bei Ordnern 0, bis die Größe berechnet wurde (Einstellung „Ordnergrößen berechnen“).
     var size: Int64
     var folderSizeKnown = false
+    /// Git-Status, wenn das Objekt in einem Git-Repository liegt (wird nach dem Laden ergänzt)
+    var gitStatus: GitFileStatus?
     let modified: Date
     let kind: String
     let created: Date

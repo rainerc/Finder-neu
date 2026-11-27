@@ -154,6 +154,7 @@ struct BrowserCommands: Commands {
             item(.move) { browser.moveToOtherPane() }
             item(.rename) { browser.beginRename() }
             item(.batchRename) { browser.beginBatchRename() }
+            item(.renameInEditor) { browser.showRenameEditor() }
             item(.quickLook) { browser.toggleQuickLook() }
             item(.systemQuickLook) { browser.toggleQuickLook(forceSystemPreview: true) }
             item(.packageContents) { browser.showSelectedPackageContents() }
@@ -190,6 +191,7 @@ struct BrowserCommands: Commands {
             item(.markDifferences) { browser.markDifferences() }
             item(.compareFiles) { browser.showFileCompare() }
             item(.findDuplicates) { browser.showDuplicates() }
+            item(.actionLog) { browser.showActionLog = true }
             Divider()
             item(.favoritesMenu) { browser.showFavoritesMenu() }
             item(.addFavorite) { browser.addSelectionToFavorites() }
@@ -200,6 +202,7 @@ struct BrowserCommands: Commands {
             item(.viewIcons) { browser.setViewMode(.icons) }
             item(.viewColumns) { browser.setViewMode(.columns) }
             item(.viewGallery) { browser.setViewMode(.gallery) }
+            item(.viewTree) { browser.setViewMode(.tree) }
             Divider()
             item(.toggleSidebar) { MainSplitViewController.current?.toggleSidebarFromMenu() }
             toggle(.toggleInspector, isOn: Bindable(browser).showInspector)
@@ -211,6 +214,9 @@ struct BrowserCommands: Commands {
                 if pane.isQuickFilterVisible { pane.closeQuickFilter() } else { pane.isQuickFilterVisible = true }
             }
             item(.branchView) { browser.activePane.toggleBranchView() }
+            Divider()
+            toggle(.toggleButtonBar, isOn: Bindable(browser.settings).showButtonBar)
+            item(.commandLine) { browser.focusCommandLine() }
             item(.reload) { browser.reloadAll() }
         }
         CommandGroup(after: .help) {

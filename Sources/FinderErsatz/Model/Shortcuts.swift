@@ -10,6 +10,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
     case back, forward, up, switchPane, nextTab, previousTab, syncPanes, swapPanes, addFavorite, connectServer
     case compareFolders, markDifferences, quickFilter, branchView, compareFiles, findDuplicates
     case favoritesMenu, restoreSelection, syncBrowsing, checksums, viewer, packageContents
+    case commandLine, toggleButtonBar, actionLog, renameInEditor, viewTree
     case viewList, viewBrief, viewIcons, viewColumns, viewGallery, toggleSidebar, toggleInspector, togglePanePreview, toggleHidden, reload
 
     var id: String { rawValue }
@@ -71,6 +72,11 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .checksums: "Prüfsummen …"
         case .viewer: "Betrachter (Text/Hex)"
         case .packageContents: "Paketinhalt anzeigen"
+        case .commandLine: "Befehlszeile"
+        case .toggleButtonBar: "Knopfleiste ein-/ausblenden"
+        case .actionLog: "Protokoll der Dateiaktionen …"
+        case .renameInEditor: "Im Texteditor umbenennen …"
+        case .viewTree: "Ansicht: Ordnerbaum"
         case .addFavorite: "Zu Favoriten hinzufügen"
         case .connectServer: "Mit Server verbinden"
         case .viewList: "Ansicht: Liste"
@@ -143,6 +149,11 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .checksums: Shortcut("k", [.command, .control])
         case .viewer: Shortcut(functionKey: 3, .shift)
         case .packageContents: Shortcut("o", [.command, .control])
+        case .commandLine: Shortcut("x", [.command, .control])
+        case .toggleButtonBar: nil
+        case .actionLog: Shortcut("l", [.command, .control, .shift])
+        case .renameInEditor: Shortcut(functionKey: 2, .control)
+        case .viewTree: Shortcut("6", .command)
         case .addFavorite: Shortcut("t", [.control, .command])
         case .connectServer: Shortcut("k", .command)
         case .viewList: Shortcut("1", .command)

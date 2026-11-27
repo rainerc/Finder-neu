@@ -407,6 +407,8 @@ final class NameCellView: NSTableCellView {
     private let nameLabel = NSTextField(labelWithString: "")
     private let subtitleLabel = NSTextField(labelWithString: "")
     private let dots = TagDotsView()
+    /// Git-Status als Buchstabe rechts in der Zelle (M, U, A …)
+    private let gitLabel = NSTextField(labelWithString: "")
     private var iconSize: CGFloat = 16
 
     override init(frame: NSRect) {
@@ -417,7 +419,10 @@ final class NameCellView: NSTableCellView {
         subtitleLabel.lineBreakMode = .byTruncatingHead
         subtitleLabel.textColor = .secondaryLabelColor
         subtitleLabel.font = NSFont.preferredFont(forTextStyle: .caption1)
-        for view in [icon, nameLabel, subtitleLabel, dots] as [NSView] { addSubview(view) }
+        gitLabel.font = .monospacedSystemFont(ofSize: 10, weight: .bold)
+        gitLabel.alignment = .center
+        gitLabel.isHidden = true
+        for view in [icon, nameLabel, subtitleLabel, dots, gitLabel] as [NSView] { addSubview(view) }
         imageView = icon
         textField = nameLabel
     }
@@ -431,6 +436,16 @@ final class NameCellView: NSTableCellView {
         if nameLabel.stringValue != item.name { nameLabel.stringValue = item.name }
         if nameLabel.font != font { nameLabel.font = font }
         nameLabel.textColor = item.isBrowsableFolder ? (folderColor ?? .labelColor) : .labelColor
+        if let git = item.gitStatus {
+            let color = Self.color(for: git)
+            gitLabel.stringValue = git.letter
+            gitLabel.textColor = color
+            gitLabel.toolTip = "Git: \(git.title)"
+            gitLabel.isHidden = false
+            if git == .ignored { nameLabel.textColor = .tertiaryLabelColor } else { nameLabel.textColor = color }
+        } else if !gitLabel.isHidden {
+            gitLabel.isHidden = true
+        }
         dots.colors = item.tagList.compactMap { FinderTag.color(for: $0).map { NSColor($0) } }
         subtitleLabel.isHidden = subtitle == nil
         subtitleLabel.stringValue = subtitle ?? ""
@@ -452,7 +467,12 @@ final class NameCellView: NSTableCellView {
     private func arrange() {
         icon.frame = NSRect(x: 2, y: floor((bounds.height - iconSize) / 2), width: iconSize, height: iconSize)
         let textX = iconSize + 8
-        let available = max(0, bounds.width - textX)
+        let gitWidth: CGFloat = gitLabel.isHidden ? 0 : 16
+        let available = max(0, bounds.width - textX - gitWidth)
+        if !gitLabel.isHidden {
+            let height = ceil(gitLabel.intrinsicContentSize.height)
+            gitLabel.frame = NSRect(x: bounds.width - gitWidth, y: floor((bounds.height - height) / 2), width: gitWidth, height: height)
+        }
         let dotsWidth = dots.intrinsicContentSize.width
         let nameHeight = ceil(nameLabel.intrinsicContentSize.height)
         // Ohne Tags: volle Breite. Mit Tags: so breit wie der Text (gemessen am Text selbst – intrinsicContentSize
@@ -472,6 +492,18 @@ final class NameCellView: NSTableCellView {
             nameLabel.frame = NSRect(x: textX, y: top + subtitleHeight, width: nameWidth, height: nameHeight)
         }
         dots.frame = NSRect(x: nameLabel.frame.maxX + 4, y: nameLabel.frame.midY - 5, width: dotsWidth, height: 10)
+    }
+}
+
+extension NameCellView {
+    /// Farben wie in gängigen Editoren: geändert orange, neu grün, gelöscht/Konflikt rot, ignoriert grau
+    static func color(for status: GitFileStatus) -> NSColor {
+        switch status {
+        case .modified, .renamed: .systemOrange
+        case .added, .untracked: .systemGreen
+        case .deleted, .conflicted: .systemRed
+        case .ignored: .tertiaryLabelColor
+        }
     }
 }
 

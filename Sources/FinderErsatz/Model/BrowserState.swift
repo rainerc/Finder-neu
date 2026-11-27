@@ -141,6 +141,7 @@ final class BrowserState {
         settings.onFolderSizeSettingChanged = { [weak self] in self?.reloadAll() }
         operations.onFinish = { [weak self] error in
             TransferLog.shared.add("Auftrag beendet: \(error ?? "ohne Fehler")")
+            if let error { ActionLog.shared.add("Fehler", details: [error], isError: true) }
             if let error { self?.alertMessage = error }
             self?.reloadAll()
         }
@@ -403,8 +404,8 @@ final class BrowserState {
         operations.enqueue(title: title, items: items, onSuccess: { [weak self] in
             let moved = items.filter(\.move).map { (from: $0.source, to: $0.destination) }
             let created = items.filter { !$0.move }.map(\.destination)
-            if !moved.isEmpty { self?.recordUndo(.moved(moved)) }
-            if !created.isEmpty { self?.recordUndo(.created(created)) }
+            if !moved.isEmpty { self?.recordUndo(.moved(moved), logTitle: "\(title) – bewegt (\(moved.count))") }
+            if !created.isEmpty { self?.recordUndo(.created(created), logTitle: "\(title) – kopiert (\(created.count))") }
         })
     }
 
@@ -515,13 +516,15 @@ final class BrowserState {
 
     // MARK: Widerrufen
 
-    func recordUndo(_ action: UndoableAction) {
+    func recordUndo(_ action: UndoableAction, logTitle: String? = nil) {
+        ActionLog.shared.add(action, title: logTitle)
         undoStack.append(action)
         if undoStack.count > 50 { undoStack.removeFirst() }
     }
 
     func undo() {
         guard let action = undoStack.popLast() else { NSSound.beep(); return }
+        ActionLog.shared.add("Widerrufen: \(action.title)")
         run { try action.revert() }
     }
 
@@ -587,6 +590,14 @@ final class BrowserState {
     /// Synchrones Blättern: Wechselt das aktive Fenster in einen Unterordner oder nach oben, folgt das andere.
     var syncBrowsing = false
     var checksumRequest: ChecksumRequest?
+    // Runde 3 (BrowserTools.swift)
+    var commandOutput: CommandOutput?
+    @ObservationIgnored var commandTask: Task<Void, Never>?
+    /// Hochzählen, damit die Befehlszeile den Tastaturfokus bekommt (⌃⌘X)
+    var commandLineFocusRequest = 0
+    var showActionLog = false
+    var renameEditorRequest: RenameEditorRequest?
+    var buttonEditorRequest: ButtonEditorRequest?
     var viewerRequest: ViewerRequest?
 
     func showSelectPattern(select: Bool) {
@@ -957,6 +968,7 @@ final class BrowserState {
             try operation()
         } catch {
             alertMessage = error.localizedDescription
+            ActionLog.shared.add("Fehler", details: [error.localizedDescription], isError: true)
         }
         reloadAll()
     }
