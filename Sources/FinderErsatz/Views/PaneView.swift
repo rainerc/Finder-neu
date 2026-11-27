@@ -483,12 +483,9 @@ struct PaneHeader: View {
             // Bei schmalem Fenster wird aus den fünf Segmenten ein Menü – so bleibt der Kopf zusammendrückbar
             // und beim Verkleinern des Fensters wird nicht die Seitenleiste schmaler.
             if !browser.debugHideViewPicker {
-                ViewThatFits(in: .horizontal) {
-                    viewPicker.pickerStyle(.segmented).fixedSize()
-                    viewPicker.pickerStyle(.menu).fixedSize()
-                }
-                .labelsHidden()
-                .help("Ansicht: Liste (⌘1), Kurz (⌘2), Miniaturen (⌘3), Spalten (⌘4), Galerie (⌘5)")
+                // Eigene Symbolknöpfe statt segmentiertem Picker in ViewThatFits: Der kostete beim Verkleinern
+                // des Fensters ~20 ms pro Schritt (Layout-Test, Build 76) und ließ es ruckeln.
+                ViewModeButtons(pane: pane)
             }
         }
         .labelStyle(.iconOnly)
@@ -497,12 +494,33 @@ struct PaneHeader: View {
         .padding(.vertical, 6)
     }
 
-    private var viewPicker: some View {
-        Picker("Ansicht", selection: Bindable(pane).viewMode) {
-            ForEach(ViewMode.allCases) { mode in
-                Label(mode.title, systemImage: mode.symbol).tag(mode)
+}
+
+/// Ansicht wählen (Liste, Kurz, Miniaturen, Spalten, Galerie) – schlanke Symbolknöpfe, billig im Layout.
+struct ViewModeButtons: View {
+    let pane: PaneState
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(ViewMode.allCases.enumerated()), id: \.element) { index, mode in
+                let selected = pane.viewMode == mode
+                Button {
+                    pane.viewMode = mode
+                } label: {
+                    Image(systemName: mode.symbol)
+                        .foregroundStyle(selected ? Color.accentColor : Color.secondary)
+                        .frame(width: 22, height: 18)
+                        .background(selected ? Color.accentColor.opacity(0.18) : Color.clear,
+                                    in: RoundedRectangle(cornerRadius: 4))
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .help("\(mode.title) (⌘\(index + 1))")
             }
         }
+        .padding(2)
+        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+        .fixedSize()
     }
 }
 
