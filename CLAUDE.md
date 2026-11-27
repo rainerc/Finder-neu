@@ -97,5 +97,5 @@ Kommunikation mit Rainer auf **Deutsch**. Diese Datei ist der Übergabepunkt zwi
 - **Stapel D (Finder-Abgleich, `docs/ROADMAP.md`):** federnde Ordner, Dienste/Schnellaktionen, Symbolleiste anpassen, iCloud-Status (laden/entfernen), Fenster/Tabs beim Neustart wiederherstellen, Papierkorb anzeigen/entleeren/„Zurücklegen“
 - **Paket 3 (Commander-One-Abgleich):** SFTP/WebDAV, Prozess-Manager, Cloud-APIs – erst nach Rücksprache
 - Total-Commander-Liste abgeschlossen (Runde 1–4). Offen nur noch GitHub online (Repos durchblättern) – Rainer wollte zuerst nur lokalen Git-Status
-- **Path-Finder-Abgleich** (cocoatech.io): Drop Stack gebaut; weitere Punkte wählt Rainer aus der P-Liste
+- **Path-Finder-Abgleich** (cocoatech.io): Drop Stack gebaut; weitere Punkte wählt Rainer aus der P-Liste – laut Rainer (27.11.) als Nächstes nach Mehrsprachigkeit Runde 1, Runden 2–4 der Übersetzung danach
 - Priorität laut Rainer: Zwei-Fenster-Komfort zuerst
