@@ -19,8 +19,10 @@ Voraussetzung: Hookmark Pro (eigene Skripte gibt es nur dort) und Twinfold als e
 ```applescript
 use framework "Foundation"
 use scripting additions
-tell application "/Applications/Twinfold.app" to set thePaths to selected paths
-if thePaths is {} then return ""
+tell application "/Applications/Twinfold.app"
+	set thePaths to selected paths
+	if thePaths is {} then set thePaths to {current folder}
+end tell
 return ((current application's NSURL's fileURLWithPath:(item 1 of thePaths))'s absoluteString()) as text
 ```
 
