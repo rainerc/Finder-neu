@@ -135,6 +135,12 @@ final class PaneState: Identifiable {
         }
         do {
             let loaded = try FileService.contents(of: currentURL, includeHidden: showHidden)
+            // Nichts Sichtbares geändert (z. B. nur unsichtbare Dateien im Benutzerordner wie .zsh_history):
+            // Liste nicht neu setzen – sonst baut die Tabelle neu auf und die Markierung kann unter dem Mauszeiger springen.
+            if errorMessage == nil, isUnchanged(loaded) {
+                watchCurrentFolder()
+                return
+            }
             items = loaded
             errorMessage = nil
             errorIsPermission = false
@@ -147,6 +153,18 @@ final class PaneState: Identifiable {
             errorIsPermission = Self.isPermissionError(error)
         }
         watchCurrentFolder()
+    }
+
+    /// Gleiche Objekte mit gleichen angezeigten Werten wie bisher? (Ordnergrößen bleiben unberücksichtigt.)
+    private func isUnchanged(_ loaded: [FileItem]) -> Bool {
+        guard !items.isEmpty, loaded.count == items.count else { return false }
+        let current = Dictionary(items.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        return loaded.allSatisfy { new in
+            guard let old = current[new.id] else { return false }
+            return old.name == new.name && old.modified == new.modified && old.tagList == new.tagList
+                && old.isHidden == new.isHidden && old.kind == new.kind
+                && (new.isBrowsableFolder || old.size == new.size)
+        }
     }
 
     /// Bei fehlender Berechtigung auf Netzlaufwerken erklären, wo man sie in macOS erteilt.
@@ -211,9 +229,10 @@ final class PaneState: Identifiable {
     private func setFolderSize(_ size: Int64, for url: URL, in folder: URL) {
         guard folder == currentURL, activeSearch == nil,
               let index = items.firstIndex(where: { $0.id == url }) else { return }
+        folderSizeCache[url] = (items[index].modified, size)
+        guard !items[index].folderSizeKnown || items[index].size != size else { return }
         items[index].size = size
         items[index].folderSizeKnown = true
-        folderSizeCache[url] = (items[index].modified, size)
     }
 
     private func folderSizesFinished(in folder: URL) {
@@ -337,6 +356,10 @@ final class PaneState: Identifiable {
         // Ordner immer zuerst, danach nach gewählter Spalte.
         let folders = items.filter(\.isBrowsableFolder).sorted(using: sortOrder)
         let files = items.filter { !$0.isBrowsableFolder }.sorted(using: sortOrder)
-        items = folders + files
+        let sorted = folders + files
+        // Nur neu setzen, wenn sich die Reihenfolge ändert (jede Zuweisung lässt die Tabelle neu aufbauen).
+        if sorted.map(\.id) != items.map(\.id) || sorted.count != items.count {
+            items = sorted
+        }
     }
 }
