@@ -29,8 +29,8 @@ struct PaneView: View {
                     }
                 }
             }
-            .contentShape(Rectangle())
-            .onTapGesture { browser.activeSide = side }
+            // Gleichzeitig statt exklusiv: sonst schluckt der Tipp die Klicks auf die Pfad-Elemente.
+            .simultaneousGesture(TapGesture().onEnded { browser.activeSide = side })
             Divider()
             if pane.isSearchBarVisible {
                 SearchBar(pane: pane)
@@ -564,23 +564,61 @@ struct PathBar: View {
                     if index > 0 {
                         Image(systemName: "chevron.compact.right").foregroundStyle(.tertiary)
                     }
-                    Button {
-                        navigate(component)
-                    } label: {
-                        HStack(spacing: 3) {
-                            Image(nsImage: NSWorkspace.shared.icon(forFile: component.path))
-                                .resizable()
-                                .frame(width: 14, height: 14)
-                            Text(component.path == "/" ? "Macintosh HD" : component.lastPathComponent)
-                                .lineLimit(1)
-                        }
-                    }
+                    PathCrumb(url: component, isCurrent: index == components.count - 1, navigate: navigate)
                 }
             }
         }
         // Links ausgerichtet; ist der Pfad zu lang, steht anfangs das Ende (aktueller Ordner) im Blick
         .defaultScrollAnchor(.leading, for: .alignment)
         .defaultScrollAnchor(.trailing, for: .initialOffset)
+    }
+}
+
+/// Ein Element der Pfadleiste: Klick springt in den Ordner, Rechtsklick bietet weitere Aktionen.
+private struct PathCrumb: View {
+    @Environment(BrowserState.self) private var browser
+    let url: URL
+    let isCurrent: Bool
+    let navigate: (URL) -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button {
+            navigate(url)
+        } label: {
+            HStack(spacing: 3) {
+                Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                    .resizable()
+                    .frame(width: 14, height: 14)
+                Text(url.path == "/" ? "Macintosh HD" : FileManager.default.displayName(atPath: url.path))
+                    .lineLimit(1)
+                    .fontWeight(isCurrent ? .semibold : .regular)
+            }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 2)
+            .background(RoundedRectangle(cornerRadius: 5).fill(hovering ? Color.primary.opacity(0.1) : .clear))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help(url.path)
+        .contextMenu {
+            Button("Öffnen") { navigate(url) }
+            Button("In neuem Tab öffnen") {
+                browser.newTab()
+                browser.activePane.navigate(to: url)
+            }
+            Button("Im anderen Fenster öffnen") {
+                browser.toggleActivePane()
+                browser.activePane.navigate(to: url)
+            }
+            Divider()
+            Button("Pfad kopieren") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(url.path, forType: .string)
+            }
+            Button("Im Finder zeigen") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+        }
     }
 }
 
