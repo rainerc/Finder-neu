@@ -63,6 +63,35 @@ final class DropShelfController: NSObject {
             upMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseUp) { _ in
                 MainActor.assumeIsolated { DropShelfController.shared.dragEnded() }
             }
+            // Ziehen aus der eigenen App: globale Monitore sehen diese Ereignisse nicht, und während der
+            // Drag-Session kommen auch lokal keine mehr an → beim ersten Ziehen Mausposition selbst abfragen
+            localDragMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDragged) { event in
+                MainActor.assumeIsolated { DropShelfController.shared.startPolling() }
+                return event
+            }
+        }
+    }
+
+    private var localDragMonitor: Any?
+    private var pollTimer: Timer?
+
+    private func startPolling() {
+        guard pollTimer == nil else { return }
+        let timer = Timer(timeInterval: 1.0 / 60, repeats: true) { _ in
+            MainActor.assumeIsolated { DropShelfController.shared.poll() }
+        }
+        // .common enthält den Modus, in dem die Run-Loop während einer Drag-Session läuft
+        RunLoop.main.add(timer, forMode: .common)
+        pollTimer = timer
+    }
+
+    private func poll() {
+        if NSEvent.pressedMouseButtons & 1 == 0 {
+            pollTimer?.invalidate()
+            pollTimer = nil
+            dragEnded()
+        } else {
+            mouseDragged()
         }
     }
 
@@ -71,8 +100,12 @@ final class DropShelfController: NSObject {
         statusItem = nil
         if let dragMonitor { NSEvent.removeMonitor(dragMonitor) }
         if let upMonitor { NSEvent.removeMonitor(upMonitor) }
+        if let localDragMonitor { NSEvent.removeMonitor(localDragMonitor) }
+        pollTimer?.invalidate()
+        pollTimer = nil
         dragMonitor = nil
         upMonitor = nil
+        localDragMonitor = nil
         panel?.orderOut(nil)
     }
 
