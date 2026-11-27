@@ -9,9 +9,23 @@ final class DropShelfController: NSObject {
     static let shared = DropShelfController()
 
     static let enabledKey = "dropShelf.enabled"
-    static let autoShowKey = "dropShelf.autoShow"
+    static let triggerKey = "dropShelf.trigger"
     static var isEnabled: Bool { UserDefaults.standard.bool(forKey: enabledKey) }
-    static var autoShows: Bool { UserDefaults.standard.object(forKey: autoShowKey) as? Bool ?? true }
+
+    /// Wann die Ablage von selbst erscheint
+    enum Trigger: String, CaseIterable {
+        case shake, drag, off
+        var title: String {
+            switch self {
+            case .shake: "Beim Schütteln einer gezogenen Datei"
+            case .drag: "Sobald Dateien gezogen werden"
+            case .off: "Nie (nur per Menüleiste)"
+            }
+        }
+    }
+    static var trigger: Trigger {
+        Trigger(rawValue: UserDefaults.standard.string(forKey: triggerKey) ?? "") ?? .shake
+    }
 
     private var panel: NSPanel?
     private var statusItem: NSStatusItem?
@@ -19,6 +33,11 @@ final class DropShelfController: NSObject {
     private var upMonitor: Any?
     private var lastDragChange = NSPasteboard(name: .drag).changeCount
     private var shownByDrag = false
+    // Schütteln erkennen: Richtungswechsel der Maus (waagerecht, je ≥ 40 pt) innerhalb kurzer Zeit
+    private var lastX: CGFloat = 0
+    private var direction = 0
+    private var turnX: CGFloat = 0
+    private var reversals: [Date] = []
 
     var isVisible: Bool { panel?.isVisible == true }
 
@@ -102,16 +121,38 @@ final class DropShelfController: NSObject {
     // MARK: Automatisch beim Ziehen
 
     private func mouseDragged() {
-        guard Self.autoShows, !isVisible else { return }
+        let trigger = Self.trigger
+        guard trigger != .off, !isVisible else { return }
+        // Nur bei einem laufenden Ziehen von Dateien (das Drag-Pasteboard wurde seit dem letzten Loslassen neu befüllt)
         let pasteboard = NSPasteboard(name: .drag)
-        guard pasteboard.changeCount != lastDragChange else { return }
-        lastDragChange = pasteboard.changeCount
-        guard pasteboard.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) else { return }
+        guard pasteboard.changeCount != lastDragChange,
+              pasteboard.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) else { return }
+        if trigger == .shake, !detectShake() { return }
         shownByDrag = true
         show()
     }
 
+    private func detectShake() -> Bool {
+        let x = NSEvent.mouseLocation.x
+        defer { lastX = x }
+        let dx = x - lastX
+        guard abs(dx) >= 2 else { return false }
+        let newDirection = dx > 0 ? 1 : -1
+        if newDirection != direction {
+            if direction != 0, abs(lastX - turnX) >= 40 { reversals.append(.now) }
+            turnX = lastX
+            direction = newDirection
+        }
+        reversals.removeAll { Date.now.timeIntervalSince($0) > 0.8 }
+        guard reversals.count >= 3 else { return false }
+        reversals.removeAll()
+        return true
+    }
+
     private func dragEnded() {
+        lastDragChange = NSPasteboard(name: .drag).changeCount
+        direction = 0
+        reversals.removeAll()
         guard shownByDrag else { return }
         // Nichts abgelegt → nach kurzer Zeit wieder ausblenden (wie Yoink)
         Task { @MainActor in
@@ -137,11 +178,17 @@ final class DropShelfController: NSObject {
         menu.addItem(withTitle: count == 1 ? "1 Datei im Drop Stack" : "\(count) Dateien im Drop Stack", action: nil, keyEquivalent: "")
         menu.addItem(.separator())
         menu.addItem(item(isVisible ? "Ablage ausblenden" : "Ablage zeigen") { DropShelfController.shared.toggle() })
-        let auto = item("Beim Ziehen automatisch zeigen") {
-            UserDefaults.standard.set(!DropShelfController.autoShows, forKey: DropShelfController.autoShowKey)
+        let triggerMenu = NSMenu()
+        for trigger in Trigger.allCases {
+            let entry = item(trigger.title) {
+                UserDefaults.standard.set(trigger.rawValue, forKey: DropShelfController.triggerKey)
+            }
+            entry.state = Self.trigger == trigger ? .on : .off
+            triggerMenu.addItem(entry)
         }
-        auto.state = Self.autoShows ? .on : .off
-        menu.addItem(auto)
+        let triggerItem = NSMenuItem(title: "Automatisch zeigen", action: nil, keyEquivalent: "")
+        triggerItem.submenu = triggerMenu
+        menu.addItem(triggerItem)
         menu.addItem(item("Drop Stack leeren") { DropStack.shared.clear() })
         menu.addItem(.separator())
         menu.addItem(item("Finder-Ersatz öffnen") { DropShelfController.openMainWindow() })

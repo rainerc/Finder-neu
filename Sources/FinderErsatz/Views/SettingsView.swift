@@ -16,7 +16,7 @@ struct SettingsView: View {
 
 private struct AppearanceSettings: View {
     @AppStorage(DropShelfController.enabledKey) private var shelfEnabled = false
-    @AppStorage(DropShelfController.autoShowKey) private var shelfAutoShow = true
+    @AppStorage(DropShelfController.triggerKey) private var shelfTrigger = DropShelfController.Trigger.shake.rawValue
     @Environment(AppSettings.self) private var settings
 
     var body: some View {
@@ -41,9 +41,13 @@ private struct AppearanceSettings: View {
             Toggle("Drop Stack (Ablage zum Sammeln) unter den Fenstern zeigen", isOn: $settings.showDropStack)
             Toggle("Schwebende Ablage + Symbol in der Menüleiste (wie Yoink, auch ohne App-Fenster)", isOn: $shelfEnabled)
                 .onChange(of: shelfEnabled) { DropShelfController.shared.apply() }
-            Toggle("Ablage beim Ziehen von Dateien automatisch zeigen", isOn: $shelfAutoShow)
-                .disabled(!shelfEnabled)
-                .padding(.leading, 20)
+            Picker("Ablage automatisch zeigen:", selection: $shelfTrigger) {
+                ForEach(DropShelfController.Trigger.allCases, id: \.self) { trigger in
+                    Text(trigger.title).tag(trigger.rawValue)
+                }
+            }
+            .disabled(!shelfEnabled)
+            .padding(.leading, 20)
             Toggle("Abwechselnde Zeilenfarben", isOn: $settings.alternatingRows)
             Toggle("Unsichtbare Dateien abgeblendet zeigen", isOn: $settings.showHiddenDimmed)
             Toggle("Leertaste auf Ordnern: Quick Look/XRay statt schneller Vorschau", isOn: $settings.folderPreviewUsesQuickLook)
