@@ -224,8 +224,8 @@ final class DropShelfController: NSObject {
         menu.addItem(triggerItem)
         menu.addItem(item("Drop Stack leeren") { DropStack.shared.clear() })
         menu.addItem(.separator())
-        menu.addItem(item("Finder-Ersatz öffnen") { DropShelfController.openMainWindow() })
-        menu.addItem(item("Finder-Ersatz beenden") { NSApp.terminate(nil) })
+        menu.addItem(item("Twinfold öffnen") { DropShelfController.openMainWindow() })
+        menu.addItem(item("Twinfold beenden") { NSApp.terminate(nil) })
         statusItem?.menu = menu
         statusItem?.button?.performClick(nil)
         statusItem?.menu = nil
@@ -310,7 +310,7 @@ struct DropShelfView: View {
                     if let browser = BrowserState.current {
                         Button("Ins aktive Fenster kopieren", systemImage: "doc.on.doc") { browser.transferDropStack(move: false) }
                             .labelStyle(.iconOnly)
-                            .help("In den Ordner des aktiven Finder-Ersatz-Fensters kopieren")
+                            .help("In den Ordner des aktiven Twinfold-Fensters kopieren")
                     }
                     Button("Leeren", systemImage: "xmark.bin") { stack.clear() }
                         .labelStyle(.iconOnly)
@@ -364,7 +364,7 @@ private struct ShelfRow: View {
         .draggable(url)
         .contextMenu {
             Button("Öffnen") { NSWorkspace.shared.open(url) }
-            Button("Im Finder-Ersatz zeigen") {
+            Button("Im Twinfold zeigen") {
                 DropShelfController.openMainWindow()
                 BrowserState.current?.revealDropStackItem(url)
             }

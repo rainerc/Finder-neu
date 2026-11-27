@@ -44,6 +44,7 @@ struct RemoteEntry: Identifiable, Hashable, Sendable {
 
 /// Passwörter im Schlüsselbund (generisches Passwort, Dienst „Finder-Ersatz Verbindungen“)
 enum KeychainStore {
+    // Name aus der Zeit vor der Umbenennung in Twinfold – bleibt, damit gespeicherte Passwörter gefunden werden
     private static let service = "Finder-Ersatz Verbindungen"
 
     static func password(for account: String) -> String? {

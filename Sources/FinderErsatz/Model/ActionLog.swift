@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 /// Protokoll aller Dateiaktionen (Total Commander: Protokolldatei). Bleibt über Neustarts erhalten:
-/// je Eintrag eine JSON-Zeile in ~/Library/Application Support/Finder-Ersatz/Aktionen.jsonl.
+/// je Eintrag eine JSON-Zeile in ~/Library/Application Support/Twinfold/Aktionen.jsonl.
 @MainActor
 @Observable
 final class ActionLog {
@@ -22,7 +22,12 @@ final class ActionLog {
     @ObservationIgnored let fileURL: URL = {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? FileManager.default.homeDirectoryForCurrentUser.appending(path: "Library/Application Support")
-        return base.appending(path: "Finder-Ersatz/Aktionen.jsonl")
+        // Ordner aus der Zeit vor der Umbenennung (Finder-Ersatz → Twinfold) einmalig übernehmen
+        let old = base.appending(path: "Finder-Ersatz"), new = base.appending(path: "Twinfold")
+        if FileManager.default.fileExists(atPath: old.path), !FileManager.default.fileExists(atPath: new.path) {
+            try? FileManager.default.moveItem(at: old, to: new)
+        }
+        return new.appending(path: "Aktionen.jsonl")
     }()
 
     private init() {

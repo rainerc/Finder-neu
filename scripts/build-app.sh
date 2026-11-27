@@ -1,10 +1,10 @@
 #!/bin/zsh
-# Baut Finder-Ersatz als echte, signierte .app (ohne Xcode-Projekt).
+# Baut Twinfold als echte, signierte .app (ohne Xcode-Projekt).
 # Nötig, damit macOS die App als eigene App kennt und Berechtigungen
 # (Netzwerkvolumes, lokales Netzwerk, Schreibtisch …) korrekt abfragt und speichert.
 #
 #   ./scripts/build-app.sh             → baut, installiert nach /Applications und startet
-#   ./scripts/build-app.sh --no-install → nur build/Finder-Ersatz.app bauen und von dort starten
+#   ./scripts/build-app.sh --no-install → nur build/Twinfold.app bauen und von dort starten
 #   ./scripts/build-app.sh --no-open    → bauen und installieren, nicht starten
 set -euo pipefail
 
@@ -13,10 +13,10 @@ cd "$(dirname "$0")/.."
 # Schlägt der Bau fehl (z. B. Compilerfehler), bleibt die alte App installiert – deshalb deutlich melden,
 # auch wenn die Ausgabe in eine Log-Datei umgeleitet wird (Kurzbefehl).
 trap 'echo "✗ Bau fehlgeschlagen – die bisher installierte App wurde NICHT ersetzt."; \
-  osascript -e "display alert \"Finder-Ersatz: Bau fehlgeschlagen\" message \"Die alte Version ist noch installiert. Fehler siehe Terminal bzw. Log.\" giving up after 60" >/dev/null 2>&1 || true' ERR
+  osascript -e "display alert \"Twinfold: Bau fehlgeschlagen\" message \"Die alte Version ist noch installiert. Fehler siehe Terminal bzw. Log.\" giving up after 60" >/dev/null 2>&1 || true' ERR
 COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unbekannt)"
 echo "▸ Stand: Commit $COMMIT"
-APP="build/Finder-Ersatz.app"
+APP="build/Twinfold.app"
 PLIST="$APP/Contents/Info.plist"
 
 echo "▸ Kompiliere (Release) …"
@@ -34,7 +34,7 @@ cp Support/AppIcon.icns "$APP/Contents/Resources/"        # App-Icon (Quelle: Su
 pb() { /usr/libexec/PlistBuddy -c "$1" "$PLIST" >/dev/null 2>&1 || true; }
 pb "Add :CFBundleExecutable string FinderErsatz"
 pb "Add :CFBundlePackageType string APPL"
-pb "Add :CFBundleDisplayName string Finder-Ersatz"
+pb "Add :CFBundleDisplayName string Twinfold"
 pb "Add :CFBundleIconFile string AppIcon"
 pb "Add :CFBundleShortVersionString string 0.5"
 pb "Add :CFBundleVersion string $(git rev-list --count HEAD 2>/dev/null || echo 1)"
@@ -104,11 +104,19 @@ sleep 0.5
 
 TARGET="$APP"
 if [[ $INSTALL == 1 ]]; then
-  TARGET="/Applications/Finder-Ersatz.app"
+  TARGET="/Applications/Twinfold.app"
   rm -rf "$TARGET"
   cp -R "$APP" "$TARGET"
   # Launch Services neu informieren (Name, AppleScript-Wörterbuch), Build-Kopie abmelden
   LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+  # Alte Installation unter dem früheren Namen entfernen (gleiche Bundle-ID → Einstellungen und Berechtigungen bleiben)
+  for OLD in "/Applications/Finder-Ersatz.app" "build/Finder-Ersatz.app"; do
+    if [[ -d "$OLD" ]]; then
+      "$LSREGISTER" -u "$OLD" >/dev/null 2>&1 || true
+      rm -rf "$OLD"
+      echo "▸ Alte App entfernt: $OLD"
+    fi
+  done
   "$LSREGISTER" -u "$PWD/$APP" >/dev/null 2>&1 || true
   "$LSREGISTER" -f "$TARGET" >/dev/null 2>&1 || true
   touch "$TARGET"   # Dock/Finder zeigen das neue Icon sofort

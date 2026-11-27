@@ -7,19 +7,19 @@
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleName</key>
-	<string>Finder-Ersatz</string>
+	<string>Twinfold</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Finder-Ersatz sucht im lokalen Netzwerk nach Servern und Freigaben (z. B. NAS), damit du dich mit ihnen verbinden kannst.</string>
+	<string>Twinfold sucht im lokalen Netzwerk nach Servern und Freigaben (z. B. NAS), damit du dich mit ihnen verbinden kannst.</string>
 	<key>NSNetworkVolumesUsageDescription</key>
-	<string>Finder-Ersatz zeigt und bearbeitet Dateien auf deinen Netzwerkfreigaben.</string>
+	<string>Twinfold zeigt und bearbeitet Dateien auf deinen Netzwerkfreigaben.</string>
 	<key>NSRemovableVolumesUsageDescription</key>
-	<string>Finder-Ersatz zeigt und bearbeitet Dateien auf externen Laufwerken.</string>
+	<string>Twinfold zeigt und bearbeitet Dateien auf externen Laufwerken.</string>
 	<key>NSDesktopFolderUsageDescription</key>
-	<string>Finder-Ersatz zeigt und bearbeitet Dateien auf deinem Schreibtisch.</string>
+	<string>Twinfold zeigt und bearbeitet Dateien auf deinem Schreibtisch.</string>
 	<key>NSDocumentsFolderUsageDescription</key>
-	<string>Finder-Ersatz zeigt und bearbeitet Dateien in deinem Dokumente-Ordner.</string>
+	<string>Twinfold zeigt und bearbeitet Dateien in deinem Dokumente-Ordner.</string>
 	<key>NSDownloadsFolderUsageDescription</key>
-	<string>Finder-Ersatz zeigt und bearbeitet Dateien in deinem Downloads-Ordner.</string>
+	<string>Twinfold zeigt und bearbeitet Dateien in deinem Downloads-Ordner.</string>
 	<key>NSAppleScriptEnabled</key>
 	<true/>
 	<key>OSAScriptingDefinition</key>

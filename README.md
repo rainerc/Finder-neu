@@ -1,4 +1,4 @@
-# Finder-Ersatz
+# Twinfold
 
 Native macOS-App (SwiftUI, macOS 26 Tahoe) als komfortablerer Finder, angelehnt an Path Finder.
 Kern des MVP: **Zwei-Fenster-Ansicht** (Dual Pane).
@@ -9,7 +9,7 @@ Kern des MVP: **Zwei-Fenster-Ansicht** (Dual Pane).
 ```sh
 ./scripts/build-app.sh
 ```
-Baut `build/Finder-Ersatz.app`, signiert sie mit deinem Apple-Development-Zertifikat und startet sie. Die App kannst du auch nach `/Programme` kopieren.
+Baut `build/Twinfold.app`, signiert sie mit deinem Apple-Development-Zertifikat und startet sie. Die App kannst du auch nach `/Programme` kopieren.
 
 **Nur zum schnellen Testen** (ohne Bundle – macOS-Berechtigungen, z. B. für Netzwerkvolumes, greifen hier nicht zuverlässig):
 ```sh
@@ -27,7 +27,7 @@ In Xcode unter *Signing & Capabilities* das eigene Team wählen (oder `DEVELOPME
 Die App-Sandbox ist bewusst aus, weil ein Dateimanager freien Zugriff braucht. Verteilt wird später per Developer ID + Notarisierung, nicht über den App Store.
 Beim ersten Zugriff auf Schreibtisch, Dokumente usw. fragt macOS nach Erlaubnis. Für alles andere ggf. *Systemeinstellungen → Datenschutz → Festplattenvollzugriff*.
 
-**Empfehlung:** Finder-Ersatz unter Systemeinstellungen → Datenschutz & Sicherheit → **Festplattenvollzugriff** einschalten. Das deckt Netzwerkvolumes, externe Laufwerke und geschützte Ordner ab und bleibt nach Neubauten erhalten (gleiches Signaturzertifikat).
+**Empfehlung:** Twinfold unter Systemeinstellungen → Datenschutz & Sicherheit → **Festplattenvollzugriff** einschalten. Das deckt Netzwerkvolumes, externe Laufwerke und geschützte Ordner ab und bleibt nach Neubauten erhalten (gleiches Signaturzertifikat).
 
 Beim ersten Start fragt macOS, ob die App auf das lokale Netzwerk zugreifen darf – das ist für die Serversuche nötig.
 

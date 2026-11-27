@@ -239,7 +239,7 @@ final class MainSplitViewController: NSSplitViewController {
     static func diagnosticReport() -> String {
         let info = Bundle.main.infoDictionary ?? [:]
         var lines = [
-            "Finder-Ersatz Build \(info["CFBundleVersion"] as? String ?? "?"), Commit \(info["FEGitCommit"] as? String ?? "?")",
+            "Twinfold Build \(info["CFBundleVersion"] as? String ?? "?"), Commit \(info["FEGitCommit"] as? String ?? "?")",
             "Layout: NSSplitViewController (MainSplitView)",
         ]
         guard let controller = current, let window = controller.view.window else {

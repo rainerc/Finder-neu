@@ -233,7 +233,7 @@ struct ActionBar: View {
 /// Erkennt, ob die App ohne .app-Bundle läuft (z. B. `swift run` oder `.build/debug/FinderErsatz`).
 /// Dann gelten die macOS-Freigaben (Netzwerkvolumes, Festplattenvollzugriff) der installierten App nicht.
 enum AppEnvironment {
-    static let installedAppURL = URL(filePath: "/Applications/Finder-Ersatz.app")
+    static let installedAppURL = URL(filePath: "/Applications/Twinfold.app")
     static var isRunningUnbundled: Bool { Bundle.main.bundleURL.pathExtension != "app" }
 }
 

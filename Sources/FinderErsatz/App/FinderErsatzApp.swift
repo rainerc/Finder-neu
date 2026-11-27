@@ -55,7 +55,7 @@ struct FinderErsatzApp: App {
     @State private var browser = BrowserState()
 
     var body: some Scene {
-        WindowGroup("Finder-Ersatz") {
+        WindowGroup("Twinfold") {
             ContentView()
                 .environment(browser)
                 .onAppear { appDelegate.browser = browser }
@@ -290,7 +290,7 @@ extension NSApplication {
         BrowserState.current?.activePane.currentURL.path ?? ""
     }
 
-    /// Diagnose: `osascript -e 'tell application "/Applications/Finder-Ersatz.app" to get debug info'`
+    /// Diagnose: `osascript -e 'tell application "/Applications/Twinfold.app" to get debug info'`
     @objc var scriptingDebugInfo: String {
         guard let browser = BrowserState.current else { return "BrowserState.current = nil (Fenster noch nicht erschienen?)" }
         let pane = browser.activePane

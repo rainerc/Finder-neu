@@ -336,11 +336,11 @@ final class PaneState: Identifiable {
         let code = "(\(nsError.domain) \(nsError.code)" + (underlying.map { ", \($0.domain) \($0.code)" } ?? "") + ")"
         guard isPermission else { return "\(error.localizedDescription) \(code)" }
         if AppEnvironment.isRunningUnbundled {
-            return "Die App läuft als Test-Build ohne App-Bundle (\(Bundle.main.executablePath ?? "?")) – dafür gelten die macOS-Freigaben nicht. Bitte die installierte App /Applications/Finder-Ersatz.app starten (Knopf oben im Fenster). \(code)"
+            return "Die App läuft als Test-Build ohne App-Bundle (\(Bundle.main.executablePath ?? "?")) – dafür gelten die macOS-Freigaben nicht. Bitte die installierte App /Applications/Twinfold.app starten (Knopf oben im Fenster). \(code)"
         }
         let isNetwork = (try? url.resourceValues(forKeys: [.volumeIsLocalKey]).volumeIsLocal) == false
         if isNetwork {
-            return "macOS hat Finder-Ersatz den Zugriff auf Netzwerkvolumes nicht erlaubt. Am dauerhaftesten: Finder-Ersatz unter „Festplattenvollzugriff“ einschalten (gilt für alle Laufwerke und bleibt auch nach Neubauten erhalten). Danach die App neu starten. \(code)"
+            return "macOS hat Twinfold den Zugriff auf Netzwerkvolumes nicht erlaubt. Am dauerhaftesten: Twinfold unter „Festplattenvollzugriff“ einschalten (gilt für alle Laufwerke und bleibt auch nach Neubauten erhalten). Danach die App neu starten. \(code)"
         }
         return "Keine Berechtigung. Ggf. unter Systemeinstellungen → Datenschutz & Sicherheit → Festplattenvollzugriff erlauben und die App neu starten. \(code)"
     }

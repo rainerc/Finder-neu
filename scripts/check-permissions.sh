@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Diagnose: Warum verliert Finder-Ersatz nach einem Neubau die Berechtigung (Netzwerkvolumes, Festplattenvollzugriff)?
+# Diagnose: Warum verliert Twinfold nach einem Neubau die Berechtigung (Netzwerkvolumes, Festplattenvollzugriff)?
 # Vergleicht die Signatur der installierten App mit dem, was macOS (TCC) zur erteilten Berechtigung gespeichert hat.
 #
 #   ./scripts/check-permissions.sh
@@ -9,7 +9,7 @@
 # (Systemeinstellungen → Datenschutz & Sicherheit → Festplattenvollzugriff → Terminal).
 set -uo pipefail
 
-APP="${1:-/Applications/Finder-Ersatz.app}"
+APP="${1:-/Applications/Twinfold.app}"
 BUNDLE_ID="com.example.FinderErsatz"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -65,7 +65,7 @@ check_db() {
 check_db "$HOME/Library/Application Support/com.apple.TCC/TCC.db" "Benutzer"
 check_db "/Library/Application Support/com.apple.TCC/TCC.db" "System (Festplattenvollzugriff)"
 
-echo "== Laufende Finder-Ersatz-Prozesse (welche Kopie läuft, seit wann?)"
+echo "== Laufende Twinfold-Prozesse (welche Kopie läuft, seit wann?)"
 ps -axo pid,lstart,command | grep -E '[F]inderErsatz' || echo "(keiner)"
 echo
 
@@ -77,10 +77,10 @@ if [[ -n "$VOLUME" ]]; then
   echo
 fi
 
-echo "== Datenschutz-Entscheidungen von macOS für Finder-Ersatz (letzte 10 Minuten)"
+echo "== Datenschutz-Entscheidungen von macOS für Twinfold (letzte 10 Minuten)"
 log show --last 10m --style compact --predicate 'subsystem == "com.apple.TCC" AND eventMessage CONTAINS[c] "FinderErsatz"' 2>/dev/null \
   | grep -iE 'auth|deny|denied|allow|service' | tail -25 || true
 echo
-echo "== Kernel/Sandbox-Meldungen zu Finder-Ersatz (letzte 10 Minuten)"
+echo "== Kernel/Sandbox-Meldungen zu Twinfold (letzte 10 Minuten)"
 log show --last 10m --style compact --predicate '(process == "kernel" OR process == "sandboxd") AND eventMessage CONTAINS[c] "FinderErsatz"' 2>/dev/null \
   | tail -15 || true

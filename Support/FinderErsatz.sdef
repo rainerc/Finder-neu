@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
-<dictionary title="Finder-Ersatz">
-    <suite name="Finder-Ersatz Suite" code="FErs" description="Zugriff auf Auswahl und Ordner (z. B. für Hookmark).">
-        <class name="application" code="capp" description="Finder-Ersatz">
+<dictionary title="Twinfold">
+    <suite name="Twinfold Suite" code="FErs" description="Zugriff auf Auswahl und Ordner (z. B. für Hookmark).">
+        <class name="application" code="capp" description="Twinfold">
             <cocoa class="NSApplication"/>
             <property name="name" code="pnam" type="text" access="r" description="Name der App.">
                 <cocoa key="name"/>
