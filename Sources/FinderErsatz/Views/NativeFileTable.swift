@@ -217,6 +217,37 @@ struct NativeFileTable: NSViewRepresentable {
             return cell
         }
 
+        /// Doppelklick auf den Spaltenbegrenzer im Kopf: Spalte so breit wie ihr längster Inhalt (wie im Finder)
+        func tableView(_ tableView: NSTableView, sizeToFitWidthOfColumn column: Int) -> CGFloat {
+            guard column >= 0, column < tableView.tableColumns.count, let style else { return 100 }
+            let tableColumn = tableView.tableColumns[column]
+            let id = tableColumn.identifier.rawValue
+            var font = FileColumn.font(for: style.listSize)
+            if id == "permissions" { font = NSFont.monospacedSystemFont(ofSize: font.pointSize, weight: .regular) }
+            let attributes: [NSAttributedString.Key: Any] = [.font: font]
+            let headerFont = tableColumn.headerCell.font ?? NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+            // Kopf: Titel + Platz für den Sortierpfeil
+            var width = (tableColumn.title as NSString).size(withAttributes: [.font: headerFont]).width + 24
+            if id == "name" {
+                let subtitleFont = NSFont.preferredFont(forTextStyle: .caption1)
+                for item in items {
+                    var itemWidth = (item.name as NSString).size(withAttributes: attributes).width + 6
+                    let tagCount = min(item.tagList.count, 3)
+                    if tagCount > 0 { itemWidth += CGFloat(tagCount) * 6 + 3 + 4 }
+                    if searching {
+                        let subtitle = parent.relativeFolder(item) as NSString
+                        itemWidth = max(itemWidth, subtitle.size(withAttributes: [.font: subtitleFont]).width + 6)
+                    }
+                    width = max(width, style.listSize.iconSize + 8 + itemWidth)
+                }
+            } else if let fileColumn = FileColumn.byID[id] {
+                for item in items {
+                    width = max(width, (fileColumn.text(item) as NSString).size(withAttributes: attributes).width + 8)
+                }
+            }
+            return min(max(ceil(width), tableColumn.minWidth), 2000)
+        }
+
         func tableView(_ tableView: NSTableView, typeSelectStringFor tableColumn: NSTableColumn?, row: Int) -> String? {
             guard tableColumn?.identifier.rawValue == "name", row < items.count else { return nil }
             return items[row].name
