@@ -410,6 +410,10 @@ struct PanesArea: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             Divider()
+            if browser.settings.showDropStack {
+                DropStackBar()
+                Divider()
+            }
             if let output = browser.commandOutput {
                 CommandOutputPanel(output: output)
                 Divider()

@@ -341,7 +341,7 @@ final class BrowserState {
     }
 
     /// Prüft auf Namenskonflikte und startet den Auftrag – oder fragt vorher nach.
-    private func enqueue(title: String, items: [TransferItem], afterSheet: Bool = false) {
+    func enqueue(title: String, items: [TransferItem], afterSheet: Bool = false) {
         let conflicts = items.filter { FileManager.default.fileExists(atPath: $0.destination.path) }
         let log = TransferLog.shared
         log.add("Auftrag „\(title)“: \(items.count) Objekt(e), \(conflicts.count) Konflikt(e)")

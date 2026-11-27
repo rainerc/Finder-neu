@@ -467,6 +467,10 @@ struct PaneView: View {
             }
         }
         entries.append(.divider)
+        entries.append(.action("Zum Drop Stack hinzufügen") {
+            activate(pane, ids)
+            browser.addSelectionToDropStack()
+        })
         if !folderURLs.isEmpty {
             entries.append(.action("Zu Favoriten hinzufügen") { browser.favorites.add(folderURLs) })
         }

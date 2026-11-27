@@ -223,6 +223,8 @@ struct BrowserCommands: Commands {
             item(.showOnlySelected) { browser.toggleShowOnlySelected() }
             Divider()
             toggle(.toggleButtonBar, isOn: Bindable(browser.settings).showButtonBar)
+            toggle(.toggleDropStack, isOn: Bindable(browser.settings).showDropStack)
+            item(.addToDropStack) { browser.addSelectionToDropStack() }
             item(.commandLine) { browser.focusCommandLine() }
             item(.reload) { browser.reloadAll() }
         }

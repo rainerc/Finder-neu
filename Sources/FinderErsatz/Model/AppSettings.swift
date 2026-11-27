@@ -80,6 +80,8 @@ final class AppSettings {
     var showCommandLine: Bool { didSet { defaults.set(showCommandLine, forKey: "showCommandLine") } }
     /// Eigene Knopfleiste für Programme und Skripte über den Fenstern
     var showButtonBar: Bool { didSet { defaults.set(showButtonBar, forKey: "showButtonBar") } }
+    /// Drop Stack (Ablage zum Sammeln von Dateien) unter den Fenstern
+    var showDropStack: Bool { didSet { defaults.set(showDropStack, forKey: "showDropStack") } }
     /// Ordnergrößen in den Listen im Hintergrund berechnen (nur lokale Laufwerke).
     var calculateFolderSizes: Bool {
         didSet {
@@ -107,6 +109,7 @@ final class AppSettings {
         showPaneTitles = defaults.object(forKey: "showPaneTitles") as? Bool ?? true
         showCommandLine = defaults.object(forKey: "showCommandLine") as? Bool ?? true
         showButtonBar = defaults.object(forKey: "showButtonBar") as? Bool ?? true
+        showDropStack = defaults.object(forKey: "showDropStack") as? Bool ?? true
         folderPreviewUsesQuickLook = defaults.bool(forKey: "folderPreviewUsesQuickLook")
         if let data = defaults.data(forKey: "customShortcuts"),
            let stored = try? JSONDecoder().decode([String: Shortcut?].self, from: data) {
