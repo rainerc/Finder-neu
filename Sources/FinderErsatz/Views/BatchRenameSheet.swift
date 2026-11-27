@@ -8,13 +8,14 @@ struct BatchRenameSheet: View {
     let request: BatchRenameRequest
 
     enum Mode: String, CaseIterable, Identifiable {
-        case replace, regex, add, format
+        case replace, regex, add, date, format
         var id: String { rawValue }
         var title: String {
             switch self {
             case .replace: "Text ersetzen"
             case .regex: "Regex"
             case .add: "Text hinzufügen"
+            case .date: "Datum"
             case .format: "Formatieren"
             }
         }
@@ -32,6 +33,10 @@ struct BatchRenameSheet: View {
     @State private var caseSensitive = false
     @State private var addText = ""
     @State private var addPosition: Position = .after
+    @State private var dateSource: DateStamp.Source = .modified
+    @State private var dateFormat: DateStamp.Format = .isoDate
+    @State private var datePosition: Position = .before
+    @State private var dateSeparator = " "
     @State private var baseName = "Datei"
     @State private var separator = " "
     @State private var startNumber = 1
@@ -86,6 +91,19 @@ struct BatchRenameSheet: View {
                 case .add:
                     TextField("Text", text: $addText)
                     Picker("Position", selection: $addPosition) {
+                        ForEach(Position.allCases) { Text($0.title).tag($0) }
+                    }
+                case .date:
+                    Picker("Datum", selection: $dateSource) {
+                        ForEach(DateStamp.Source.allCases) { Text($0.title).tag($0) }
+                    }
+                    Picker("Format", selection: $dateFormat) {
+                        ForEach(DateStamp.Format.allCases) { format in
+                            Text("\(format.example)  (\(format.rawValue))").tag(format)
+                        }
+                    }
+                    TextField("Trennzeichen", text: $dateSeparator)
+                    Picker("Position", selection: $datePosition) {
                         ForEach(Position.allCases) { Text($0.title).tag($0) }
                     }
                 case .format:
@@ -169,6 +187,9 @@ struct BatchRenameSheet: View {
                 }
             case .add:
                 newStem = addPosition == .before ? addText + stem : stem + addText
+            case .date:
+                let stamp = dateFormat.string(from: dateSource.date(for: item))
+                newStem = datePosition == .before ? stamp + dateSeparator + stem : stem + dateSeparator + stamp
             case .format:
                 let number = String(format: "%0\(digits)ld", startNumber + index)
                 newStem = numberPosition == .after ? baseName + separator + number : number + separator + baseName

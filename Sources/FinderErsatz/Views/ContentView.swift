@@ -141,15 +141,8 @@ struct ContentView: View {
         } message: {
             Text("Pfad eingeben, z. B. ~/Library oder /Volumes")
         }
-        .alert(
-            "Umbenennen",
-            isPresented: Binding(get: { browser.renameTarget != nil },
-                                 set: { if !$0 { browser.renameTarget = nil } })
-        ) {
-            TextField("Neuer Name", text: $browser.renameText)
-            Button("Umbenennen") { browser.commitRename() }
-            Button("Erweitert (Regex, Nummerieren) …") { browser.beginBatchRename(regex: true) }
-            Button("Abbrechen", role: .cancel) { browser.renameTarget = nil }
+        .sheet(item: $browser.renameTarget) { item in
+            RenameSheet(item: item).environment(browser)
         }
     }
 }
