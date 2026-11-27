@@ -168,7 +168,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .joinFiles: nil
         case .packArchive: Shortcut(functionKey: 5, .control)
         case .listArchive: nil
-        case .connectRemote: Shortcut("k", [.command, .shift])
+        case .connectRemote: Shortcut("k", [.command, .control, .shift])
         case .addFavorite: Shortcut("t", [.control, .command])
         case .connectServer: Shortcut("k", .command)
         case .viewList: Shortcut("1", .command)
