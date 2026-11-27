@@ -413,6 +413,10 @@ struct PaneView: View {
                 activate(pane, ids)
                 browser.copyPathsToPasteboard()
             },
+            .action(ids.count > 1 ? "Namen kopieren" : "Name kopieren") {
+                activate(pane, ids)
+                browser.copyNamesToPasteboard()
+            },
             .action("Terminal hier öffnen") {
                 activate(pane, ids)
                 browser.openTerminal()
@@ -632,6 +636,10 @@ private struct PathCrumb: View {
             Button("Pfad kopieren") {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(url.path, forType: .string)
+            }
+            Button("Name kopieren") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(url.lastPathComponent, forType: .string)
             }
             Button("Im Finder zeigen") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
         }
