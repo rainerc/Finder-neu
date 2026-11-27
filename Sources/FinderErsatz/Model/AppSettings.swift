@@ -93,6 +93,8 @@ final class AppSettings {
         showHiddenDimmed = defaults.object(forKey: "showHiddenDimmed") as? Bool ?? true
         activeColorHex = defaults.string(forKey: "activeColorHex") ?? ""
         folderColorHex = defaults.string(forKey: "folderColorHex") ?? ""
+        // Ordnergrößen wie im Finder standardmäßig anzeigen (register: gilt auch für `UserDefaults.bool` in PaneState)
+        defaults.register(defaults: [Self.calculateFolderSizesKey: true])
         calculateFolderSizes = defaults.bool(forKey: Self.calculateFolderSizesKey)
         compactLayout = defaults.bool(forKey: "compactLayout")
         showActionBar = defaults.object(forKey: "showActionBar") as? Bool ?? true
