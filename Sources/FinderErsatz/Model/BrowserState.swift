@@ -317,7 +317,9 @@ final class BrowserState {
             return
         }
         let verb = request.move ? "Verschieben" : "Kopieren"
-        enqueue(title: "\(verb) nach „\(folder.lastPathComponent)“", items: items)
+        // Der F5/F6-Dialog schließt gerade noch – ein sofort danach gesetztes zweites Sheet
+        // (Überschreiben-Dialog) zeigt SwiftUI sonst nicht an.
+        enqueue(title: "\(verb) nach „\(folder.lastPathComponent)“", items: items, afterSheet: true)
     }
 
     /// Drag & Drop: gleiches Volume → verschieben, anderes Volume → kopieren (wie im Finder).
@@ -334,13 +336,21 @@ final class BrowserState {
     }
 
     /// Prüft auf Namenskonflikte und startet den Auftrag – oder fragt vorher nach.
-    private func enqueue(title: String, items: [TransferItem]) {
+    private func enqueue(title: String, items: [TransferItem], afterSheet: Bool = false) {
         let conflicts = items.filter { FileManager.default.fileExists(atPath: $0.destination.path) }
         if conflicts.isEmpty {
             enqueueRecordingUndo(title: title, items: items)
+            return
+        }
+        let request = ConflictRequest(title: title, items: items,
+                                      conflictNames: conflicts.map(\.destination.lastPathComponent))
+        if afterSheet {
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .milliseconds(450))
+                self?.conflictRequest = request
+            }
         } else {
-            conflictRequest = ConflictRequest(title: title, items: items,
-                                              conflictNames: conflicts.map(\.destination.lastPathComponent))
+            conflictRequest = request
         }
     }
 
@@ -368,6 +378,10 @@ final class BrowserState {
                 )
             }
             return resolved
+        }
+        guard !items.isEmpty else {
+            flash("Nichts kopiert – alle Objekte übersprungen")
+            return
         }
         enqueueRecordingUndo(title: request.title, items: items)
     }

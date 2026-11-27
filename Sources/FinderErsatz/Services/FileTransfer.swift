@@ -36,7 +36,13 @@ enum FileTransfer {
                 ])
             }
             if item.replaceExisting, fm.fileExists(atPath: item.destination.path) {
-                try fm.trashItem(at: item.destination, resultingItemURL: nil)
+                guard item.source.standardizedFileURL.path != item.destination.standardizedFileURL.path else { continue }
+                do {
+                    try fm.trashItem(at: item.destination, resultingItemURL: nil)
+                } catch {
+                    // Netzwerkvolumes/USB-Sticks haben oft keinen Papierkorb → direkt löschen (wie der Finder)
+                    try fm.removeItem(at: item.destination)
+                }
             }
             if fast {
                 try fm.moveItem(at: item.source, to: item.destination)

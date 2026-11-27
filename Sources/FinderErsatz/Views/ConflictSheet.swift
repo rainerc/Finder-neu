@@ -47,6 +47,7 @@ struct ConflictSheet: View {
 
         /// Ist die vorhandene Datei älter als die neue (mit 2 s Spielraum)?
         var targetIsOlder: Bool { target.modified.addingTimeInterval(2) < source.modified }
+        var targetIsNewer: Bool { source.modified.addingTimeInterval(2) < target.modified }
         var sameDate: Bool { abs(target.modified.timeIntervalSince(source.modified)) <= 2 }
     }
 
@@ -63,6 +64,8 @@ struct ConflictSheet: View {
                 Button("Ersetzen") { setAll(conflicts) { _ in .replace } }
                 Button("Nur ältere ersetzen") { setAll(conflicts) { $0.targetIsOlder ? .replace : .skip } }
                     .help("Ersetzt nur, wenn die vorhandene Datei älter ist als die neue – sonst überspringen")
+                Button("Außer neuere") { setAll(conflicts) { $0.targetIsNewer ? .skip : .replace } }
+                    .help("Ersetzt alles, nur wenn die vorhandene Datei neuer ist, wird sie behalten")
                 Button("Überspringen") { setAll(conflicts) { _ in .skip } }
                 Button("Beide behalten") { setAll(conflicts) { _ in .keepBoth } }
             }
@@ -92,8 +95,8 @@ struct ConflictSheet: View {
         .padding(16)
         .frame(minWidth: 720, idealWidth: 820, minHeight: 360, idealHeight: CGFloat(min(260 + conflicts.count * 72, 680)))
         .onAppear {
-            // Vorgabe: ältere ersetzen, sonst überspringen – also nie versehentlich Neueres überschreiben
-            setAll(conflicts) { $0.targetIsOlder ? .replace : .skip }
+            // Vorgabe: ersetzen – nur wenn die vorhandene Datei neuer ist, überspringen
+            setAll(conflicts) { $0.targetIsNewer ? .skip : .replace }
         }
         .sheet(item: $fileCompare) { request in FileCompareSheet(request: request) }
     }
