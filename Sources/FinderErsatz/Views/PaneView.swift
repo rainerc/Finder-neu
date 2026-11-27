@@ -634,7 +634,6 @@ private struct PathCrumb: View {
     }
 
     private func open() {
-        browser.flash("Öffne „\(name)“")   // sichtbare Rückmeldung (auch zur Fehlersuche)
         navigate(url)
     }
 }
