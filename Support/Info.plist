@@ -29,5 +29,7 @@
 		<string>_smb._tcp</string>
 		<string>_afpovertcp._tcp</string>
 	</array>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Twinfold steuert das Terminal, um Befehle aus der Befehlszeile dort auszuführen, und den Finder für das Informationsfenster.</string>
 </dict>
 </plist>
