@@ -75,6 +75,26 @@ final class BrowserState {
     private(set) var flashMessage: String?
     @ObservationIgnored private var flashToken = UUID()
 
+    // Layout-Test (Hilfe → Layout-Test): Teile abschalten, um Ruckeln beim Verkleinern einzugrenzen. Nicht gespeichert.
+    var debugHideHeader = false
+    var debugHidePathBar = false
+    var debugHideViewPicker = false
+    var debugHideStatus = false
+    var debugHideBottomBars = false
+    var debugPlainPaneStack = false
+    var debugNoVSplit = false
+
+    var debugFlagsDescription: String {
+        let flags: [(Bool, String)] = [
+            (debugHideHeader, "Fensterkopf aus"), (debugHidePathBar, "Pfadleiste aus"),
+            (debugHideViewPicker, "Ansicht-Auswahl aus"), (debugHideStatus, "Statuszeile aus"),
+            (debugHideBottomBars, "Aktionsleiste/Aufträge aus"), (debugPlainPaneStack, "HStack statt HSplitView"),
+            (debugNoVSplit, "ohne VSplitView"),
+        ]
+        let active = flags.filter { $0.0 }.map { $0.1 }
+        return active.isEmpty ? "keine" : active.joined(separator: ", ")
+    }
+
     /// Mindestbreite des Fensterinhalts (Seitenleiste + 500 + Vorschau-Spalte), gesetzt von `MainSplitViewController`.
     /// Läuft über SwiftUI (`ContentView.frame(minWidth:)`), weil SwiftUI `contentMinSize` sonst mit eigenem Wert überschreibt.
     var layoutMinWidth: CGFloat = 660

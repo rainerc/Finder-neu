@@ -186,6 +186,15 @@ struct BrowserCommands: Commands {
             item(.reload) { browser.reloadAll() }
         }
         CommandGroup(after: .help) {
+            Menu("Layout-Test (Teile abschalten)") {
+                Toggle("Fensterkopf aus", isOn: Bindable(browser).debugHideHeader)
+                Toggle("Pfadleiste aus", isOn: Bindable(browser).debugHidePathBar)
+                Toggle("Ansicht-Auswahl aus", isOn: Bindable(browser).debugHideViewPicker)
+                Toggle("Statuszeile aus", isOn: Bindable(browser).debugHideStatus)
+                Toggle("Aktionsleiste/Aufträge aus", isOn: Bindable(browser).debugHideBottomBars)
+                Toggle("HStack statt HSplitView", isOn: Bindable(browser).debugPlainPaneStack)
+                Toggle("Ohne VSplitView (Vorschau unten aus)", isOn: Bindable(browser).debugNoVSplit)
+            }
             Button("Layout-Diagnose kopieren") {
                 let report = MainSplitViewController.diagnosticReport()
                 NSPasteboard.general.clearContents()

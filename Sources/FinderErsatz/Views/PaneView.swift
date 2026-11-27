@@ -18,24 +18,26 @@ struct PaneView: View {
                 TabBar(group: group) { browser.activeSide = side }
                 Divider()
             }
-            Group {
-                if settings.compactLayout {
-                    SlimPaneHeader(pane: pane, isActive: isActive, onActivate: { browser.activeSide = side })
-                } else {
-                    PaneHeader(pane: pane, showsNewTabButton: group.tabs.count <= 1, onNewTab: {
-                        browser.activeSide = side
-                        browser.newTab()
-                    }, onActivate: { browser.activeSide = side })
+            if !browser.debugHideHeader {
+                Group {
+                    if settings.compactLayout {
+                        SlimPaneHeader(pane: pane, isActive: isActive, onActivate: { browser.activeSide = side })
+                    } else {
+                        PaneHeader(pane: pane, showsNewTabButton: group.tabs.count <= 1, onNewTab: {
+                            browser.activeSide = side
+                            browser.newTab()
+                        }, onActivate: { browser.activeSide = side })
+                    }
                 }
+                // Klick auf freie Fläche aktiviert das Fenster. Als Hintergrund, damit Knöpfe und
+                // Pfad-Elemente ihre Klicks selbst bekommen (ein Gesten-Modifier darüber schluckte sie).
+                .background(
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { browser.activeSide = side }
+                )
+                Divider()
             }
-            // Klick auf freie Fläche aktiviert das Fenster. Als Hintergrund, damit Knöpfe und
-            // Pfad-Elemente ihre Klicks selbst bekommen (ein Gesten-Modifier darüber schluckte sie).
-            .background(
-                Color.clear
-                    .contentShape(Rectangle())
-                    .onTapGesture { browser.activeSide = side }
-            )
-            Divider()
             if pane.isSearchBarVisible {
                 SearchBar(pane: pane)
                     .id(pane.searchBarResetToken)
@@ -52,70 +54,24 @@ struct PaneView: View {
                 Divider()
             }
 
-            VSplitView {
-                Group {
-                    if let error = pane.errorMessage {
-                        ContentUnavailableView {
-                            Label("Ordner nicht lesbar", systemImage: "lock.fill")
-                        } description: {
-                            Text(error)
-                        } actions: {
-                            if pane.errorIsPermission {
-                                Button("Festplattenvollzugriff öffnen") {
-                                    SystemSettings.open(.fullDiskAccess)
-                                }
-                                .buttonStyle(.borderedProminent)
-                                Button("Erneut versuchen") { pane.reload() }
-                            }
-                        }
-                    } else if pane.activeSearch != nil, pane.items.isEmpty, !pane.isSearchRunning {
-                        ContentUnavailableView.search
-                    } else if pane.viewMode == .list || pane.activeSearch != nil {
-                        fileTable(pane: pane, settings: settings)
-                    } else if pane.viewMode == .columns {
-                        keyHandling(
-                            ColumnBrowserView(pane: pane, side: side, onOpen: { open($0, in: pane) }) { ids in
-                                fileMenu(ids, pane: pane)
-                            }
-                            .focusable()
-                            .focusEffectDisabled(),
-                            pane: pane
-                        )
-                    } else if pane.viewMode == .gallery {
-                        keyHandling(
-                            GalleryView(pane: pane, onOpen: { open($0, in: pane) }) { ids in
-                                fileMenu(ids, pane: pane)
-                            }
-                            .focusable()
-                            .focusEffectDisabled(),
-                            pane: pane
-                        )
-                    } else {
-                        keyHandling(
-                            FileGridView(pane: pane, mode: pane.viewMode, onOpen: { open($0, in: pane) }) { ids in
-                                fileMenu(ids, pane: pane)
-                            }
-                            .focusable()
-                            .focusEffectDisabled(),
-                            pane: pane
-                        )
+            if browser.debugNoVSplit && !browser.showPanePreview {
+                // Layout-Test: ohne VSplitView
+                listArea(pane: pane, settings: settings)
+            } else {
+                VSplitView {
+                    listArea(pane: pane, settings: settings)
+                    // Vorschaubereich unten im Fenster (⌃⌘P)
+                    if browser.showPanePreview {
+                        PanePreview(pane: pane)
+                            .frame(minHeight: 110, idealHeight: 200, maxHeight: .infinity)
                     }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)   // Liste füllt immer die volle Höhe
-                .dropDestination(for: URL.self) { urls, _ in
-                    _ = browser.drop(urls, into: pane)
-                }
-                .frame(minHeight: 120)
-
-                // Vorschaubereich unten im Fenster (⌃⌘P)
-                if browser.showPanePreview {
-                    PanePreview(pane: pane)
-                        .frame(minHeight: 110, idealHeight: 200, maxHeight: .infinity)
                 }
             }
 
-            Divider()
-            PaneStatusBar(pane: pane)
+            if !browser.debugHideStatus {
+                Divider()
+                PaneStatusBar(pane: pane)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onChange(of: pane.selection) {
@@ -128,6 +84,64 @@ struct PaneView: View {
                 .fill(isActive ? settings.activeColor : .clear)
                 .frame(height: 3)
         }
+    }
+
+    /// Ordnerinhalt (Liste, Raster, Spalten, Galerie) bzw. Fehlermeldung
+    @ViewBuilder
+    private func listArea(pane: PaneState, settings: AppSettings) -> some View {
+        Group {
+            if let error = pane.errorMessage {
+                ContentUnavailableView {
+                    Label("Ordner nicht lesbar", systemImage: "lock.fill")
+                } description: {
+                    Text(error)
+                } actions: {
+                    if pane.errorIsPermission {
+                        Button("Festplattenvollzugriff öffnen") {
+                            SystemSettings.open(.fullDiskAccess)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        Button("Erneut versuchen") { pane.reload() }
+                    }
+                }
+            } else if pane.activeSearch != nil, pane.items.isEmpty, !pane.isSearchRunning {
+                ContentUnavailableView.search
+            } else if pane.viewMode == .list || pane.activeSearch != nil {
+                fileTable(pane: pane, settings: settings)
+            } else if pane.viewMode == .columns {
+                keyHandling(
+                    ColumnBrowserView(pane: pane, side: side, onOpen: { open($0, in: pane) }) { ids in
+                        fileMenu(ids, pane: pane)
+                    }
+                    .focusable()
+                    .focusEffectDisabled(),
+                    pane: pane
+                )
+            } else if pane.viewMode == .gallery {
+                keyHandling(
+                    GalleryView(pane: pane, onOpen: { open($0, in: pane) }) { ids in
+                        fileMenu(ids, pane: pane)
+                    }
+                    .focusable()
+                    .focusEffectDisabled(),
+                    pane: pane
+                )
+            } else {
+                keyHandling(
+                    FileGridView(pane: pane, mode: pane.viewMode, onOpen: { open($0, in: pane) }) { ids in
+                        fileMenu(ids, pane: pane)
+                    }
+                    .focusable()
+                    .focusEffectDisabled(),
+                    pane: pane
+                )
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)   // Liste füllt immer die volle Höhe
+        .dropDestination(for: URL.self) { urls, _ in
+            _ = browser.drop(urls, into: pane)
+        }
+        .frame(minHeight: 120)
     }
 
     // MARK: Tastatur
@@ -439,6 +453,7 @@ struct PaneView: View {
 }
 
 struct PaneHeader: View {
+    @Environment(BrowserState.self) private var browser
     let pane: PaneState
     /// Bei nur einem Tab ist die Tab-Leiste ausgeblendet – dann sitzt der „+“-Knopf hier.
     var showsNewTabButton = false
@@ -467,12 +482,14 @@ struct PaneHeader: View {
                 .help("Suchen (⌘F)")
             // Bei schmalem Fenster wird aus den fünf Segmenten ein Menü – so bleibt der Kopf zusammendrückbar
             // und beim Verkleinern des Fensters wird nicht die Seitenleiste schmaler.
-            ViewThatFits(in: .horizontal) {
-                viewPicker.pickerStyle(.segmented).fixedSize()
-                viewPicker.pickerStyle(.menu).fixedSize()
+            if !browser.debugHideViewPicker {
+                ViewThatFits(in: .horizontal) {
+                    viewPicker.pickerStyle(.segmented).fixedSize()
+                    viewPicker.pickerStyle(.menu).fixedSize()
+                }
+                .labelsHidden()
+                .help("Ansicht: Liste (⌘1), Kurz (⌘2), Miniaturen (⌘3), Spalten (⌘4), Galerie (⌘5)")
             }
-            .labelsHidden()
-            .help("Ansicht: Liste (⌘1), Kurz (⌘2), Miniaturen (⌘3), Spalten (⌘4), Galerie (⌘5)")
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.borderless)
@@ -491,6 +508,7 @@ struct PaneHeader: View {
 
 /// Klickbare Pfadleiste: jeder Ordner im Pfad ist ein Sprungziel.
 struct PathBar: View {
+    @Environment(BrowserState.self) private var browser
     let url: URL
     let navigate: (URL) -> Void
 
@@ -506,6 +524,16 @@ struct PathBar: View {
     }
 
     var body: some View {
+        if browser.debugHidePathBar {
+            Text(url.lastPathComponent)   // Layout-Test: einfache Pfadanzeige
+                .lineLimit(1)
+                .frame(minWidth: 30, maxWidth: .infinity, alignment: .leading)
+        } else {
+            crumbs
+        }
+    }
+
+    private var crumbs: some View {
         // Ohne ScrollView: Die horizontale ScrollView hat Klicks auf die Elemente nicht weitergegeben.
         // Bei Platzmangel werden die mittleren Ordnernamen gekürzt, der aktuelle Ordner bleibt lesbar.
         HStack(spacing: 2) {

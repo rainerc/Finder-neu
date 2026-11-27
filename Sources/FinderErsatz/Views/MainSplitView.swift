@@ -246,6 +246,7 @@ final class MainSplitViewController: NSSplitViewController {
             lines.append("Kein Hauptfenster gefunden")
             return lines.joined(separator: "\n")
         }
+        lines.append("Layout-Test: \(current?.browser.debugFlagsDescription ?? "–")")
         lines.append("Letztes Ziehen am Fensterrand: \(lastResizeStats)")
         lines.append(contentsOf: LayoutTimer.summary())
         if let controller = current {
@@ -385,16 +386,32 @@ struct PanesArea: View {
                 UnbundledBanner()
                 Divider()
             }
-            HSplitView {
-                PaneView(side: .left, focus: $focusedPane)
-                    .frame(minWidth: 240, maxWidth: .infinity, maxHeight: .infinity)
-                PaneView(side: .right, focus: $focusedPane)
-                    .frame(minWidth: 240, maxWidth: .infinity, maxHeight: .infinity)
+            if browser.debugPlainPaneStack {
+                // Layout-Test: zwei gleich breite Fenster ohne SwiftUI-HSplitView
+                HStack(spacing: 0) {
+                    PaneView(side: .left, focus: $focusedPane)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    Divider()
+                    PaneView(side: .right, focus: $focusedPane)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                HSplitView {
+                    PaneView(side: .left, focus: $focusedPane)
+                        .frame(minWidth: 240, maxWidth: .infinity, maxHeight: .infinity)
+                    PaneView(side: .right, focus: $focusedPane)
+                        .frame(minWidth: 240, maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
             Divider()
-            JobsPanel(queue: browser.operations)
-            if browser.settings.showActionBar {
+            if !browser.debugHideBottomBars {
+                JobsPanel(queue: browser.operations)
+            }
+            if browser.debugHideBottomBars {
+                EmptyView()
+            } else if browser.settings.showActionBar {
                 ActionBar()
             } else if let message = browser.flashMessage {
                 Label(message, systemImage: "checkmark.circle.fill")
