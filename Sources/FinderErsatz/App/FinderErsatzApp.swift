@@ -34,9 +34,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate()
         // Eigene Tabs statt macOS-Fenster-Tabs (sonst Konflikt mit ⌘T).
         NSWindow.allowsAutomaticWindowTabbing = false
+        // Schwebende Ablage (Drop Stack wie Yoink) mit Menüleisten-Symbol
+        DropShelfController.shared.apply()
     }
 
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+    /// Mit schwebender Ablage läuft die App ohne Fenster weiter (die Ablage soll erreichbar bleiben)
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        !DropShelfController.isEnabled
+    }
 
     func applicationWillTerminate(_ notification: Notification) {
         // Temporär entpackte Archive aufräumen.
@@ -224,6 +229,13 @@ struct BrowserCommands: Commands {
             Divider()
             toggle(.toggleButtonBar, isOn: Bindable(browser.settings).showButtonBar)
             toggle(.toggleDropStack, isOn: Bindable(browser.settings).showDropStack)
+            item(.toggleDropShelf) {
+                if !DropShelfController.isEnabled {
+                    UserDefaults.standard.set(true, forKey: DropShelfController.enabledKey)
+                    DropShelfController.shared.apply()
+                }
+                DropShelfController.shared.toggle()
+            }
             item(.addToDropStack) { browser.addSelectionToDropStack() }
             item(.commandLine) { browser.focusCommandLine() }
             item(.reload) { browser.reloadAll() }

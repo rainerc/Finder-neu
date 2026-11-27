@@ -125,7 +125,7 @@ private struct DropStackChip: View {
 }
 
 /// Zieh-Griff für mehrere Dateien auf einmal (SwiftUIs `.draggable` kann nur ein Objekt)
-private struct MultiFileDragHandle: NSViewRepresentable {
+struct MultiFileDragHandle: NSViewRepresentable {
     let urls: () -> [URL]
 
     func makeNSView(context: Context) -> HandleView {

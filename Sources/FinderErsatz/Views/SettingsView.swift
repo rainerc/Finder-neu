@@ -15,6 +15,8 @@ struct SettingsView: View {
 }
 
 private struct AppearanceSettings: View {
+    @AppStorage(DropShelfController.enabledKey) private var shelfEnabled = false
+    @AppStorage(DropShelfController.autoShowKey) private var shelfAutoShow = true
     @Environment(AppSettings.self) private var settings
 
     var body: some View {
@@ -37,6 +39,11 @@ private struct AppearanceSettings: View {
             Toggle("Knopfleiste für Programme und Skripte zeigen", isOn: $settings.showButtonBar)
             Toggle("Befehlszeile unter den Fenstern zeigen", isOn: $settings.showCommandLine)
             Toggle("Drop Stack (Ablage zum Sammeln) unter den Fenstern zeigen", isOn: $settings.showDropStack)
+            Toggle("Schwebende Ablage + Symbol in der Menüleiste (wie Yoink, auch ohne App-Fenster)", isOn: $shelfEnabled)
+                .onChange(of: shelfEnabled) { DropShelfController.shared.apply() }
+            Toggle("Ablage beim Ziehen von Dateien automatisch zeigen", isOn: $shelfAutoShow)
+                .disabled(!shelfEnabled)
+                .padding(.leading, 20)
             Toggle("Abwechselnde Zeilenfarben", isOn: $settings.alternatingRows)
             Toggle("Unsichtbare Dateien abgeblendet zeigen", isOn: $settings.showHiddenDimmed)
             Toggle("Leertaste auf Ordnern: Quick Look/XRay statt schneller Vorschau", isOn: $settings.folderPreviewUsesQuickLook)

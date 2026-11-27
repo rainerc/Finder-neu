@@ -12,7 +12,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
     case favoritesMenu, restoreSelection, syncBrowsing, checksums, viewer, packageContents
     case commandLine, toggleButtonBar, actionLog, renameInEditor, viewTree
     case showOnlySelected, changeAttributes, splitFile, joinFiles, packArchive, listArchive, connectRemote
-    case addToDropStack, toggleDropStack
+    case addToDropStack, toggleDropStack, toggleDropShelf
     case viewList, viewBrief, viewIcons, viewColumns, viewGallery, toggleSidebar, toggleInspector, togglePanePreview, toggleHidden, reload
 
     var id: String { rawValue }
@@ -88,6 +88,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .connectRemote: "FTP/SFTP-Verbindung …"
         case .addToDropStack: "Zum Drop Stack hinzufügen"
         case .toggleDropStack: "Drop Stack ein-/ausblenden"
+        case .toggleDropShelf: "Schwebende Ablage zeigen/ausblenden"
         case .addFavorite: "Zu Favoriten hinzufügen"
         case .connectServer: "Mit Server verbinden"
         case .viewList: "Ansicht: Liste"
@@ -174,6 +175,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .connectRemote: Shortcut("k", [.command, .control, .shift])
         case .addToDropStack: Shortcut("j", [.command, .control])
         case .toggleDropStack: Shortcut("j", [.command, .control, .shift])
+        case .toggleDropShelf: nil
         case .addFavorite: Shortcut("t", [.control, .command])
         case .connectServer: Shortcut("k", .command)
         case .viewList: Shortcut("1", .command)
