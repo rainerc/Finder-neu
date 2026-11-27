@@ -134,7 +134,7 @@ final class DropShelfController: NSObject {
         panel.isFloatingPanel = true
         panel.level = .floating
         panel.hidesOnDeactivate = false
-        panel.becomesKeyOnlyIfNeeded = true
+        panel.becomesKeyOnlyIfNeeded = false   // per Klick Tastenfokus (⌘A, Rücktaste), ohne die App zu aktivieren
         panel.isReleasedWhenClosed = false
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.minSize = NSSize(width: 180, height: 200)
@@ -296,6 +296,17 @@ struct DropShelfView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer(minLength: 0)
+                    Button("Alle auswählen", systemImage: "checkmark.circle") {
+                        if stack.selection.count == stack.items.count { stack.selection.removeAll() } else { stack.selectAll() }
+                    }
+                    .labelStyle(.iconOnly)
+                    .keyboardShortcut("a", modifiers: .command)
+                    .help("Alle auswählen bzw. Auswahl aufheben (⌘A)")
+                    Button("Ausgewählte entfernen", systemImage: "minus.circle") { stack.remove(Array(stack.selection)) }
+                        .labelStyle(.iconOnly)
+                        .keyboardShortcut(.delete, modifiers: [])
+                        .disabled(stack.selection.isEmpty)
+                        .help("Ausgewählte aus dem Drop Stack entfernen (Rücktaste) – die Dateien bleiben erhalten")
                     if let browser = BrowserState.current {
                         Button("Ins aktive Fenster kopieren", systemImage: "doc.on.doc") { browser.transferDropStack(move: false) }
                             .labelStyle(.iconOnly)
@@ -342,13 +353,12 @@ private struct ShelfRow: View {
         .background(isSelected ? Color.accentColor.opacity(0.3) : Color.clear, in: RoundedRectangle(cornerRadius: 5))
         .help(url.path)
         .contentShape(Rectangle())
-        .onTapGesture(count: 2) { NSWorkspace.shared.open(url) }
+        // Nur ein Tap-Erkenner (sonst wartet SwiftUI bei jedem Klick auf einen möglichen Doppelklick)
         .onTapGesture {
-            let stack = DropStack.shared
-            if NSEvent.modifierFlags.contains(.command) || NSEvent.modifierFlags.contains(.shift) {
-                if stack.selection.contains(url) { stack.selection.remove(url) } else { stack.selection.insert(url) }
+            if (NSApp.currentEvent?.clickCount ?? 1) >= 2 {
+                NSWorkspace.shared.open(url)
             } else {
-                stack.selection = stack.selection == [url] ? [] : [url]
+                DropStack.shared.click(url, modifiers: NSEvent.modifierFlags)
             }
         }
         .draggable(url)

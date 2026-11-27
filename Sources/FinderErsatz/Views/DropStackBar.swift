@@ -42,6 +42,12 @@ struct DropStackBar: View {
                     .frame(width: 30, height: 30)
                     .help("Ziehen: \(stack.selection.isEmpty ? "alle" : "die ausgewählten") Dateien zusammen herausziehen (z. B. in Mail oder den Finder)")
 
+                Button(stack.selection.count == stack.items.count ? "Keine" : "Alle", systemImage: "checkmark.circle") {
+                    if stack.selection.count == stack.items.count { stack.selection.removeAll() } else { stack.selectAll() }
+                }
+                .buttonStyle(.borderless)
+                .font(.caption)
+                .help("Alle Einträge auswählen bzw. Auswahl aufheben")
                 VStack(alignment: .leading, spacing: 2) {
                     Button("Hierher kopieren", systemImage: "doc.on.doc") { browser.transferDropStack(move: false) }
                     Button("Hierher verschieben", systemImage: "arrow.right.doc.on.clipboard") { browser.transferDropStack(move: true) }
@@ -104,13 +110,12 @@ private struct DropStackChip: View {
                     in: RoundedRectangle(cornerRadius: 6))
         .help(url.path)
         .contentShape(Rectangle())
-        .onTapGesture(count: 2) { browser.revealDropStackItem(url) }
+        // Nur ein Tap-Erkenner: ein zusätzlicher Doppelklick-Erkenner lässt SwiftUI jeden Einzelklick verzögern
         .onTapGesture {
-            let stack = DropStack.shared
-            if NSEvent.modifierFlags.contains(.command) || NSEvent.modifierFlags.contains(.shift) {
-                if stack.selection.contains(url) { stack.selection.remove(url) } else { stack.selection.insert(url) }
+            if (NSApp.currentEvent?.clickCount ?? 1) >= 2 {
+                browser.revealDropStackItem(url)
             } else {
-                stack.selection = stack.selection == [url] ? [] : [url]
+                DropStack.shared.click(url, modifiers: NSEvent.modifierFlags)
             }
         }
         .draggable(url)

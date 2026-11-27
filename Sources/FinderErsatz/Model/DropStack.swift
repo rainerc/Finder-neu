@@ -16,6 +16,24 @@ final class DropStack {
         items = paths.map { URL(filePath: $0) }.filter { FileManager.default.fileExists(atPath: $0.path) }
     }
 
+    @ObservationIgnored private var anchor: URL?
+
+    /// Klick auf einen Eintrag: ⌘ = hinzufügen/entfernen, ⇧ = Bereich ab dem letzten Klick, sonst nur dieser
+    func click(_ url: URL, modifiers: NSEvent.ModifierFlags) {
+        if modifiers.contains(.shift), let anchor, let from = items.firstIndex(of: anchor), let to = items.firstIndex(of: url) {
+            selection = Set(items[min(from, to)...max(from, to)])
+            return
+        }
+        if modifiers.contains(.command) {
+            if selection.contains(url) { selection.remove(url) } else { selection.insert(url) }
+        } else {
+            selection = [url]
+        }
+        anchor = url
+    }
+
+    func selectAll() { selection = Set(items) }
+
     /// Ausgewählte Einträge – oder alle, wenn nichts ausgewählt ist
     var chosen: [URL] {
         let selected = items.filter { selection.contains($0) }
