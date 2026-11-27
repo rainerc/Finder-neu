@@ -230,6 +230,15 @@ struct PaneView: View {
         case .backspace:
             pane.goUp()   // Backspace = übergeordneter Ordner
             return true
+        case .numPlus:
+            browser.showSelectPattern(select: true)
+            return true
+        case .numMinus:
+            browser.showSelectPattern(select: false)
+            return true
+        case .numStar:
+            browser.invertSelection()
+            return true
         }
     }
 
@@ -481,6 +490,7 @@ struct PaneHeader: View {
                 pane.navigate(to: url)
                 onActivate()
             }
+            RecentFoldersMenu(pane: pane, onActivate: onActivate)
             Spacer(minLength: 4)
             if showsNewTabButton {
                 Button("Neuer Tab", systemImage: "plus.square.on.square", action: onNewTab)
@@ -668,6 +678,40 @@ struct PaneStatusBar: View {
 }
 
 /// Schmaler Fensterkopf fürs ruhige Layout: nur der Pfad (links ausgerichtet), aktives Fenster farbig.
+/// Menü „Zuletzt besuchte Ordner“ neben der Pfadleiste (wie in Commander One); aktueller Ordner mit Häkchen.
+struct RecentFoldersMenu: View {
+    let pane: PaneState
+    var onActivate: () -> Void = {}
+    private var recent: RecentFolders { RecentFolders.shared }
+
+    var body: some View {
+        Menu {
+            ForEach(recent.urls, id: \.self) { url in
+                Button {
+                    pane.navigate(to: url)
+                    onActivate()
+                } label: {
+                    if url == pane.currentURL, pane.activeSearch == nil {
+                        Label(RecentFolders.displayPath(url), systemImage: "checkmark")
+                    } else {
+                        Text(RecentFolders.displayPath(url))
+                    }
+                }
+            }
+            if !recent.urls.isEmpty {
+                Divider()
+                Button("Liste leeren") { recent.clear() }
+            }
+        } label: {
+            Image(systemName: "clock.arrow.circlepath")
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Zuletzt besuchte Ordner")
+    }
+}
+
 struct SlimPaneHeader: View {
     @Environment(BrowserState.self) private var browser
     let pane: PaneState
@@ -685,6 +729,8 @@ struct SlimPaneHeader: View {
                     pane.navigate(to: url)
                     onActivate()
                 }
+                RecentFoldersMenu(pane: pane, onActivate: onActivate)
+                Spacer(minLength: 0)
             }
         }
         .font(.callout)

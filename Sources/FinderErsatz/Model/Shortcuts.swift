@@ -4,7 +4,8 @@ import AppKit
 /// Alle Befehle, deren Tastenkürzel man in den Einstellungen ändern kann.
 enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
     case newTab, newFolder, newFile, copy, move, rename, quickLook, systemQuickLook, trash, compress, extractHere, extractToOther
-    case copyFiles, pasteFiles, moveFilesHere, duplicate, makeAlias, copyPath, getInfo, goToFolder, selectAll, undo
+    case copyFiles, pasteFiles, moveFilesHere, duplicate, makeAlias, copyPath, copyNames, getInfo, goToFolder, selectAll, undo
+    case selectPattern, deselectPattern, deselectAll, invertSelection, selectSameExtension
     case search, newSmartFolder, saveSearch, reveal, terminal, batchRename, recents
     case back, forward, up, switchPane, nextTab, previousTab, syncPanes, swapPanes, addFavorite, connectServer
     case viewList, viewBrief, viewIcons, viewColumns, viewGallery, toggleSidebar, toggleInspector, togglePanePreview, toggleHidden, reload
@@ -31,6 +32,12 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .duplicate: "Duplizieren"
         case .makeAlias: "Alias erstellen"
         case .copyPath: "Pfad kopieren"
+        case .copyNames: "Name(n) kopieren"
+        case .selectPattern: "Auswählen …"
+        case .deselectPattern: "Auswahl aufheben …"
+        case .deselectAll: "Nichts auswählen"
+        case .invertSelection: "Auswahl umkehren"
+        case .selectSameExtension: "Alle mit derselben Endung auswählen"
         case .getInfo: "Informationen"
         case .goToFolder: "Gehe zu Ordner …"
         case .selectAll: "Alles auswählen"
@@ -85,6 +92,12 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .duplicate: Shortcut("d", .command)
         case .makeAlias: Shortcut("a", [.control, .command])
         case .copyPath: Shortcut("c", [.command, .option])
+        case .copyNames: Shortcut("c", [.command, .control, .shift])
+        case .selectPattern: Shortcut("+", .command)
+        case .deselectPattern: Shortcut("-", .command)
+        case .deselectAll: Shortcut("a", [.command, .shift])
+        case .invertSelection: Shortcut("i", [.command, .shift])
+        case .selectSameExtension: Shortcut("e", [.command, .control])
         case .getInfo: Shortcut("i", .command)
         case .goToFolder: Shortcut("g", [.command, .shift])
         case .selectAll: Shortcut("a", .command)

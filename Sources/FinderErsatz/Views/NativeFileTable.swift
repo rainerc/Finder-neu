@@ -6,7 +6,7 @@ import AppKit
 /// Grund: SwiftUIs `Table` baut bei jeder Breitenänderung jede sichtbare Zelle neu auf (bei Rainer ~2 ms pro Zeile,
 /// Fenster-Verkleinern ruckelte mit ~100 ms pro Schritt). AppKit-Zellen sind dagegen sehr billig.
 struct NativeFileTable: NSViewRepresentable {
-    enum Key { case tab, space, returnKey, backspace }
+    enum Key { case tab, space, returnKey, backspace, numPlus, numMinus, numStar }
 
     struct Style: Equatable {
         var listSize: AppSettings.ListSize
@@ -341,6 +341,10 @@ final class FileTableView: NSTableView {
         case 49 where modifiers.subtracting(.shift).isEmpty: key = .space
         case 36 where modifiers.isEmpty, 76 where modifiers.isEmpty: key = .returnKey
         case 51 where modifiers.isEmpty: key = .backspace
+        // Ziffernblock wie in Commander One: + auswählen, − abwählen, * umkehren
+        case 69 where modifiers.isEmpty: key = .numPlus
+        case 78 where modifiers.isEmpty: key = .numMinus
+        case 67 where modifiers.isEmpty: key = .numStar
         default: key = nil
         }
         if let key, coordinator?.handleKey(key, modifiers: modifiers) == true { return }

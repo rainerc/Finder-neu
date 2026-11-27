@@ -141,6 +141,17 @@ struct ContentView: View {
         } message: {
             Text("Pfad eingeben, z. B. ~/Library oder /Volumes")
         }
+        .alert(
+            browser.selectPatternMode == false ? "Auswahl aufheben" : "Auswählen",
+            isPresented: Binding(get: { browser.selectPatternMode != nil },
+                                 set: { if !$0 { browser.selectPatternMode = nil } })
+        ) {
+            TextField("Muster, z. B. *.pdf", text: $browser.selectPatternText)
+            Button(browser.selectPatternMode == false ? "Abwählen" : "Auswählen") { browser.commitSelectPattern() }
+            Button("Abbrechen", role: .cancel) { browser.selectPatternMode = nil }
+        } message: {
+            Text("* steht für beliebige Zeichen, ? für genau eines. Mehrere Muster mit ; trennen, z. B. *.jpg; *.png")
+        }
         .sheet(item: $browser.renameTarget) { item in
             RenameSheet(item: item).environment(browser)
         }

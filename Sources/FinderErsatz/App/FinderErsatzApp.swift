@@ -128,8 +128,14 @@ struct BrowserCommands: Commands {
                 if textEditing { NSApp.sendAction(#selector(NSText.selectAll(_:)), to: nil, from: nil) } else { browser.selectAll() }
             }
             .keyboardShortcut(settings.keyboardShortcut(for: .selectAll))
+            item(.deselectAll) { browser.deselectAll() }
+            item(.selectPattern) { browser.showSelectPattern(select: true) }
+            item(.deselectPattern) { browser.showSelectPattern(select: false) }
+            item(.invertSelection) { browser.invertSelection() }
+            item(.selectSameExtension) { browser.selectSameExtension() }
             Divider()
             item(.copyPath) { browser.copyPathsToPasteboard() }
+            item(.copyNames) { browser.copyNamesToPasteboard() }
         }
         CommandGroup(after: .textEditing) {
             item(.search) { browser.showSearch() }

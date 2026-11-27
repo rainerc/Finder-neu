@@ -31,7 +31,9 @@ enum ViewMode: String, CaseIterable, Identifiable {
 final class PaneState: Identifiable {
     let id = UUID()
 
-    private(set) var currentURL: URL
+    private(set) var currentURL: URL {
+        didSet { if currentURL != oldValue { RecentFolders.shared.record(currentURL) } }
+    }
     private(set) var items: [FileItem] = []
     var selection = Set<FileItem.ID>()
     var sortOrder: [KeyPathComparator<FileItem>] = [KeyPathComparator(\.name, comparator: .localizedStandard)] {

@@ -435,6 +435,63 @@ final class BrowserState {
         activePane.selection = Set(activePane.items.map(\.id))
     }
 
+    // MARK: Auswahl (wie Commander One)
+
+    /// Dialog „Auswählen …“ / „Auswahl aufheben …“ mit Muster (true = auswählen, false = abwählen)
+    var selectPatternMode: Bool?
+    var selectPatternText = "*"
+
+    func showSelectPattern(select: Bool) {
+        if let ext = activePane.selectedItems.first?.fileExtension, !ext.isEmpty {
+            selectPatternText = "*.\(ext)"
+        }
+        selectPatternMode = select
+    }
+
+    func commitSelectPattern() {
+        guard let select = selectPatternMode else { return }
+        selectPatternMode = nil
+        let patterns = selectPatternText.split(separator: ";").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        guard !patterns.isEmpty else { return }
+        let pane = activePane
+        let predicates = patterns.map { NSPredicate(format: "SELF LIKE[cd] %@", $0) }
+        let matching = Set(pane.items.filter { item in predicates.contains { $0.evaluate(with: item.name) } }.map(\.id))
+        if select {
+            pane.selection.formUnion(matching)
+        } else {
+            pane.selection.subtract(matching)
+        }
+        flash("\(matching.count) Objekt(e) passen zu „\(selectPatternText)“")
+    }
+
+    func deselectAll() {
+        activePane.selection.removeAll()
+    }
+
+    func invertSelection() {
+        let pane = activePane
+        pane.selection = Set(pane.items.map(\.id)).subtracting(pane.selection)
+    }
+
+    /// Alle Objekte mit derselben Endung wie die ausgewählten (ohne Endung: alle ohne Endung, aber keine Ordner)
+    func selectSameExtension() {
+        let pane = activePane
+        let selected = pane.selectedItems
+        guard !selected.isEmpty else { NSSound.beep(); return }
+        // Ordner und Dateien getrennt: „ohne Endung“ bei einer Datei wählt keine Ordner aus
+        let keys = Set(selected.map { "\($0.isBrowsableFolder)|\($0.fileExtension)" })
+        let matching = pane.items.filter { keys.contains("\($0.isBrowsableFolder)|\($0.fileExtension)") }
+        pane.selection.formUnion(matching.map(\.id))
+    }
+
+    func copyNamesToPasteboard() {
+        let names = activePane.selectedItems.map(\.name)
+        let text = (names.isEmpty ? [activePane.currentURL.lastPathComponent] : names).joined(separator: "\n")
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        flash(names.count > 1 ? "\(names.count) Namen kopiert" : "Name kopiert: \(text)")
+    }
+
     // MARK: Duplizieren, Alias, Öffnen mit, Paketinhalt, Gehe zu
 
     func duplicateSelection() {
