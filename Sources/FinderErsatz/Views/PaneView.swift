@@ -592,28 +592,29 @@ private struct PathCrumb: View {
     let navigate: (URL) -> Void
     @State private var hovering = false
 
+    private var name: String {
+        url.path == "/" ? "Macintosh HD" : FileManager.default.displayName(atPath: url.path)
+    }
+
     var body: some View {
-        Button {
-            navigate(url)
-        } label: {
-            HStack(spacing: 3) {
-                Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
-                    .resizable()
-                    .frame(width: 14, height: 14)
-                Text(url.path == "/" ? "Macintosh HD" : FileManager.default.displayName(atPath: url.path))
-                    .lineLimit(1)
-                    .fontWeight(isCurrent ? .semibold : .regular)
-            }
-            .padding(.horizontal, 4)
-            .padding(.vertical, 2)
-            .background(RoundedRectangle(cornerRadius: 5).fill(hovering ? Color.primary.opacity(0.1) : .clear))
-            .contentShape(Rectangle())
+        HStack(spacing: 3) {
+            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                .resizable()
+                .frame(width: 14, height: 14)
+            Text(name)
+                .lineLimit(1)
+                .fontWeight(isCurrent ? .semibold : .regular)
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 4)
+        .padding(.vertical, 2)
+        .background(RoundedRectangle(cornerRadius: 5).fill(hovering ? Color.primary.opacity(0.1) : .clear))
+        .contentShape(Rectangle())
+        // Eigene Geste statt Button – hat Vorrang vor allen Gesten der umgebenden Ansichten.
+        .highPriorityGesture(TapGesture().onEnded { open() })
         .onHover { hovering = $0 }
         .help(url.path)
         .contextMenu {
-            Button("Öffnen") { navigate(url) }
+            Button("Öffnen") { open() }
             Button("In neuem Tab öffnen") {
                 browser.newTab()
                 browser.activePane.navigate(to: url)
@@ -629,6 +630,11 @@ private struct PathCrumb: View {
             }
             Button("Im Finder zeigen") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
         }
+    }
+
+    private func open() {
+        browser.flash("Öffne „\(name)“")   // sichtbare Rückmeldung (auch zur Fehlersuche)
+        navigate(url)
     }
 }
 
