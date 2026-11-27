@@ -18,7 +18,7 @@ enum FileSearch {
         }
         let criteria = query.criteria.filter(\.isComplete)
         if query.mode == .spotlight
-            || ((!criteria.isEmpty || query.scope == .thisMac) && canUseSpotlight(query)) {
+            || ((!criteria.isEmpty || query.searchesEverywhere) && canUseSpotlight(query)) {
             try spotlight(query, criteria: criteria, onBatch: onBatch)
             return
         }
@@ -189,7 +189,7 @@ enum FileSearch {
         }
         let criteria = query.criteria.filter(\.isComplete)
         if query.mode == .spotlight
-            || ((!criteria.isEmpty || query.scope == .thisMac) && canUseSpotlight(query)) {
+            || ((!criteria.isEmpty || query.searchesEverywhere) && canUseSpotlight(query)) {
             return "mdfind " + spotlightArguments(query, criteria: criteria).map { "'\($0)'" }.joined(separator: " ")
         }
         return "Ordner durchsuchen ab \(query.root.path) (ohne Spotlight), Bedingungen: \(criteria.count)"
