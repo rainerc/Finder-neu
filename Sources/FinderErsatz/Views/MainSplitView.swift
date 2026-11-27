@@ -345,9 +345,18 @@ enum LayoutTimer {
     static func summary() -> [String] {
         order.compactMap { name in
             guard let values = samples[name], !values.isEmpty else { return nil }
-            let average = values.reduce(0, +) / Double(values.count)
-            return "  Layout \(name): \(values.count)×, Ø \(String(format: "%.1f", average)) ms, max \(Int(values.max() ?? 0)) ms"
+            let total = values.reduce(0, +)
+            let average = total / Double(values.count)
+            return "  Layout \(name): \(values.count)×, Ø \(String(format: "%.1f", average)) ms, max \(Int(values.max() ?? 0)) ms, Summe \(Int(total)) ms"
         }
+    }
+
+    /// Misst `body` nur während des Ziehens am Fensterrand
+    static func measure(_ name: String, in view: NSView, _ body: () -> Void) {
+        guard view.window?.inLiveResize == true else { return body() }
+        let start = ProcessInfo.processInfo.systemUptime
+        body()
+        record(name, ms: (ProcessInfo.processInfo.systemUptime - start) * 1000)
     }
 }
 

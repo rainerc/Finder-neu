@@ -311,6 +311,10 @@ final class FileTableView: NSTableView {
         super.keyDown(with: event)
     }
 
+    override func layout() {
+        LayoutTimer.measure("davon Tabellen (ohne Zellen)", in: self) { super.layout() }
+    }
+
     override func menu(for event: NSEvent) -> NSMenu? {
         let point = convert(event.locationInWindow, from: nil)
         return coordinator?.contextMenu(forClickedRow: row(at: point))
@@ -338,13 +342,23 @@ final class TextCellView: NSTableCellView {
         if label.stringValue != text { label.stringValue = text }
         if label.font != font { label.font = font }
         label.alignment = alignRight ? .right : .left
+        contentChanged = true
         needsLayout = true
     }
 
+    private var laidOutSize = NSSize.zero
+    private var contentChanged = true
+
     override func layout() {
         super.layout()
-        let height = ceil(label.intrinsicContentSize.height)
-        label.frame = NSRect(x: 0, y: floor((bounds.height - height) / 2), width: bounds.width, height: height)
+        // Nur neu anordnen, wenn sich Größe oder Inhalt geändert haben (beim Verkleinern ändert sich meist nichts)
+        guard contentChanged || bounds.size != laidOutSize else { return }
+        LayoutTimer.measure("davon Zellen", in: self) {
+            let height = ceil(label.intrinsicContentSize.height)
+            label.frame = NSRect(x: 0, y: floor((bounds.height - height) / 2), width: bounds.width, height: height)
+        }
+        laidOutSize = bounds.size
+        contentChanged = false
     }
 }
 
@@ -380,11 +394,22 @@ final class NameCellView: NSTableCellView {
         dots.colors = item.tagList.compactMap { FinderTag.color(for: $0).map { NSColor($0) } }
         subtitleLabel.isHidden = subtitle == nil
         subtitleLabel.stringValue = subtitle ?? ""
+        contentChanged = true
         needsLayout = true
     }
 
+    private var laidOutSize = NSSize.zero
+    private var contentChanged = true
+
     override func layout() {
         super.layout()
+        guard contentChanged || bounds.size != laidOutSize else { return }
+        LayoutTimer.measure("davon Zellen", in: self) { arrange() }
+        laidOutSize = bounds.size
+        contentChanged = false
+    }
+
+    private func arrange() {
         icon.frame = NSRect(x: 2, y: floor((bounds.height - iconSize) / 2), width: iconSize, height: iconSize)
         let textX = iconSize + 8
         let available = max(0, bounds.width - textX)
