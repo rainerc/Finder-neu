@@ -467,7 +467,7 @@ struct PaneView: View {
             }
         }
         entries.append(.divider)
-        entries.append(.action("Zum Drop Stack hinzufügen") {
+        entries.append(.action("Zur Sammelablage hinzufügen") {
             activate(pane, ids)
             browser.addSelectionToDropStack()
         })

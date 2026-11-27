@@ -80,7 +80,7 @@ final class AppSettings {
     var showCommandLine: Bool { didSet { defaults.set(showCommandLine, forKey: "showCommandLine") } }
     /// Eigene Knopfleiste für Programme und Skripte über den Fenstern
     var showButtonBar: Bool { didSet { defaults.set(showButtonBar, forKey: "showButtonBar") } }
-    /// Drop Stack (Ablage zum Sammeln von Dateien) unter den Fenstern
+    /// Sammelablage (Ablage zum Sammeln von Dateien) unter den Fenstern
     var showDropStack: Bool { didSet { defaults.set(showDropStack, forKey: "showDropStack") } }
     /// Ordnergrößen in den Listen im Hintergrund berechnen (nur lokale Laufwerke).
     var calculateFolderSizes: Bool {

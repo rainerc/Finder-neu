@@ -38,7 +38,7 @@ private struct AppearanceSettings: View {
             Toggle("Ordnername über jedem Fenster zeigen", isOn: $settings.showPaneTitles)
             Toggle("Knopfleiste für Programme und Skripte zeigen", isOn: $settings.showButtonBar)
             Toggle("Befehlszeile unter den Fenstern zeigen", isOn: $settings.showCommandLine)
-            Toggle("Drop Stack (Ablage zum Sammeln) unter den Fenstern zeigen", isOn: $settings.showDropStack)
+            Toggle("Sammelablage unter den Fenstern zeigen", isOn: $settings.showDropStack)
             Toggle("Schwebende Ablage + Symbol in der Menüleiste (wie Yoink, auch ohne App-Fenster)", isOn: $shelfEnabled)
                 .onChange(of: shelfEnabled) { DropShelfController.shared.apply() }
             Picker("Ablage automatisch zeigen:", selection: $shelfTrigger) {

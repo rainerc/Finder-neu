@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// Drop Stack unter den Fenstern: Dateien hineinziehen (oder ⌃⌘J), später gesammelt ins aktive Fenster
+/// Sammelablage unter den Fenstern: Dateien hineinziehen (oder ⌃⌘J), später gesammelt ins aktive Fenster
 /// kopieren/verschieben oder per Griff alle zusammen in eine andere App ziehen.
 struct DropStackBar: View {
     @Environment(BrowserState.self) private var browser
@@ -13,7 +13,7 @@ struct DropStackBar: View {
             VStack(spacing: 2) {
                 Image(systemName: "tray.full")
                     .font(.title3)
-                Text("Drop Stack").font(.caption2)
+                Text("Sammelablage").font(.caption2)
             }
             .foregroundStyle(.secondary)
             .frame(width: 64)
@@ -62,9 +62,9 @@ struct DropStackBar: View {
                     Button("Ausgewählte entfernen") { stack.remove(Array(stack.selection)) }
                         .disabled(stack.selection.isEmpty)
                     Button("Nicht mehr vorhandene entfernen") { stack.prune() }
-                    Button("Drop Stack leeren") { stack.clear() }
+                    Button("Sammelablage leeren") { stack.clear() }
                     Divider()
-                    Button("Drop Stack ausblenden") { browser.settings.showDropStack = false }
+                    Button("Sammelablage ausblenden") { browser.settings.showDropStack = false }
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
@@ -124,7 +124,7 @@ private struct DropStackChip: View {
             Button("Öffnen") { NSWorkspace.shared.open(url) }
             Button("Im Finder zeigen") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
             Divider()
-            Button("Aus dem Drop Stack entfernen") { DropStack.shared.remove([url]) }
+            Button("Aus der Sammelablage entfernen") { DropStack.shared.remove([url]) }
         }
     }
 }

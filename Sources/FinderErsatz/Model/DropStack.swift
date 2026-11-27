@@ -1,6 +1,6 @@
 import AppKit
 
-/// Drop Stack (wie in Path Finder): Ablage zum Sammeln von Dateien aus verschiedenen Ordnern.
+/// Sammelablage (wie in Path Finder): Ablage zum Sammeln von Dateien aus verschiedenen Ordnern.
 /// Die Dateien bleiben, wo sie sind – gemerkt werden nur die Pfade (UserDefaults „dropStack“).
 /// Danach alles auf einmal herauskopieren/-verschieben oder herausziehen (Finder, Mail …).
 @MainActor
@@ -89,20 +89,20 @@ final class DropStack {
 
 extension BrowserState {
 
-    /// ⌃⌘J: Auswahl des aktiven Fensters in den Drop Stack
+    /// ⌃⌘J: Auswahl des aktiven Fensters in die Sammelablage
     func addSelectionToDropStack() {
         let urls = activePane.selectedItems.map(\.url)
         guard !urls.isEmpty else {
             NSSound.beep()
-            flash("Erst Dateien auswählen – ⌃⌘J legt sie in den Drop Stack")
+            flash("Erst Dateien auswählen – ⌃⌘J legt sie in die Sammelablage")
             return
         }
         let added = DropStack.shared.add(urls)
         settings.showDropStack = true
-        flash(added == 0 ? "Schon im Drop Stack" : "\(added) in den Drop Stack gelegt (\(DropStack.shared.items.count) insgesamt)")
+        flash(added == 0 ? "Schon in der Sammelablage" : "\(added) in die Sammelablage gelegt (\(DropStack.shared.items.count) insgesamt)")
     }
 
-    /// Inhalt des Drop Stacks (Auswahl oder alles) ins aktive Fenster kopieren/verschieben
+    /// Inhalt der Sammelablage (Auswahl oder alles) ins aktive Fenster kopieren/verschieben
     func transferDropStack(move: Bool) {
         let stack = DropStack.shared
         stack.prune()
@@ -120,7 +120,7 @@ extension BrowserState {
             flash("Die Dateien liegen schon in diesem Ordner")
             return
         }
-        enqueue(title: "Drop Stack \(move ? "verschieben" : "kopieren") nach „\(folder.lastPathComponent)“", items: items)
+        enqueue(title: "Sammelablage \(move ? "verschieben" : "kopieren") nach „\(folder.lastPathComponent)“", items: items)
         if move { stack.relocate(items.map { (from: $0.source, to: $0.destination) }) }
     }
 

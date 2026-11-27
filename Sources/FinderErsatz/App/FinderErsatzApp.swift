@@ -34,7 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate()
         // Eigene Tabs statt macOS-Fenster-Tabs (sonst Konflikt mit ⌘T).
         NSWindow.allowsAutomaticWindowTabbing = false
-        // Schwebende Ablage (Drop Stack wie Yoink) mit Menüleisten-Symbol
+        // Schwebende Ablage (Sammelablage wie Yoink) mit Menüleisten-Symbol
         DropShelfController.shared.apply()
     }
 

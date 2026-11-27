@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Schwebende Ablage für den Drop Stack (wie Yoink): kleines Fenster am rechten Bildschirmrand, über allen
+/// Schwebende Ablage für die Sammelablage (wie Yoink): kleines Fenster am rechten Bildschirmrand, über allen
 /// Programmen und auf allen Spaces, plus Symbol in der Menüleiste. Funktioniert auch ohne offenes App-Fenster
 /// (die App läuft dann weiter). Erscheint auf Wunsch automatisch, sobald irgendwo Dateien gezogen werden.
 @MainActor
@@ -49,7 +49,7 @@ final class DropShelfController: NSObject {
     private func install() {
         if statusItem == nil {
             let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-            item.button?.image = NSImage(systemSymbolName: "tray.full", accessibilityDescription: "Drop Stack")
+            item.button?.image = NSImage(systemSymbolName: "tray.full", accessibilityDescription: "Sammelablage")
             item.button?.target = self
             item.button?.action = #selector(statusItemClicked(_:))
             item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -129,7 +129,7 @@ final class DropShelfController: NSObject {
         let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 230, height: 380),
                             styleMask: [.titled, .closable, .resizable, .utilityWindow, .nonactivatingPanel, .fullSizeContentView],
                             backing: .buffered, defer: false)
-        panel.title = "Drop Stack"
+        panel.title = "Sammelablage"
         panel.titlebarAppearsTransparent = true
         panel.isFloatingPanel = true
         panel.level = .floating
@@ -208,7 +208,7 @@ final class DropShelfController: NSObject {
     private func showStatusMenu() {
         let menu = NSMenu()
         let count = DropStack.shared.items.count
-        menu.addItem(withTitle: count == 1 ? "1 Datei im Drop Stack" : "\(count) Dateien im Drop Stack", action: nil, keyEquivalent: "")
+        menu.addItem(withTitle: count == 1 ? "1 Datei in der Sammelablage" : "\(count) Dateien in der Sammelablage", action: nil, keyEquivalent: "")
         menu.addItem(.separator())
         menu.addItem(item(isVisible ? "Ablage ausblenden" : "Ablage zeigen") { DropShelfController.shared.toggle() })
         let triggerMenu = NSMenu()
@@ -222,7 +222,7 @@ final class DropShelfController: NSObject {
         let triggerItem = NSMenuItem(title: "Automatisch zeigen", action: nil, keyEquivalent: "")
         triggerItem.submenu = triggerMenu
         menu.addItem(triggerItem)
-        menu.addItem(item("Drop Stack leeren") { DropStack.shared.clear() })
+        menu.addItem(item("Sammelablage leeren") { DropStack.shared.clear() })
         menu.addItem(.separator())
         menu.addItem(item("Twinfold öffnen") { DropShelfController.openMainWindow() })
         menu.addItem(item("Twinfold beenden") { NSApp.terminate(nil) })
@@ -306,7 +306,7 @@ struct DropShelfView: View {
                         .labelStyle(.iconOnly)
                         .keyboardShortcut(.delete, modifiers: [])
                         .disabled(stack.selection.isEmpty)
-                        .help("Ausgewählte aus dem Drop Stack entfernen (Rücktaste) – die Dateien bleiben erhalten")
+                        .help("Ausgewählte aus der Sammelablage entfernen (Rücktaste) – die Dateien bleiben erhalten")
                     if let browser = BrowserState.current {
                         Button("Ins aktive Fenster kopieren", systemImage: "doc.on.doc") { browser.transferDropStack(move: false) }
                             .labelStyle(.iconOnly)
@@ -314,7 +314,7 @@ struct DropShelfView: View {
                     }
                     Button("Leeren", systemImage: "xmark.bin") { stack.clear() }
                         .labelStyle(.iconOnly)
-                        .help("Drop Stack leeren (die Dateien selbst bleiben unverändert)")
+                        .help("Sammelablage leeren (die Dateien selbst bleiben unverändert)")
                 }
                 .buttonStyle(.borderless)
                 .padding(.horizontal, 8)
@@ -370,7 +370,7 @@ private struct ShelfRow: View {
             }
             Button("Im Finder zeigen") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
             Divider()
-            Button("Aus dem Drop Stack entfernen") { DropStack.shared.remove([url]) }
+            Button("Aus der Sammelablage entfernen") { DropStack.shared.remove([url]) }
         }
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Übernimmt die Einstellungen (Favoriten, Drop Stack, Verbindungen, Spalten, Fensterpositionen …)
+/// Übernimmt die Einstellungen (Favoriten, Sammelablage, Verbindungen, Spalten, Fensterpositionen …)
 /// einmalig aus der alten Bundle-ID `com.example.FinderErsatz`, als Twinfold eine eigene bekam.
 /// Läuft vor allem anderen (erste gespeicherte Eigenschaft von `FinderErsatzApp`), damit
 /// `AppSettings`, `@AppStorage` und die Stores schon die übernommenen Werte lesen.
