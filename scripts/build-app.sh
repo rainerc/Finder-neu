@@ -9,6 +9,13 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# Schlägt der Bau fehl (z. B. Compilerfehler), bleibt die alte App installiert – deshalb deutlich melden,
+# auch wenn die Ausgabe in eine Log-Datei umgeleitet wird (Kurzbefehl).
+trap 'echo "✗ Bau fehlgeschlagen – die bisher installierte App wurde NICHT ersetzt."; \
+  osascript -e "display alert \"Finder-Ersatz: Bau fehlgeschlagen\" message \"Die alte Version ist noch installiert. Fehler siehe Terminal bzw. Log.\" giving up after 60" >/dev/null 2>&1 || true' ERR
+COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unbekannt)"
+echo "▸ Stand: Commit $COMMIT"
 APP="build/Finder-Ersatz.app"
 PLIST="$APP/Contents/Info.plist"
 
@@ -31,6 +38,7 @@ pb "Add :CFBundleDisplayName string Finder-Ersatz"
 pb "Add :CFBundleIconFile string AppIcon"
 pb "Add :CFBundleShortVersionString string 0.5"
 pb "Add :CFBundleVersion string $(git rev-list --count HEAD 2>/dev/null || echo 1)"
+pb "Add :FEGitCommit string $COMMIT"
 pb "Add :LSMinimumSystemVersion string 26.0"
 pb "Add :LSApplicationCategoryType string public.app-category.productivity"
 pb "Add :NSHighResolutionCapable bool true"
@@ -106,7 +114,7 @@ if [[ $INSTALL == 1 ]]; then
   touch "$TARGET"   # Dock/Finder zeigen das neue Icon sofort
   echo "✓ Installiert: $TARGET"
 fi
-echo "✓ Fertig"
+echo "✓ Fertig (Commit $COMMIT)"
 if [[ $OPEN == 1 ]]; then
   open "$TARGET"
 fi

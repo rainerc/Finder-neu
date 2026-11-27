@@ -56,8 +56,7 @@ struct FinderErsatzApp: App {
                 .onAppear { appDelegate.browser = browser }
         }
         .defaultSize(width: 1200, height: 720)
-        // Fenster nicht kleiner als der Inhalt (Seitenleiste + zwei Fenster + ggf. Vorschau-Spalte) –
-        // sonst wurden Seitenleiste und Vorschau links/rechts abgeschnitten.
+        // Die eigentliche Mindestbreite setzt MainSplitViewController (Seitenleiste + Inhalt + Vorschau-Spalte).
         .windowResizability(.contentMinSize)
         .commands { BrowserCommands(browser: browser, settings: browser.settings) }
 
@@ -179,11 +178,20 @@ struct BrowserCommands: Commands {
             item(.viewColumns) { browser.setViewMode(.columns) }
             item(.viewGallery) { browser.setViewMode(.gallery) }
             Divider()
+            item(.toggleSidebar) { MainSplitViewController.current?.toggleSidebarFromMenu() }
             toggle(.toggleInspector, isOn: Bindable(browser).showInspector)
             toggle(.togglePanePreview, isOn: Bindable(browser).showPanePreview)
             Divider()
             item(.toggleHidden) { browser.activePane.toggleHidden() }
             item(.reload) { browser.reloadAll() }
+        }
+        CommandGroup(after: .help) {
+            Button("Layout-Diagnose kopieren") {
+                let report = MainSplitViewController.diagnosticReport()
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(report, forType: .string)
+                browser.flash("Layout-Diagnose in der Zwischenablage")
+            }
         }
     }
 }

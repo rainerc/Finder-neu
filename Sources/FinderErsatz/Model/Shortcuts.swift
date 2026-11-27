@@ -7,7 +7,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
     case copyFiles, pasteFiles, moveFilesHere, duplicate, makeAlias, copyPath, getInfo, goToFolder, selectAll, undo
     case search, newSmartFolder, saveSearch, reveal, terminal, batchRename, recents
     case back, forward, up, switchPane, nextTab, previousTab, syncPanes, swapPanes, addFavorite, connectServer
-    case viewList, viewBrief, viewIcons, viewColumns, viewGallery, toggleInspector, togglePanePreview, toggleHidden, reload
+    case viewList, viewBrief, viewIcons, viewColumns, viewGallery, toggleSidebar, toggleInspector, togglePanePreview, toggleHidden, reload
 
     var id: String { rawValue }
 
@@ -56,6 +56,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .viewIcons: "Ansicht: Miniaturen"
         case .viewColumns: "Ansicht: Spalten"
         case .viewGallery: "Ansicht: Galerie"
+        case .toggleSidebar: "Seitenleiste ein-/ausblenden"
         case .toggleInspector: "Vorschau-Spalte rechts"
         case .togglePanePreview: "Vorschaubereich unten"
         case .toggleHidden: "Unsichtbare Dateien ein/aus"
@@ -108,6 +109,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .viewIcons: Shortcut("3", .command)
         case .viewColumns: Shortcut("4", .command)
         case .viewGallery: Shortcut("5", .command)
+        case .toggleSidebar: Shortcut("s", [.control, .command])
         case .toggleInspector: Shortcut("p", [.command, .shift])
         case .togglePanePreview: Shortcut("p", [.command, .control])
         case .toggleHidden: Shortcut(".", [.command, .shift])
