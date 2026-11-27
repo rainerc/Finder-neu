@@ -7,6 +7,7 @@ struct SearchBar: View {
     @State private var query: SearchQuery
     @FocusState private var termFocused: Bool
     @State private var regexHelperTab: RegexHelperSheet.Tab?
+    @State private var showConditions = false
 
     init(pane: PaneState) {
         self.pane = pane
@@ -24,11 +25,30 @@ struct SearchBar: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField(query.mode == .wildcard ? "z. B. *.jpg; *.png" : "Dateiname", text: $query.term)
-                    .textFieldStyle(.roundedBorder)
-                    .focused($termFocused)
-                    .onSubmit(start)
+                // Suchfeld mit Bedingungen als „Chips“ wie in Apple Mail: Text eintippen, Vorschlag anklicken,
+                // weitere Begriffe eintippen – alle Chips zusammen schränken die Suche ein.
+                HStack(spacing: 4) {
+                    Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                    ForEach($query.criteria) { $criterion in
+                        if criterion.isComplete {
+                            SearchToken(criterion: $criterion) { removeCriterion(criterion.id) }
+                        }
+                    }
+                    TextField(fieldPrompt, text: $query.term)
+                        .textFieldStyle(.plain)
+                        .focused($termFocused)
+                        .onSubmit(start)
+                        .onKeyPress(.delete) {
+                            // Rücktaste im leeren Feld entfernt den letzten Chip (wie in Mail)
+                            guard query.term.isEmpty, let last = query.criteria.last else { return .ignored }
+                            removeCriterion(last.id)
+                            return .handled
+                        }
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
+                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.secondary.opacity(0.35)))
                 Picker("Modus", selection: $query.mode) {
                     ForEach(SearchQuery.Mode.allCases) { Text($0.title).tag($0) }
                 }
@@ -81,6 +101,16 @@ struct SearchBar: View {
                     .keyboardShortcut(.cancelAction)
                     .help("Suche schließen (Esc)")
             }
+            if !suggestions.isEmpty {
+                FlowLayout(spacing: 6) {
+                    Text("Suchen nach:").foregroundStyle(.secondary)
+                    ForEach(Array(suggestions.enumerated()), id: \.offset) { _, suggestion in
+                        Button(suggestion.label) { addToken(suggestion.criterion) }
+                            .buttonStyle(.bordered)
+                            .help("Als Bedingung hinzufügen – danach weitere Begriffe eintippen")
+                    }
+                }
+            }
             HStack(spacing: 8) {
                 Text("Suchen in:").foregroundStyle(.secondary)
                 Picker("Suchen in", selection: $query.scope) {
@@ -99,14 +129,24 @@ struct SearchBar: View {
                     .fixedSize()
                 }
                 Spacer()
-                Button("Bedingung", systemImage: "plus.circle") { addCriterion(after: nil) }
-                    .help("Weitere Bedingung hinzufügen, z. B. Art, Datum, Größe, Tag")
+                Toggle(isOn: $showConditions) {
+                    Label("Bedingungen", systemImage: "line.3.horizontal.decrease.circle")
+                }
+                .toggleStyle(.button)
+                .help("Alle Bedingungen als Zeilen bearbeiten (Datum, Größe … genau einstellen)")
+                Button("Bedingung", systemImage: "plus.circle") {
+                    showConditions = true
+                    addCriterion(after: nil)
+                }
+                .help("Weitere Bedingung hinzufügen, z. B. Art, Datum, Größe, Tag")
             }
-            ForEach($query.criteria) { $criterion in
-                SearchCriterionRow(criterion: $criterion,
-                                   onAdd: { addCriterion(after: criterion.id) },
-                                   onRemove: { query.criteria.removeAll { $0.id == criterion.id } })
-                    .onSubmit(start)
+            if showConditions {
+                ForEach($query.criteria) { $criterion in
+                    SearchCriterionRow(criterion: $criterion,
+                                       onAdd: { addCriterion(after: criterion.id) },
+                                       onRemove: { removeCriterion(criterion.id) })
+                        .onSubmit(start)
+                }
             }
             HStack(spacing: 6) {
                 Image(systemName: "doc.text.magnifyingglass").foregroundStyle(.secondary)
@@ -133,6 +173,12 @@ struct SearchBar: View {
         .padding(.vertical, 6)
         .background(.bar)
         .onAppear { termFocused = true }
+        .task(id: query.criteria) {
+            // Geänderte Bedingungen nach kurzer Pause automatisch suchen (wie in Mail)
+            try? await Task.sleep(for: .milliseconds(500))
+            guard !Task.isCancelled, !query.isEmpty, pane.activeSearch?.criteria != query.criteria else { return }
+            start()
+        }
         .sheet(item: $regexHelperTab) { tab in
             RegexHelperSheet(purpose: .search, sampleNames: regexSamples, pattern: query.term,
                              caseSensitive: query.caseSensitive, initialTab: tab) { pattern, _, caseSensitive in
@@ -159,6 +205,80 @@ struct SearchBar: View {
         // Ab dem Ordner suchen, der gerade angezeigt wird (beim Bearbeiten eines intelligenten Ordners: dessen Ordner).
         if pane.editingSmartFolder == nil { query.root = pane.currentURL }
         pane.startSearch(query)
+    }
+
+    private var fieldPrompt: String {
+        if query.mode == .wildcard { return "z. B. *.jpg; *.png" }
+        return query.criteria.isEmpty ? "Suchbegriff – Name, Inhalt, Art, Tag, Datum …" : "Weiteren Begriff eingeben …"
+    }
+
+    /// Vorschläge zum eingetippten Text, wie in Mail („Betreff enthält …“, „Von …“).
+    private var suggestions: [(label: String, criterion: SearchCriterion)] {
+        let text = query.term.trimmingCharacters(in: .whitespaces)
+        guard !text.isEmpty, query.mode == .contains || query.mode == .spotlight else { return [] }
+        var result: [(label: String, criterion: SearchCriterion)] = []
+        func textCriterion(_ attribute: SearchCriterion.Attribute,
+                           _ op: SearchCriterion.TextOperator = .contains) -> SearchCriterion {
+            var criterion = SearchCriterion(attribute: attribute)
+            criterion.textOperator = op
+            criterion.text = text
+            return criterion
+        }
+        result.append(("Name enthält „\(text)“", textCriterion(.name)))
+        result.append(("Name beginnt mit „\(text)“", textCriterion(.name, .begins)))
+        result.append(("Inhalt enthält „\(text)“", textCriterion(.contents)))
+        result.append(("Tag „\(text)“", textCriterion(.tag, .equals)))
+        let lower = text.lowercased()
+        // Art, wenn der Text dazu passt („bild“, „pdf“, „ordner“ …)
+        for kind in SearchCriterion.Kind.allCases
+        where lower.count >= 2 && (kind.title.lowercased().hasPrefix(lower) || kind.rawValue.hasPrefix(lower)) {
+            var criterion = SearchCriterion(attribute: .kind)
+            criterion.kind = kind
+            result.append(("Art: \(kind.title)", criterion))
+        }
+        // Dateiendung bei kurzen Wörtern ohne Leerzeichen („pdf“, „.jpg“)
+        let ext = lower.trimmingCharacters(in: CharacterSet(charactersIn: "."))
+        if !ext.isEmpty, ext.count <= 5, !ext.contains(" "), ext.allSatisfy({ $0.isLetter || $0.isNumber }) {
+            var criterion = SearchCriterion(attribute: .fileExtension)
+            criterion.text = ext
+            result.append(("Endung .\(ext)", criterion))
+        }
+        // Datumsangaben: „heute“, „gestern“, „woche“, „monat“, „jahr“ oder eine Jahreszahl
+        let dateWords: [(String, SearchCriterion.DateOperator)] = [
+            ("heute", .today), ("gestern", .yesterday), ("diese woche", .thisWeek),
+            ("diesen monat", .thisMonth), ("dieses jahr", .thisYear),
+        ]
+        for (word, op) in dateWords
+        where lower.count >= 3 && (word.hasPrefix(lower) || word.split(separator: " ").last.map({ $0.hasPrefix(lower) }) == true) {
+            var criterion = SearchCriterion(attribute: .modified)
+            criterion.dateOperator = op
+            result.append(("Geändert \(op.title)", criterion))
+        }
+        if let year = Int(text), (1970...2100).contains(year) {
+            var criterion = SearchCriterion(attribute: .modified)
+            criterion.dateOperator = .inYear
+            criterion.amount = year
+            result.append(("Geändert im Jahr \(text)", criterion))
+            criterion.attribute = .created
+            result.append(("Erstellt im Jahr \(text)", criterion))
+        }
+        return result
+    }
+
+    private func addToken(_ criterion: SearchCriterion) {
+        query.criteria.append(criterion)
+        query.term = ""
+        termFocused = true
+        start()
+    }
+
+    private func removeCriterion(_ id: SearchCriterion.ID) {
+        query.criteria.removeAll { $0.id == id }
+        if query.isEmpty {
+            pane.stopSearch()
+        } else {
+            start()
+        }
     }
 
     private var folderName: String {
@@ -260,6 +380,10 @@ struct SearchCriterionRow: View {
                 }
                 .labelsHidden()
                 .fixedSize()
+            case .inYear:
+                TextField("Jahr", value: $criterion.amount, format: .number.grouping(.never))
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 60)
             case .before, .after, .exactly:
                 DatePicker("Datum", selection: $criterion.date, displayedComponents: .date)
                     .labelsHidden()
@@ -287,14 +411,94 @@ struct SearchCriterionRow: View {
     /// Kurzbeschreibung, z. B. „Art: Bild“ – als Namensvorschlag beim Sichern.
     static func summary(_ criterion: SearchCriterion) -> String {
         switch criterion.attribute {
-        case .kind: return criterion.kind.title
-        case .name, .contents, .tag, .fileExtension: return "\(criterion.attribute.title): \(criterion.text)"
+        case .kind: return "Art: \(criterion.kind.title)"
+        case .fileExtension: return "Endung .\(criterion.text.trimmingCharacters(in: CharacterSet(charactersIn: ". ")))"
+        case .name, .contents, .tag:
+            return "\(criterion.attribute.title) \(criterion.textOperator.title) „\(criterion.text)“"
         case .modified, .created, .lastOpened:
-            let when = criterion.dateOperator == .withinLast
-                ? "letzte \(criterion.amount) \(criterion.dateUnit.title)"
-                : criterion.dateOperator.title
+            let when: String = switch criterion.dateOperator {
+            case .withinLast: "letzte \(criterion.amount) \(criterion.dateUnit.title)"
+            case .inYear: "im Jahr \(String(criterion.amount))"
+            case .before, .after, .exactly:
+                "\(criterion.dateOperator.title) \(criterion.date.formatted(date: .numeric, time: .omitted))"
+            default: criterion.dateOperator.title
+            }
             return "\(criterion.attribute.title) \(when)"
         case .size: return "\(criterion.sizeOperator.title) \(criterion.size.formatted()) \(criterion.sizeUnit.title)"
+        }
+    }
+}
+
+/// Eine Bedingung als Chip im Suchfeld. Klick öffnet ein Menü zum Umstellen (z. B. Name → Inhalt), × entfernt sie.
+struct SearchToken: View {
+    @Binding var criterion: SearchCriterion
+    let onRemove: () -> Void
+
+    var body: some View {
+        HStack(spacing: 2) {
+            Menu {
+                menuContent
+                Divider()
+                Button("Entfernen", role: .destructive, action: onRemove)
+            } label: {
+                Text(SearchCriterionRow.summary(criterion)).lineLimit(1)
+            }
+            .menuStyle(.button)
+            .buttonStyle(.borderless)
+            .fixedSize()
+            Button("Entfernen", systemImage: "xmark.circle.fill", action: onRemove)
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.leading, 7)
+        .padding(.trailing, 3)
+        .padding(.vertical, 1)
+        .background(Capsule().fill(Color.accentColor.opacity(0.18)))
+    }
+
+    @ViewBuilder
+    private var menuContent: some View {
+        switch criterion.attribute {
+        case .name, .contents, .tag, .fileExtension:
+            Picker("Suchen in", selection: $criterion.attribute) {
+                Text("Name").tag(SearchCriterion.Attribute.name)
+                Text("Inhalt").tag(SearchCriterion.Attribute.contents)
+                Text("Tag").tag(SearchCriterion.Attribute.tag)
+                Text("Dateiendung").tag(SearchCriterion.Attribute.fileExtension)
+            }
+            .pickerStyle(.inline)
+            if criterion.attribute != .fileExtension {
+                Picker("Vergleich", selection: $criterion.textOperator) {
+                    ForEach(SearchCriterion.TextOperator.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.inline)
+            }
+        case .kind:
+            Picker("Art", selection: $criterion.kind) {
+                ForEach(SearchCriterion.Kind.allCases) { Text($0.title).tag($0) }
+            }
+            .pickerStyle(.inline)
+        case .modified, .created, .lastOpened:
+            Picker("Datum", selection: $criterion.attribute) {
+                Text("Änderungsdatum").tag(SearchCriterion.Attribute.modified)
+                Text("Erstellungsdatum").tag(SearchCriterion.Attribute.created)
+                Text("Zuletzt geöffnet").tag(SearchCriterion.Attribute.lastOpened)
+            }
+            .pickerStyle(.inline)
+            let quick: [SearchCriterion.DateOperator] = [.today, .yesterday, .thisWeek, .thisMonth, .thisYear]
+            Picker("Zeitraum", selection: $criterion.dateOperator) {
+                ForEach(quick.contains(criterion.dateOperator) ? quick : quick + [criterion.dateOperator]) { op in
+                    Text(op == criterion.dateOperator && !quick.contains(op) ? SearchCriterionRow.summary(criterion) : op.title)
+                        .tag(op)
+                }
+            }
+            .pickerStyle(.inline)
+        case .size:
+            Picker("Größe", selection: $criterion.sizeOperator) {
+                ForEach(SearchCriterion.SizeOperator.allCases) { Text($0.title).tag($0) }
+            }
+            .pickerStyle(.inline)
         }
     }
 }

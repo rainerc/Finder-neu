@@ -40,7 +40,7 @@ struct SearchCriterion: Identifiable, Hashable, Codable, Sendable {
     }
 
     enum DateOperator: String, CaseIterable, Identifiable, Codable, Sendable {
-        case withinLast, today, yesterday, thisWeek, thisMonth, thisYear, before, after, exactly
+        case withinLast, today, yesterday, thisWeek, thisMonth, thisYear, inYear, before, after, exactly
         var id: String { rawValue }
         var title: String {
             switch self {
@@ -50,6 +50,7 @@ struct SearchCriterion: Identifiable, Hashable, Codable, Sendable {
             case .thisWeek: "diese Woche"
             case .thisMonth: "diesen Monat"
             case .thisYear: "dieses Jahr"
+            case .inYear: "im Jahr"
             case .before: "vor dem"
             case .after: "nach dem"
             case .exactly: "am"
@@ -175,6 +176,9 @@ struct SearchCriterion: Identifiable, Hashable, Codable, Sendable {
             return (calendar.dateInterval(of: .month, for: now)?.start, nil)
         case .thisYear:
             return (calendar.dateInterval(of: .year, for: now)?.start, nil)
+        case .inYear:
+            let start = calendar.date(from: DateComponents(year: amount, month: 1, day: 1))
+            return (start, start.flatMap { calendar.date(byAdding: .year, value: 1, to: $0) })
         case .before:
             return (nil, calendar.startOfDay(for: date))
         case .after:
