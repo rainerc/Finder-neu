@@ -19,88 +19,88 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .newTab: "Neuer Tab"
-        case .newFolder: "Neuer Ordner"
-        case .newFile: "Neue Textdatei"
-        case .copy: "In anderes Fenster kopieren"
-        case .move: "In anderes Fenster verschieben"
-        case .rename: "Umbenennen"
-        case .quickLook: "Schnellansicht"
-        case .systemQuickLook: "Quick Look mit XRay (auch Ordner)"
-        case .trash: "In den Papierkorb"
-        case .compress: "Als ZIP komprimieren"
-        case .extractHere: "Entpacken (hierher)"
-        case .extractToOther: "Entpacken ins andere Fenster"
-        case .copyFiles: "Kopieren (Zwischenablage)"
-        case .pasteFiles: "Einsetzen"
-        case .moveFilesHere: "Objekt hierher bewegen"
-        case .duplicate: "Duplizieren"
-        case .makeAlias: "Alias erstellen"
-        case .copyPath: "Pfad kopieren"
-        case .copyNames: "Name(n) kopieren"
-        case .selectPattern: "Auswählen …"
-        case .deselectPattern: "Auswahl aufheben …"
-        case .deselectAll: "Nichts auswählen"
-        case .invertSelection: "Auswahl umkehren"
-        case .selectSameExtension: "Alle mit derselben Endung auswählen"
-        case .getInfo: "Informationen"
-        case .goToFolder: "Gehe zu Ordner …"
-        case .selectAll: "Alles auswählen"
-        case .undo: "Widerrufen"
-        case .search: "Suchen"
-        case .newSmartFolder: "Neuer intelligenter Ordner"
-        case .saveSearch: "Suche als intelligenten Ordner sichern"
-        case .batchRename: "Mehrere umbenennen …"
-        case .recents: "Zuletzt benutzt"
-        case .reveal: "Im Finder zeigen"
-        case .terminal: "Terminal hier öffnen"
-        case .back: "Zurück"
-        case .forward: "Vorwärts"
-        case .up: "Übergeordneter Ordner"
-        case .switchPane: "Fenster wechseln"
-        case .nextTab: "Nächster Tab"
-        case .previousTab: "Vorheriger Tab"
-        case .syncPanes: "Anderes Fenster auf gleichen Ordner"
-        case .swapPanes: "Fenster tauschen"
-        case .compareFolders: "Verzeichnisse vergleichen …"
-        case .markDifferences: "Unterschiede markieren"
-        case .quickFilter: "Schnellfilter"
-        case .branchView: "Zweigansicht (alle Dateien aus Unterordnern)"
-        case .compareFiles: "Dateien nach Inhalt vergleichen …"
-        case .findDuplicates: "Doppelte Dateien suchen …"
-        case .favoritesMenu: "Favoriten-Menü"
-        case .restoreSelection: "Auswahl wiederherstellen"
-        case .syncBrowsing: "Synchrones Blättern"
-        case .checksums: "Prüfsummen …"
-        case .viewer: "Betrachter (Text/Hex)"
-        case .packageContents: "Paketinhalt anzeigen"
-        case .commandLine: "Befehlszeile"
-        case .toggleButtonBar: "Knopfleiste ein-/ausblenden"
-        case .actionLog: "Protokoll der Dateiaktionen …"
-        case .renameInEditor: "Im Texteditor umbenennen …"
-        case .viewTree: "Ansicht: Ordnerbaum"
-        case .showOnlySelected: "Nur Ausgewähltes anzeigen"
-        case .changeAttributes: "Attribute ändern …"
-        case .splitFile: "Datei aufteilen …"
-        case .joinFiles: "Dateien zusammenfügen …"
-        case .packArchive: "Packen …"
-        case .listArchive: "Archivinhalt auflisten"
-        case .connectRemote: "FTP/SFTP-Verbindung …"
-        case .addToDropStack: "Zur Sammelablage hinzufügen"
-        case .toggleDropStack: "Sammelablage ein-/ausblenden"
-        case .toggleDropShelf: "Schwebende Ablage zeigen/ausblenden"
-        case .addFavorite: "Zu Favoriten hinzufügen"
-        case .connectServer: "Mit Server verbinden"
-        case .viewList: "Ansicht: Liste"
-        case .viewBrief: "Ansicht: Kurz"
-        case .viewIcons: "Ansicht: Miniaturen"
-        case .viewColumns: "Ansicht: Spalten"
-        case .viewGallery: "Ansicht: Galerie"
-        case .toggleSidebar: "Seitenleiste ein-/ausblenden"
-        case .toggleInspector: "Vorschau-Spalte rechts"
-        case .togglePanePreview: "Vorschaubereich unten"
-        case .toggleHidden: "Unsichtbare Dateien ein/aus"
-        case .reload: "Aktualisieren"
+        case .newTab: String(localized: "Neuer Tab")
+        case .newFolder: String(localized: "Neuer Ordner")
+        case .newFile: String(localized: "Neue Textdatei")
+        case .copy: String(localized: "In anderes Fenster kopieren")
+        case .move: String(localized: "In anderes Fenster verschieben")
+        case .rename: String(localized: "Umbenennen")
+        case .quickLook: String(localized: "Schnellansicht")
+        case .systemQuickLook: String(localized: "Quick Look mit XRay (auch Ordner)")
+        case .trash: String(localized: "In den Papierkorb")
+        case .compress: String(localized: "Als ZIP komprimieren")
+        case .extractHere: String(localized: "Entpacken (hierher)")
+        case .extractToOther: String(localized: "Entpacken ins andere Fenster")
+        case .copyFiles: String(localized: "Kopieren (Zwischenablage)")
+        case .pasteFiles: String(localized: "Einsetzen")
+        case .moveFilesHere: String(localized: "Objekt hierher bewegen")
+        case .duplicate: String(localized: "Duplizieren")
+        case .makeAlias: String(localized: "Alias erstellen")
+        case .copyPath: String(localized: "Pfad kopieren")
+        case .copyNames: String(localized: "Name(n) kopieren")
+        case .selectPattern: String(localized: "Auswählen …")
+        case .deselectPattern: String(localized: "Auswahl aufheben …")
+        case .deselectAll: String(localized: "Nichts auswählen")
+        case .invertSelection: String(localized: "Auswahl umkehren")
+        case .selectSameExtension: String(localized: "Alle mit derselben Endung auswählen")
+        case .getInfo: String(localized: "Informationen")
+        case .goToFolder: String(localized: "Gehe zu Ordner …")
+        case .selectAll: String(localized: "Alles auswählen")
+        case .undo: String(localized: "Widerrufen")
+        case .search: String(localized: "Suchen")
+        case .newSmartFolder: String(localized: "Neuer intelligenter Ordner")
+        case .saveSearch: String(localized: "Suche als intelligenten Ordner sichern")
+        case .batchRename: String(localized: "Mehrere umbenennen …")
+        case .recents: String(localized: "Zuletzt benutzt")
+        case .reveal: String(localized: "Im Finder zeigen")
+        case .terminal: String(localized: "Terminal hier öffnen")
+        case .back: String(localized: "Zurück")
+        case .forward: String(localized: "Vorwärts")
+        case .up: String(localized: "Übergeordneter Ordner")
+        case .switchPane: String(localized: "Fenster wechseln")
+        case .nextTab: String(localized: "Nächster Tab")
+        case .previousTab: String(localized: "Vorheriger Tab")
+        case .syncPanes: String(localized: "Anderes Fenster auf gleichen Ordner")
+        case .swapPanes: String(localized: "Fenster tauschen")
+        case .compareFolders: String(localized: "Verzeichnisse vergleichen …")
+        case .markDifferences: String(localized: "Unterschiede markieren")
+        case .quickFilter: String(localized: "Schnellfilter")
+        case .branchView: String(localized: "Zweigansicht (alle Dateien aus Unterordnern)")
+        case .compareFiles: String(localized: "Dateien nach Inhalt vergleichen …")
+        case .findDuplicates: String(localized: "Doppelte Dateien suchen …")
+        case .favoritesMenu: String(localized: "Favoriten-Menü")
+        case .restoreSelection: String(localized: "Auswahl wiederherstellen")
+        case .syncBrowsing: String(localized: "Synchrones Blättern")
+        case .checksums: String(localized: "Prüfsummen …")
+        case .viewer: String(localized: "Betrachter (Text/Hex)")
+        case .packageContents: String(localized: "Paketinhalt anzeigen")
+        case .commandLine: String(localized: "Befehlszeile")
+        case .toggleButtonBar: String(localized: "Knopfleiste ein-/ausblenden")
+        case .actionLog: String(localized: "Protokoll der Dateiaktionen …")
+        case .renameInEditor: String(localized: "Im Texteditor umbenennen …")
+        case .viewTree: String(localized: "Ansicht: Ordnerbaum")
+        case .showOnlySelected: String(localized: "Nur Ausgewähltes anzeigen")
+        case .changeAttributes: String(localized: "Attribute ändern …")
+        case .splitFile: String(localized: "Datei aufteilen …")
+        case .joinFiles: String(localized: "Dateien zusammenfügen …")
+        case .packArchive: String(localized: "Packen …")
+        case .listArchive: String(localized: "Archivinhalt auflisten")
+        case .connectRemote: String(localized: "FTP/SFTP-Verbindung …")
+        case .addToDropStack: String(localized: "Zur Sammelablage hinzufügen")
+        case .toggleDropStack: String(localized: "Sammelablage ein-/ausblenden")
+        case .toggleDropShelf: String(localized: "Schwebende Ablage zeigen/ausblenden")
+        case .addFavorite: String(localized: "Zu Favoriten hinzufügen")
+        case .connectServer: String(localized: "Mit Server verbinden")
+        case .viewList: String(localized: "Ansicht: Liste")
+        case .viewBrief: String(localized: "Ansicht: Kurz")
+        case .viewIcons: String(localized: "Ansicht: Miniaturen")
+        case .viewColumns: String(localized: "Ansicht: Spalten")
+        case .viewGallery: String(localized: "Ansicht: Galerie")
+        case .toggleSidebar: String(localized: "Seitenleiste ein-/ausblenden")
+        case .toggleInspector: String(localized: "Vorschau-Spalte rechts")
+        case .togglePanePreview: String(localized: "Vorschaubereich unten")
+        case .toggleHidden: String(localized: "Unsichtbare Dateien ein/aus")
+        case .reload: String(localized: "Aktualisieren")
         }
     }
 

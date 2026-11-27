@@ -30,6 +30,10 @@ cp "$BIN" "$APP/Contents/MacOS/FinderErsatz"
 cp Support/Info.plist "$PLIST"
 cp Support/FinderErsatz.sdef "$APP/Contents/Resources/"   # AppleScript-Schnittstelle (Hookmark)
 cp Support/AppIcon.icns "$APP/Contents/Resources/"        # App-Icon (Quelle: Support/Icon/AppIcon.svg)
+cp -R Support/Localization/*.lproj "$APP/Contents/Resources/"   # Sprachen (de = Ausgangssprache, en)
+for STRINGS in "$APP"/Contents/Resources/*.lproj/*.strings; do
+  plutil -lint -s "$STRINGS" || { echo "✗ Übersetzungsdatei fehlerhaft: $STRINGS"; false; }
+done
 
 pb() { /usr/libexec/PlistBuddy -c "$1" "$PLIST" >/dev/null 2>&1 || true; }
 pb "Add :CFBundleExecutable string FinderErsatz"

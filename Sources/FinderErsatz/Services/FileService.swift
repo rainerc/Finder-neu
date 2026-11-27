@@ -126,25 +126,25 @@ enum NewFileType: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .text: "Textdatei (.txt)"
-        case .markdown: "Markdown (.md)"
-        case .rtf: "RTF-Dokument (.rtf)"
-        case .html: "HTML-Datei (.html)"
-        case .csv: "CSV-Tabelle (.csv)"
-        case .json: "JSON-Datei (.json)"
-        case .empty: "Leere Datei ohne Endung"
+        case .text: String(localized: "Textdatei (.txt)")
+        case .markdown: String(localized: "Markdown (.md)")
+        case .rtf: String(localized: "RTF-Dokument (.rtf)")
+        case .html: String(localized: "HTML-Datei (.html)")
+        case .csv: String(localized: "CSV-Tabelle (.csv)")
+        case .json: String(localized: "JSON-Datei (.json)")
+        case .empty: String(localized: "Leere Datei ohne Endung")
         }
     }
 
     var fileName: String {
         switch self {
-        case .text: "Neue Textdatei.txt"
-        case .markdown: "Neue Datei.md"
-        case .rtf: "Neues Dokument.rtf"
-        case .html: "Neue Seite.html"
-        case .csv: "Neue Tabelle.csv"
-        case .json: "Neue Datei.json"
-        case .empty: "Neue Datei"
+        case .text: String(localized: "Neue Textdatei.txt")
+        case .markdown: String(localized: "Neue Datei.md")
+        case .rtf: String(localized: "Neues Dokument.rtf")
+        case .html: String(localized: "Neue Seite.html")
+        case .csv: String(localized: "Neue Tabelle.csv")
+        case .json: String(localized: "Neue Datei.json")
+        case .empty: String(localized: "Neue Datei")
         }
     }
 

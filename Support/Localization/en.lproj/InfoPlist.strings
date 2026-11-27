@@ -1,0 +1,9 @@
+"CFBundleName" = "Twinfold";
+"CFBundleDisplayName" = "Twinfold";
+"NSLocalNetworkUsageDescription" = "Twinfold searches your local network for servers and shares (e.g. a NAS) so you can connect to them.";
+"NSNetworkVolumesUsageDescription" = "Twinfold shows and edits files on your network shares.";
+"NSRemovableVolumesUsageDescription" = "Twinfold shows and edits files on external drives.";
+"NSDesktopFolderUsageDescription" = "Twinfold shows and edits files on your desktop.";
+"NSDocumentsFolderUsageDescription" = "Twinfold shows and edits files in your Documents folder.";
+"NSDownloadsFolderUsageDescription" = "Twinfold shows and edits files in your Downloads folder.";
+"NSAppleEventsUsageDescription" = "Twinfold controls Terminal to run commands from the command line there, and Finder for the Get Info window.";

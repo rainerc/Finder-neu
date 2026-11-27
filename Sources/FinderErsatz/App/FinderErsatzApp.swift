@@ -112,7 +112,7 @@ struct BrowserCommands: Commands {
         }
         // Bearbeiten-Menü: in Textfeldern normales Text-Verhalten, sonst Dateien (wie im Finder).
         CommandGroup(replacing: .undoRedo) {
-            Button(browser.undoTitle ?? "Widerrufen") {
+            Button(browser.undoTitle ?? String(localized: "Widerrufen")) {
                 if textEditing { NSApp.sendAction(Selector(("undo:")), to: nil, from: nil) } else { browser.undo() }
             }
             .keyboardShortcut(settings.keyboardShortcut(for: .undo))
