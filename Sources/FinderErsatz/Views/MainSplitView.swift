@@ -50,20 +50,20 @@ final class MainSplitViewController: NSSplitViewController {
     init(browser: BrowserState, inspectorVisible: Bool) {
         self.browser = browser
 
-        sidebarItem = NSSplitViewItem(sidebarWithViewController: MainSplitViewController.host(SidebarView(), browser: browser, width: 200))
+        sidebarItem = NSSplitViewItem(sidebarWithViewController: MainSplitViewController.host(SidebarView(), name: "Seitenleiste", browser: browser, width: 200))
         sidebarItem.minimumThickness = 160
         sidebarItem.maximumThickness = 320
         sidebarItem.canCollapse = true
         sidebarItem.canCollapseFromWindowResize = false
         sidebarItem.holdingPriority = NSLayoutConstraint.Priority(rawValue: 260)
 
-        contentItem = NSSplitViewItem(viewController: MainSplitViewController.host(PanesArea(), browser: browser, width: 700))
+        contentItem = NSSplitViewItem(viewController: MainSplitViewController.host(PanesArea(), name: "Inhalt", browser: browser, width: 700))
         contentItem.minimumThickness = MainSplitViewController.contentMinWidth
         // Niedrigste Priorität → wird beim Verkleinern/Vergrößern des Fensters zuerst angepasst
         contentItem.holdingPriority = .defaultLow
 
         inspectorItem = NSSplitViewItem(inspectorWithViewController: MainSplitViewController.host(
-            InspectorColumn(), browser: browser, width: 300))
+            InspectorColumn(), name: "Vorschau-Spalte", browser: browser, width: 300))
         inspectorItem.minimumThickness = 220
         inspectorItem.maximumThickness = 480
         // Nur per Knopf/Menü (⇧⌘P) ein-/ausblenden, nicht durch Ziehen – so bleibt `showInspector` stimmig.
@@ -81,11 +81,34 @@ final class MainSplitViewController: NSSplitViewController {
 
     /// SwiftUI-Inhalt ohne eigene Größenvorgaben: Breite bestimmt allein die Split-View
     /// (sonst drückt SwiftUI Mindest-/Idealgrößen als Constraints hinein → Ruckeln, falsche Bereiche schrumpfen).
-    private static func host(_ root: some View, browser: BrowserState, width: CGFloat) -> NSViewController {
+    private static func host(_ root: some View, name: String, browser: BrowserState, width: CGFloat) -> NSViewController {
         let controller = NSHostingController(rootView: AnyView(root.environment(browser)))
         controller.sizingOptions = []
         controller.view.frame = NSRect(x: 0, y: 0, width: width, height: 600)
-        return controller
+        // In einen Messbehälter packen: misst beim Ziehen am Fensterrand, wie lange das Layout dieses Bereichs dauert
+        return MeasuredController(child: controller, name: name, width: width)
+    }
+
+    /// Tabellen (SwiftUI-`Table` = NSTableView) wie im Finder: beim Ändern der Fensterbreite nur die letzte Spalte
+    /// anpassen statt alle Spalten (sonst müssen bei jedem Schritt alle sichtbaren Zellen neu gelayoutet werden).
+    /// Abschalten: `defaults write com.example.FinderErsatz tableLastColumnOnly -bool NO`
+    static var tableLastColumnOnly: Bool {
+        UserDefaults.standard.object(forKey: "tableLastColumnOnly") as? Bool ?? true
+    }
+
+    private func adjustTables() {
+        guard Self.tableLastColumnOnly else { return }
+        for table in Self.subviews(of: NSTableView.self, in: contentItem.viewController.view)
+        where table.columnAutoresizingStyle != .lastColumnOnlyAutoresizingStyle {
+            table.columnAutoresizingStyle = .lastColumnOnlyAutoresizingStyle
+        }
+    }
+
+    private static func subviews<T: NSView>(of type: T.Type, in view: NSView) -> [T] {
+        var result: [T] = []
+        if let match = view as? T { result.append(match) }
+        for sub in view.subviews { result += subviews(of: type, in: sub) }
+        return result
     }
 
     override func viewDidLoad() {
@@ -127,6 +150,8 @@ final class MainSplitViewController: NSSplitViewController {
     }
 
     @objc private func windowWillStartLiveResize(_ note: Notification) {
+        adjustTables()
+        LayoutTimer.reset()
         resizeStamps = [ProcessInfo.processInfo.systemUptime]
     }
 
@@ -222,6 +247,16 @@ final class MainSplitViewController: NSSplitViewController {
             return lines.joined(separator: "\n")
         }
         lines.append("Letztes Ziehen am Fensterrand: \(lastResizeStats)")
+        lines.append(contentsOf: LayoutTimer.summary())
+        if let controller = current {
+            let tables = subviews(of: NSTableView.self, in: controller.contentItem.viewController.view)
+            let styles = tables.map { table in
+                "\(table.numberOfColumns) Spalten/\(table.rows(in: table.visibleRect).length) sichtbare Zeilen/Stil \(table.columnAutoresizingStyle.rawValue)"
+            }
+            lines.append("Tabellen im Inhalt: \(tables.count)\(styles.isEmpty ? "" : " – " + styles.joined(separator: "; ")) (Stil 4 = nur letzte Spalte; tableLastColumnOnly = \(tableLastColumnOnly))")
+            let panes = [controller.browser.pane(.left), controller.browser.pane(.right)]
+            lines.append("Ansicht links/rechts: \(panes.map { "\($0.viewMode)" }.joined(separator: " / ")), Objekte: \(panes.map { String($0.items.count) }.joined(separator: " / ")), Vorschaubereich unten: \(controller.browser.showPanePreview)")
+        }
         lines.append("Fenster: \(format(window.frame.size)), contentMinSize: \(format(window.contentMinSize)), minSize: \(format(window.minSize)), inLiveResize: \(window.inLiveResize)")
         let names = ["Seitenleiste", "Inhalt", "Vorschau-Spalte"]
         for (index, item) in controller.splitViewItems.enumerated() {
@@ -245,6 +280,74 @@ final class MainSplitViewController: NSSplitViewController {
         if let split = view as? NSSplitView { result.append(split) }
         for sub in view.subviews { result += splitViews(in: sub) }
         return result
+    }
+}
+
+/// Hält einen Bereich (NSHostingController) und misst beim Live-Resize die Layout-Zeit seines Teilbaums.
+@MainActor
+final class MeasuredController: NSViewController {
+    private let child: NSViewController
+    private let name: String
+    private let initialWidth: CGFloat
+
+    init(child: NSViewController, name: String, width: CGFloat) {
+        self.child = child
+        self.name = name
+        self.initialWidth = width
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) wird nicht unterstützt") }
+
+    override func loadView() {
+        let container = MeasuringView(frame: NSRect(x: 0, y: 0, width: initialWidth, height: 600))
+        container.name = name
+        addChild(child)
+        child.view.frame = container.bounds
+        child.view.autoresizingMask = [.width, .height]
+        container.addSubview(child.view)
+        container.content = child.view
+        view = container
+    }
+}
+
+@MainActor
+final class MeasuringView: NSView {
+    var name = ""
+    weak var content: NSView?
+
+    override func layout() {
+        super.layout()
+        guard let content else { return }
+        if content.frame != bounds { content.frame = bounds }
+        guard window?.inLiveResize == true else { return }
+        // Teilbaum jetzt (statt später im selben Durchgang) layouten, damit die Zeit diesem Bereich zugeordnet wird
+        let start = ProcessInfo.processInfo.systemUptime
+        content.layoutSubtreeIfNeeded()
+        LayoutTimer.record(name, ms: (ProcessInfo.processInfo.systemUptime - start) * 1000)
+    }
+}
+
+/// Sammelt Layout-Zeiten je Bereich während eines Live-Resize (für die Layout-Diagnose).
+@MainActor
+enum LayoutTimer {
+    private static var samples: [String: [Double]] = [:]
+    private static var order: [String] = []
+
+    static func reset() { samples = [:] }
+
+    static func record(_ name: String, ms: Double) {
+        if !order.contains(name) { order.append(name) }
+        samples[name, default: []].append(ms)
+    }
+
+    static func summary() -> [String] {
+        order.compactMap { name in
+            guard let values = samples[name], !values.isEmpty else { return nil }
+            let average = values.reduce(0, +) / Double(values.count)
+            return "  Layout \(name): \(values.count)×, Ø \(String(format: "%.1f", average)) ms, max \(Int(values.max() ?? 0)) ms"
+        }
     }
 }
 
