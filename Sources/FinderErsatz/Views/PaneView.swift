@@ -18,6 +18,14 @@ struct PaneView: View {
                 TabBar(group: group) { browser.activeSide = side }
                 Divider()
             }
+            if settings.showPaneTitles {
+                PaneTitle(pane: pane, isActive: isActive)
+                    .background(
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture { browser.activeSide = side }
+                    )
+            }
             if !browser.debugHideHeader {
                 Group {
                     if settings.compactLayout {
@@ -790,6 +798,38 @@ struct RecentFoldersMenu: View {
         .menuIndicator(.hidden)
         .fixedSize()
         .help("Zuletzt besuchte Ordner")
+    }
+}
+
+/// Überschrift eines Fensters: Symbol + Name des aktuellen Ordners (bzw. der Suche), daneben die Objektanzahl.
+struct PaneTitle: View {
+    @Environment(BrowserState.self) private var browser
+    let pane: PaneState
+    let isActive: Bool
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if let search = pane.activeSearch {
+                Image(systemName: search.spotlightQuery != nil ? "sparkle.magnifyingglass" : "magnifyingglass")
+                    .frame(width: 18, height: 18)
+            } else {
+                Image(nsImage: IconCache.icon(for: pane.currentURL))
+                    .resizable()
+                    .frame(width: 18, height: 18)
+            }
+            Text(pane.title)
+                .font(.headline)
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(isActive ? .primary : .secondary)
+        .padding(.horizontal, 10)
+        .padding(.top, 6)
+        .padding(.bottom, 2)
+        .frame(minWidth: 30)
+        .background(isActive ? browser.settings.activeColor.opacity(0.08) : .clear)
+        .help(pane.currentURL.path)
     }
 }
 

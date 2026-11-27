@@ -74,6 +74,8 @@ final class AppSettings {
     }
     /// Leiste mit F2/F3/F5 … unten im Fenster.
     var showActionBar: Bool { didSet { defaults.set(showActionBar, forKey: "showActionBar") } }
+    /// Ordnername als Überschrift über jedem Fenster (der Fenstertitel zeigt nur das aktive)
+    var showPaneTitles: Bool { didSet { defaults.set(showPaneTitles, forKey: "showPaneTitles") } }
     /// Ordnergrößen in den Listen im Hintergrund berechnen (nur lokale Laufwerke).
     var calculateFolderSizes: Bool {
         didSet {
@@ -98,6 +100,7 @@ final class AppSettings {
         calculateFolderSizes = defaults.bool(forKey: Self.calculateFolderSizesKey)
         compactLayout = defaults.bool(forKey: "compactLayout")
         showActionBar = defaults.object(forKey: "showActionBar") as? Bool ?? true
+        showPaneTitles = defaults.object(forKey: "showPaneTitles") as? Bool ?? true
         folderPreviewUsesQuickLook = defaults.bool(forKey: "folderPreviewUsesQuickLook")
         if let data = defaults.data(forKey: "customShortcuts"),
            let stored = try? JSONDecoder().decode([String: Shortcut?].self, from: data) {
