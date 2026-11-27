@@ -48,6 +48,9 @@ struct ContentView: View {
         }
         // Mindestgröße wie im Finder: Seitenleiste (bis 320) + zwei Fenster (je 240) + ggf. Vorschau-Spalte (220)
         .frame(minWidth: browser.showInspector ? 1060 : 840, minHeight: 500)
+        // SwiftUI gibt die Mindestbreite durch NavigationSplitView/HSplitView nicht zuverlässig ans Fenster
+        // weiter – deshalb direkt am NSWindow setzen (sonst lässt sich das Fenster kleiner ziehen als der Inhalt).
+        .background(WindowMinSize(width: browser.showInspector ? 1060 : 840, height: 500))
         .preferredColorScheme(browser.settings.appearance.colorScheme)
         // Fenstertitel wie im Finder: Ordner des aktiven Fensters, darunter der volle Pfad
         .navigationTitle(browser.activePane.title)
@@ -268,5 +271,47 @@ private struct UnbundledBanner: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .background(.orange.opacity(0.15))
+    }
+}
+
+/// Setzt die Mindestgröße direkt am Fenster (AppKit), damit es sich nicht kleiner ziehen lässt als der Inhalt.
+private struct WindowMinSize: NSViewRepresentable {
+    let width: CGFloat
+    let height: CGFloat
+
+    func makeNSView(context: Context) -> MinSizeView {
+        let view = MinSizeView()
+        view.minSize = NSSize(width: width, height: height)
+        return view
+    }
+
+    func updateNSView(_ view: MinSizeView, context: Context) {
+        view.minSize = NSSize(width: width, height: height)
+    }
+
+    final class MinSizeView: NSView {
+        var minSize = NSSize(width: 840, height: 500) {
+            didSet { apply() }
+        }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            apply()
+        }
+
+        private func apply() {
+            guard let window else { return }
+            window.contentMinSize = minSize
+            // Ist das Fenster gerade kleiner (z. B. Vorschau-Spalte eingeblendet), auf die Mindestgröße vergrößern.
+            var frame = window.frame
+            let content = window.contentRect(forFrameRect: frame)
+            let missingWidth = minSize.width - content.width
+            let missingHeight = minSize.height - content.height
+            guard missingWidth > 0 || missingHeight > 0 else { return }
+            frame.size.width += max(missingWidth, 0)
+            frame.size.height += max(missingHeight, 0)
+            frame.origin.y -= max(missingHeight, 0)
+            window.setFrame(frame, display: true, animate: false)
+        }
     }
 }
