@@ -40,6 +40,16 @@ final class SmartFolderStore {
         save()
     }
 
+    /// Suchkriterien eines intelligenten Ordners ersetzen (nach „Bearbeiten“).
+    func update(_ id: SmartFolder.ID, query: SearchQuery) {
+        guard let index = items.firstIndex(where: { $0.id == id }) else { return }
+        var stored = query
+        stored.title = nil
+        stored.sidebarTag = nil
+        items[index].query = stored
+        save()
+    }
+
     func rename(_ folder: SmartFolder, to name: String) {
         guard let index = items.firstIndex(where: { $0.id == folder.id }), !name.isEmpty else { return }
         items[index].name = name

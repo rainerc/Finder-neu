@@ -638,10 +638,32 @@ final class BrowserState {
         showQuery(folder.displayQuery)
     }
 
+    /// Intelligenten Ordner mit geöffneter Suchleiste zeigen, damit sich die Kriterien ändern lassen.
+    func editSmartFolder(_ folder: SmartFolder) {
+        let pane = activePane
+        pane.startSearch(folder.displayQuery)
+        pane.editingSmartFolder = folder.id
+        pane.searchBarResetToken = UUID()
+        pane.isSearchBarVisible = true
+    }
+
+    /// Neue Suche wie im Finder: Suchleiste mit „Dieser Mac“ und einer ersten Bedingungszeile.
+    func newFinderSearch() {
+        let pane = activePane
+        var query = SearchQuery(root: pane.currentURL)
+        query.scope = .thisMac
+        query.criteria = [SearchCriterion(attribute: .kind)]
+        pane.closeSearch()
+        pane.lastSearch = query
+        pane.searchBarResetToken = UUID()
+        pane.isSearchBarVisible = true
+    }
+
     /// Zeigt das Ergebnis einer Abfrage im aktiven Fenster (ohne Suchleiste).
     func showQuery(_ query: SearchQuery, sortOrder: [KeyPathComparator<FileItem>]? = nil) {
         let pane = activePane
         pane.isSearchBarVisible = false
+        pane.editingSmartFolder = nil
         pane.startSearch(query, sortOrder: sortOrder)
     }
 

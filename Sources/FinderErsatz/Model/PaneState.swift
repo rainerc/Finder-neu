@@ -48,6 +48,10 @@ final class PaneState: Identifiable {
     private(set) var activeSearch: SearchQuery?
     private(set) var isSearchRunning = false
     var lastSearch: SearchQuery?
+    /// Wird gerade ein intelligenter Ordner bearbeitet? Dann sichert die Suchleiste in diesen Ordner.
+    var editingSmartFolder: UUID?
+    /// Neu setzen, damit die Suchleiste ihre Felder aus `lastSearch` neu lädt.
+    var searchBarResetToken = UUID()
     @ObservationIgnored private var searchTask: Task<Void, Never>?
     @ObservationIgnored private var searchToken = UUID()
 
@@ -275,6 +279,7 @@ final class PaneState: Identifiable {
 
     func closeSearch() {
         isSearchBarVisible = false
+        editingSmartFolder = nil
         stopSearch()
     }
 

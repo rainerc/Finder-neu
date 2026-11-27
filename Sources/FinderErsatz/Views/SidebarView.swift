@@ -76,6 +76,7 @@ struct SidebarView: View {
                                 browser.toggleActivePane()
                                 browser.showSmartFolder(folder)
                             }
+                            Button("Suchkriterien bearbeiten …") { browser.editSmartFolder(folder) }
                             Button("Umbenennen …") {
                                 renameText = folder.name
                                 renamingSmart = folder
@@ -85,6 +86,14 @@ struct SidebarView: View {
                         }
                 }
                 .onMove { browser.smartFolders.move(fromOffsets: $0, toOffset: $1) }
+                Button {
+                    browser.newFinderSearch()
+                } label: {
+                    Label("Neuer intelligenter Ordner …", systemImage: "plus")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Suche mit Bedingungen (Art, Datum, Größe …) anlegen und als intelligenten Ordner sichern (⌃⌘N)")
             }
 
             Section("Tags", isExpanded: $showTags) {
@@ -327,7 +336,8 @@ struct SidebarView: View {
         var parts: [String] = []
         if !query.term.isEmpty { parts.append("„\(query.term)“ (\(query.mode.title))") }
         if !query.contentText.isEmpty { parts.append("enthält „\(query.contentText)“") }
-        parts.append("in \(query.root.path)")
+        parts += query.criteria.filter(\.isComplete).map(SearchCriterionRow.summary)
+        parts.append(query.searchesEverywhere ? "auf diesem Mac" : "in \(query.root.path)")
         return parts.joined(separator: ", ")
     }
 }

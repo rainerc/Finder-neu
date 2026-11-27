@@ -126,6 +126,7 @@ struct BrowserCommands: Commands {
         }
         CommandGroup(after: .textEditing) {
             item(.search) { browser.showSearch() }
+            item(.newSmartFolder) { browser.newFinderSearch() }
             item(.saveSearch) { browser.requestSaveSearch() }
         }
         CommandGroup(after: .newItem) {

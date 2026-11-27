@@ -34,7 +34,7 @@ struct PaneView: View {
             Divider()
             if pane.isSearchBarVisible {
                 SearchBar(pane: pane)
-                    .id(pane.id)
+                    .id(pane.searchBarResetToken)
                 Divider()
             }
             if pane.isBrowsingArchive {
