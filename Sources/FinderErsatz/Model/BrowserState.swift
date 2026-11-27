@@ -598,6 +598,11 @@ final class BrowserState {
     var showActionLog = false
     var renameEditorRequest: RenameEditorRequest?
     var buttonEditorRequest: ButtonEditorRequest?
+    // Runde 4 (BrowserRound4.swift)
+    var attributesRequest: AttributesRequest?
+    var splitRequest: SplitRequest?
+    var packRequest: PackRequest?
+    var showRemoteConnections = false
     var viewerRequest: ViewerRequest?
 
     func showSelectPattern(select: Bool) {

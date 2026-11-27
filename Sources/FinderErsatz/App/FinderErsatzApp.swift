@@ -155,6 +155,9 @@ struct BrowserCommands: Commands {
             item(.rename) { browser.beginRename() }
             item(.batchRename) { browser.beginBatchRename() }
             item(.renameInEditor) { browser.showRenameEditor() }
+            item(.changeAttributes) { browser.showAttributes() }
+            item(.splitFile) { browser.showSplit() }
+            item(.joinFiles) { browser.joinSelectedParts() }
             item(.quickLook) { browser.toggleQuickLook() }
             item(.systemQuickLook) { browser.toggleQuickLook(forceSystemPreview: true) }
             item(.packageContents) { browser.showSelectedPackageContents() }
@@ -163,6 +166,8 @@ struct BrowserCommands: Commands {
             item(.trash) { browser.trashSelection() }
             Divider()
             item(.compress) { browser.compressSelection() }
+            item(.packArchive) { browser.showPack() }
+            item(.listArchive) { browser.listSelectedArchive() }
             item(.extractHere) { browser.extractSelection(toOtherPane: false) }
             item(.extractToOther) { browser.extractSelection(toOtherPane: true) }
             Divider()
@@ -175,6 +180,7 @@ struct BrowserCommands: Commands {
             item(.connectServer) {
                 NotificationCenter.default.post(name: .connectToServer, object: nil)
             }
+            item(.connectRemote) { browser.showRemoteConnections = true }
             Divider()
             item(.back) { browser.activePane.goBack() }
             item(.forward) { browser.activePane.goForward() }
@@ -214,6 +220,7 @@ struct BrowserCommands: Commands {
                 if pane.isQuickFilterVisible { pane.closeQuickFilter() } else { pane.isQuickFilterVisible = true }
             }
             item(.branchView) { browser.activePane.toggleBranchView() }
+            item(.showOnlySelected) { browser.toggleShowOnlySelected() }
             Divider()
             toggle(.toggleButtonBar, isOn: Bindable(browser.settings).showButtonBar)
             item(.commandLine) { browser.focusCommandLine() }

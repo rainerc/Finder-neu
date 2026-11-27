@@ -32,6 +32,52 @@ enum ArchiveService {
         }
     }
 
+    /// Formate zum Packen. RAR kann macOS nur lesen, nicht schreiben.
+    enum PackFormat: String, CaseIterable, Identifiable, Sendable {
+        case zip, sevenZip = "7z", tarGz = "tar.gz", tarBz2 = "tar.bz2", tarXz = "tar.xz", tar
+        var id: String { rawValue }
+        var fileExtension: String { rawValue }
+        var title: String {
+            switch self {
+            case .zip: "ZIP"
+            case .sevenZip: "7z"
+            case .tarGz: "tar.gz (gzip)"
+            case .tarBz2: "tar.bz2 (bzip2)"
+            case .tarXz: "tar.xz (xz, sehr klein)"
+            case .tar: "tar (unkomprimiert)"
+            }
+        }
+    }
+
+    /// Packen in beliebigem Format. ZIP ohne Passwort wie bisher (ditto/zip), mit Passwort per `zip -P`;
+    /// 7z und tar.* über libarchive (`tar -a` wählt das Format anhand der Endung).
+    static func pack(_ sources: [URL], to archive: URL, format: PackFormat, password: String?) throws {
+        guard let first = sources.first else { return }
+        let folder = first.deletingLastPathComponent()
+        switch format {
+        case .zip:
+            if let password, !password.isEmpty {
+                try ProcessRunner.run("/usr/bin/zip", ["-r", "-y", "-q", "-P", password, archive.path] + sources.map(\.lastPathComponent), in: folder)
+            } else {
+                try compress(sources, to: archive)
+            }
+        default:
+            // Je Objekt eigenes -C, damit auch Objekte aus verschiedenen Ordnern (Zweigansicht) gehen
+            var arguments = ["-a", "-c", "-f", archive.path]
+            for source in sources {
+                arguments += ["-C", source.deletingLastPathComponent().path, source.lastPathComponent]
+            }
+            try ProcessRunner.run("/usr/bin/tar", arguments, in: folder)
+        }
+    }
+
+    /// Shell-Befehl, der den Inhalt eines Archivs auflistet (für die Ausgabe unter den Fenstern)
+    static func listCommand(for archive: URL) -> String {
+        archive.pathExtension.lowercased() == "zip"
+            ? "/usr/bin/unzip -l \(CommandRunner.quote(archive.path))"
+            : "/usr/bin/tar -tvf \(CommandRunner.quote(archive.path))"
+    }
+
     /// Entpackt in den (neu angelegten) Zielordner.
     static func extract(_ archive: URL, to folder: URL) throws {
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

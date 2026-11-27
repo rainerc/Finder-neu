@@ -120,6 +120,7 @@ final class PaneState: Identifiable {
         stopSearch()
         leaveBranchView()
         closeQuickFilter()
+        onlySelectedIDs = nil
         backStack.append(currentURL)
         forwardStack.removeAll()
         rememberSelection()
@@ -133,6 +134,7 @@ final class PaneState: Identifiable {
         stopSearch()
         leaveBranchView()
         closeQuickFilter()
+        onlySelectedIDs = nil
         forwardStack.append(currentURL)
         currentURL = previous
         selection.removeAll()
@@ -144,6 +146,7 @@ final class PaneState: Identifiable {
         stopSearch()
         leaveBranchView()
         closeQuickFilter()
+        onlySelectedIDs = nil
         backStack.append(currentURL)
         currentURL = next
         selection.removeAll()
@@ -170,18 +173,34 @@ final class PaneState: Identifiable {
         quickFilter = ""
     }
 
+    // MARK: Nur Ausgewähltes anzeigen (Total Commander: „Nur ausgewählte Dateien“)
+
+    /// Gesetzt: Liste zeigt nur diese Objekte (die Auswahl beim Einschalten)
+    var onlySelectedIDs: Set<FileItem.ID>? {
+        didSet { if onlySelectedIDs != oldValue { applyQuickFilter() } }
+    }
+
+    func toggleShowOnlySelected() {
+        if onlySelectedIDs != nil {
+            onlySelectedIDs = nil
+        } else if !selection.isEmpty {
+            onlySelectedIDs = selection
+        }
+    }
+
     private func applyQuickFilter() {
         let text = quickFilter.trimmingCharacters(in: .whitespaces)
+        let base = onlySelectedIDs.map { ids in allItems.filter { ids.contains($0.id) } } ?? allItems
         guard !text.isEmpty else {
-            items = allItems
+            items = base
             return
         }
         let filtered: [FileItem]
         if text.contains("*") || text.contains("?") {
             let predicate = NSPredicate(format: "SELF LIKE[cd] %@", text)
-            filtered = allItems.filter { predicate.evaluate(with: $0.name) }
+            filtered = base.filter { predicate.evaluate(with: $0.name) }
         } else {
-            filtered = allItems.filter { $0.name.localizedStandardContains(text) }
+            filtered = base.filter { $0.name.localizedStandardContains(text) }
         }
         items = filtered
         let visible = Set(filtered.map(\.id))

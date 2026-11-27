@@ -147,6 +147,18 @@ struct ContentView: View {
         .sheet(isPresented: $browser.showActionLog) {
             ActionLogSheet().environment(browser)
         }
+        .sheet(item: $browser.attributesRequest) { request in
+            AttributesSheet(request: request).environment(browser)
+        }
+        .sheet(item: $browser.splitRequest) { request in
+            SplitSheet(request: request).environment(browser)
+        }
+        .sheet(item: $browser.packRequest) { request in
+            PackSheet(request: request).environment(browser)
+        }
+        .sheet(isPresented: $browser.showRemoteConnections) {
+            RemoteSheet().environment(browser)
+        }
         .sheet(item: $browser.fileCompareRequest) { request in
             FileCompareSheet(request: request)
         }

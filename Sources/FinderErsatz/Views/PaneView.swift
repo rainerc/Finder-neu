@@ -70,6 +70,10 @@ struct PaneView: View {
                 QuickFilterBar(pane: pane)
                 Divider()
             }
+            if let ids = pane.onlySelectedIDs {
+                OnlySelectedBanner(pane: pane, count: ids.count)
+                Divider()
+            }
 
             if browser.debugNoVSplit && !browser.showPanePreview {
                 // Layout-Test: ohne VSplitView
@@ -365,6 +369,10 @@ struct PaneView: View {
                 activate(pane, ids)
                 browser.showRenameEditor()
             },
+            .action("Attribute ändern …") {
+                activate(pane, ids)
+                browser.showAttributes()
+            },
             .action("Informationen") {
                 activate(pane, ids)
                 browser.showInfo()
@@ -414,6 +422,10 @@ struct PaneView: View {
                 activate(pane, ids)
                 browser.compressSelection()
             },
+            .action("Packen …") {
+                activate(pane, ids)
+                browser.showPack()
+            },
         ]
         if !archives.isEmpty {
             entries += [
@@ -425,7 +437,24 @@ struct PaneView: View {
                     activate(pane, ids)
                     browser.extractSelection(toOtherPane: true)
                 },
+                .action("Archivinhalt auflisten") {
+                    activate(pane, ids)
+                    browser.listSelectedArchive()
+                },
             ]
+        }
+        if selected.count == 1, !selected[0].isDirectory {
+            if Int(selected[0].fileExtension) != nil {
+                entries.append(.action("Teile zusammenfügen (ins andere Fenster)") {
+                    activate(pane, ids)
+                    browser.joinSelectedParts()
+                })
+            } else {
+                entries.append(.action("Datei aufteilen …") {
+                    activate(pane, ids)
+                    browser.showSplit()
+                })
+            }
         }
         entries.append(.divider)
         if !folderURLs.isEmpty {
@@ -770,6 +799,27 @@ struct BranchViewBanner: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
         .background(Color.purple.opacity(0.10))
+    }
+}
+
+struct OnlySelectedBanner: View {
+    let pane: PaneState
+    let count: Int
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "line.3.horizontal.decrease.circle")
+            Text("Nur Ausgewähltes: \(pane.items.count) von \(pane.allItems.count) Objekten")
+                .lineLimit(1)
+            Spacer(minLength: 4)
+            Button("Alle zeigen") { pane.onlySelectedIDs = nil }
+                .buttonStyle(.borderless)
+                .help("Wieder alle Objekte des Ordners zeigen (⌃⌘I)")
+        }
+        .font(.caption)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .background(Color.blue.opacity(0.10))
     }
 }
 

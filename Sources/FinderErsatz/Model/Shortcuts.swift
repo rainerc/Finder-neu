@@ -11,6 +11,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
     case compareFolders, markDifferences, quickFilter, branchView, compareFiles, findDuplicates
     case favoritesMenu, restoreSelection, syncBrowsing, checksums, viewer, packageContents
     case commandLine, toggleButtonBar, actionLog, renameInEditor, viewTree
+    case showOnlySelected, changeAttributes, splitFile, joinFiles, packArchive, listArchive, connectRemote
     case viewList, viewBrief, viewIcons, viewColumns, viewGallery, toggleSidebar, toggleInspector, togglePanePreview, toggleHidden, reload
 
     var id: String { rawValue }
@@ -77,6 +78,13 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .actionLog: "Protokoll der Dateiaktionen …"
         case .renameInEditor: "Im Texteditor umbenennen …"
         case .viewTree: "Ansicht: Ordnerbaum"
+        case .showOnlySelected: "Nur Ausgewähltes anzeigen"
+        case .changeAttributes: "Attribute ändern …"
+        case .splitFile: "Datei aufteilen …"
+        case .joinFiles: "Dateien zusammenfügen …"
+        case .packArchive: "Packen …"
+        case .listArchive: "Archivinhalt auflisten"
+        case .connectRemote: "FTP/SFTP-Verbindung …"
         case .addFavorite: "Zu Favoriten hinzufügen"
         case .connectServer: "Mit Server verbinden"
         case .viewList: "Ansicht: Liste"
@@ -154,6 +162,13 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .actionLog: Shortcut("l", [.command, .control, .shift])
         case .renameInEditor: Shortcut(functionKey: 2, .control)
         case .viewTree: Shortcut("6", .command)
+        case .showOnlySelected: Shortcut("i", [.command, .control])
+        case .changeAttributes: nil
+        case .splitFile: nil
+        case .joinFiles: nil
+        case .packArchive: Shortcut(functionKey: 5, .control)
+        case .listArchive: nil
+        case .connectRemote: Shortcut("k", [.command, .shift])
         case .addFavorite: Shortcut("t", [.control, .command])
         case .connectServer: Shortcut("k", .command)
         case .viewList: Shortcut("1", .command)
