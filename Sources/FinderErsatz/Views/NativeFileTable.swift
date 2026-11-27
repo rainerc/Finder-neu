@@ -89,6 +89,11 @@ struct NativeFileTable: NSViewRepresentable {
         context.coordinator.apply(self, initial: false)
     }
 
+    /// Nimmt einfach den angebotenen Platz – sonst misst SwiftUI bei jedem Layout-Durchgang die AppKit-Ansicht aus.
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: NSScrollView, context: Context) -> CGSize? {
+        CGSize(width: proposal.width ?? 300, height: proposal.height ?? 300)
+    }
+
     // MARK: Coordinator
 
     @MainActor
@@ -415,7 +420,13 @@ final class NameCellView: NSTableCellView {
         let available = max(0, bounds.width - textX)
         let dotsWidth = dots.intrinsicContentSize.width
         let nameHeight = ceil(nameLabel.intrinsicContentSize.height)
-        let nameWidth = min(ceil(nameLabel.intrinsicContentSize.width), max(0, available - (dotsWidth > 0 ? dotsWidth + 4 : 0)))
+        // Ohne Tags: volle Breite. Mit Tags: so breit wie der Text (gemessen am Text selbst – intrinsicContentSize
+        // eines kürzenden Labels hängt von seinem alten Rahmen ab und schnitt Namen fälschlich ab).
+        var nameWidth = available
+        if dotsWidth > 0 {
+            let textWidth = ceil(nameLabel.attributedStringValue.size().width) + 6
+            nameWidth = min(textWidth, max(0, available - dotsWidth - 4))
+        }
         if subtitleLabel.isHidden {
             nameLabel.frame = NSRect(x: textX, y: floor((bounds.height - nameHeight) / 2), width: nameWidth, height: nameHeight)
         } else {
