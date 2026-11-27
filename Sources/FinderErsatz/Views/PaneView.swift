@@ -822,13 +822,22 @@ struct PaneTitle: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer(minLength: 0)
-            if browser.syncBrowsing {
-                Button("Synchron", systemImage: "link") { browser.toggleSyncBrowsing() }
-                    .buttonStyle(.borderless)
-                    .font(.caption)
-                    .foregroundStyle(Color.accentColor)
-                    .help("Synchrones Blättern ist an – Klick schaltet es aus (⌃⌘L)")
+            // Synchrones Blättern ein/aus – immer sichtbar, eingeschaltet farbig mit Beschriftung
+            Button {
+                browser.toggleSyncBrowsing()
+            } label: {
+                if browser.syncBrowsing {
+                    Label("Synchron", systemImage: "link")
+                } else {
+                    Image(systemName: "link")
+                }
             }
+            .buttonStyle(.borderless)
+            .font(.caption)
+            .foregroundStyle(browser.syncBrowsing ? Color.accentColor : Color.secondary)
+            .help(browser.syncBrowsing
+                  ? "Synchrones Blättern ist an – Klick schaltet es aus (⌃⌘Y)"
+                  : "Synchrones Blättern: das andere Fenster wechselt mit in Unterordner und nach oben (⌃⌘Y)")
         }
         .foregroundStyle(isActive ? .primary : .secondary)
         .padding(.horizontal, 10)

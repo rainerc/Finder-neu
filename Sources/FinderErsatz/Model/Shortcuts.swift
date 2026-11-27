@@ -139,7 +139,7 @@ enum ShortcutAction: String, CaseIterable, Identifiable, Codable {
         case .findDuplicates: nil
         case .favoritesMenu: Shortcut("g", [.command, .control])
         case .restoreSelection: Shortcut("r", [.command, .control])
-        case .syncBrowsing: Shortcut("l", [.command, .control])
+        case .syncBrowsing: Shortcut("y", [.command, .control])
         case .checksums: Shortcut("k", [.command, .control])
         case .viewer: Shortcut(functionKey: 3, .shift)
         case .packageContents: Shortcut("o", [.command, .control])
