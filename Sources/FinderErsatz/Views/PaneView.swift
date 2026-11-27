@@ -106,7 +106,9 @@ struct PaneView: View {
                 }
             } else if pane.activeSearch != nil, pane.items.isEmpty, !pane.isSearchRunning {
                 ContentUnavailableView.search
-            } else if pane.viewMode == .list || pane.activeSearch != nil {
+            } else if pane.viewMode == .list || (pane.viewMode == .columns && pane.activeSearch != nil) {
+                // Suchergebnisse kommen aus vielen Ordnern – die Spaltenansicht passt dafür nicht, dann Liste.
+                // Symbole, Miniaturen und Galerie zeigen die Treffer wie einen Ordner.
                 fileTable(pane: pane, settings: settings)
             } else if pane.viewMode == .columns {
                 keyHandling(
@@ -160,12 +162,12 @@ struct PaneView: View {
                 return .handled
             }
             .onKeyPress(.return) {
-                guard pane.viewMode != .list, pane.activeSearch == nil, !pane.selection.isEmpty else { return .ignored }
+                guard pane.viewMode != .list, !pane.selection.isEmpty else { return .ignored }
                 open(pane.selection, in: pane)
                 return .handled
             }
             .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow]) { press in
-                guard pane.viewMode != .list, pane.activeSearch == nil, press.modifiers.isEmpty else { return .ignored }
+                guard pane.viewMode != .list, press.modifiers.isEmpty else { return .ignored }
                 if pane.viewMode == .columns, press.key == .leftArrow {
                     pane.goUp()   // Spalte nach links: übergeordneter Ordner, bisheriger Ordner bleibt markiert
                 } else if pane.viewMode == .columns, press.key == .rightArrow {
