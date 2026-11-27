@@ -51,6 +51,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 @main
 struct FinderErsatzApp: App {
+    /// Muss die erste Eigenschaft bleiben: übernimmt alte Einstellungen, bevor irgendetwas UserDefaults liest.
+    private let defaultsMigration: Void = DefaultsMigration.run()
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var browser = BrowserState()
 

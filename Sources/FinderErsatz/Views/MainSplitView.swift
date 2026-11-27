@@ -91,7 +91,7 @@ final class MainSplitViewController: NSSplitViewController {
 
     /// Tabellen (SwiftUI-`Table` = NSTableView) wie im Finder: beim Ändern der Fensterbreite nur die letzte Spalte
     /// anpassen statt alle Spalten (sonst müssen bei jedem Schritt alle sichtbaren Zellen neu gelayoutet werden).
-    /// Abschalten: `defaults write com.example.FinderErsatz tableLastColumnOnly -bool NO`
+    /// Abschalten: `defaults write de.clodius.twinfold tableLastColumnOnly -bool NO`
     static var tableLastColumnOnly: Bool {
         UserDefaults.standard.object(forKey: "tableLastColumnOnly") as? Bool ?? true
     }

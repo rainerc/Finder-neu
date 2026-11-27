@@ -1,7 +1,7 @@
 # XcodeGen-Konfiguration: `brew install xcodegen && xcodegen` erzeugt FinderErsatz.xcodeproj
 name: FinderErsatz
 options:
-  bundleIdPrefix: com.example
+  bundleIdPrefix: de.clodius
   deploymentTarget:
     macOS: "26.0"
 targets:
@@ -16,7 +16,7 @@ targets:
         buildPhase: resources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.FinderErsatz
+        PRODUCT_BUNDLE_IDENTIFIER: de.clodius.twinfold
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "6.0"

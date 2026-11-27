@@ -10,7 +10,7 @@
 set -uo pipefail
 
 APP="${1:-/Applications/Twinfold.app}"
-BUNDLE_ID="com.example.FinderErsatz"
+BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Contents/Info.plist" 2>/dev/null || echo de.clodius.twinfold)"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 

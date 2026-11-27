@@ -13,7 +13,7 @@ Voraussetzung: Hookmark Pro (eigene Skripte gibt es nur dort) und Twinfold als e
 
 1. Twinfold starten und in den Vordergrund holen.
 2. Hookmark → Einstellungen → **Scripts** → „+“ bzw. die App „Twinfold“ wählen
-   (Bundle-ID `com.example.FinderErsatz`).
+   (Bundle-ID `de.clodius.twinfold`; nach dem Wechsel der Bundle-ID am 27.11. das Skript dort neu für Twinfold eintragen).
 3. Bei **Get Address** dieses AppleScript einfügen (getestet, funktioniert; JavaScript nimmt Hookmark hier nicht an):
 
 ```applescript

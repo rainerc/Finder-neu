@@ -38,5 +38,4 @@ Nur signieren, ohne Notarisierung (Test): `./scripts/release.sh 1.0 --no-notariz
   für sie einmal neu ab.
 - Entitlements: `Support/Twinfold.entitlements` (Apple Events für Terminal/Finder; ohne sie blockiert die
   Hardened Runtime diese Steuerung).
-- Vor der ersten öffentlichen Version sollte die Bundle-ID von `com.example.FinderErsatz` auf eine eigene
-  wechseln (z. B. `de.<domain>.twinfold`) – mit Übernahme der Einstellungen aus der alten Domain.
+- Bundle-ID: `de.clodius.twinfold` (bis 27.11. `com.example.FinderErsatz`; Einstellungen werden beim ersten Start per `DefaultsMigration` übernommen).

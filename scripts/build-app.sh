@@ -73,7 +73,7 @@ fi
 IDENTITY_NAME="$(echo "$IDENTITIES" | grep "$IDENTITY_HASH" | sed -E 's/.*"(.*)"/\1/' | head -1)"
 if [[ -n "$IDENTITY_HASH" ]]; then
   echo "▸ Signiere mit: $IDENTITY_NAME ($IDENTITY_HASH)"
-  codesign --force --options runtime --timestamp=none --entitlements Support/Twinfold.entitlements --identifier com.example.FinderErsatz --sign "$IDENTITY_HASH" "$APP"
+  codesign --force --options runtime --timestamp=none --entitlements Support/Twinfold.entitlements --identifier "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' Support/Info.plist)" --sign "$IDENTITY_HASH" "$APP"
 else
   echo "⚠︎ Kein Entwicklerzertifikat gefunden – ad-hoc-Signatur. Berechtigungen gehen bei jedem Neubau verloren!"
   echo "  (Xcode → Einstellungen → Accounts → Zertifikate verwalten → „Apple Development“ anlegen)"
