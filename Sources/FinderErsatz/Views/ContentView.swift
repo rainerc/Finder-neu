@@ -274,35 +274,62 @@ private struct UnbundledBanner: View {
     }
 }
 
-/// Setzt die Mindestgröße direkt am Fenster (AppKit), damit es sich nicht kleiner ziehen lässt als der Inhalt.
+/// Setzt die Mindestgröße direkt am Fenster (AppKit) und sorgt dafür, dass beim Verkleinern wie in Mail/Finder
+/// nur der Inhalt (die beiden Fenster) schmaler wird – Seitenleiste und Vorschau-Spalte behalten ihre Breite.
 private struct WindowMinSize: NSViewRepresentable {
     let width: CGFloat
     let height: CGFloat
 
     func makeNSView(context: Context) -> MinSizeView {
         let view = MinSizeView()
-        view.minSize = NSSize(width: width, height: height)
+        view.baseMinSize = NSSize(width: width, height: height)
         return view
     }
 
     func updateNSView(_ view: MinSizeView, context: Context) {
-        view.minSize = NSSize(width: width, height: height)
+        let size = NSSize(width: width, height: height)
+        if view.baseMinSize != size {
+            view.baseMinSize = size
+            // Vorschau-Spalte ein-/ausgeblendet: Fenster bei Bedarf vergrößern (erst nach dem Umbau der Split-View)
+            DispatchQueue.main.async { view.apply(growIfNeeded: true) }
+        }
     }
 
     final class MinSizeView: NSView {
-        var minSize = NSSize(width: 840, height: 500) {
-            didSet { apply() }
-        }
+        /// Mindestbreite des Inhalts (beide Fenster) zwischen Seitenleiste und Vorschau-Spalte
+        static let contentMinWidth: CGFloat = 2 * 240 + 20
+        var baseMinSize = NSSize(width: 840, height: 500)
+        private weak var observedWindow: NSWindow?
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
-            apply()
+            if let observedWindow {
+                NotificationCenter.default.removeObserver(self, name: NSWindow.willStartLiveResizeNotification, object: observedWindow)
+            }
+            observedWindow = window
+            if let window {
+                NotificationCenter.default.addObserver(self, selector: #selector(windowWillStartLiveResize(_:)),
+                                                       name: NSWindow.willStartLiveResizeNotification, object: window)
+            }
+            apply(growIfNeeded: true)
+            // Die Split-View von SwiftUI entsteht teils erst nach dem ersten Layout
+            DispatchQueue.main.async { [weak self] in self?.apply(growIfNeeded: true) }
         }
 
-        private func apply() {
+        @objc private func windowWillStartLiveResize(_ note: Notification) {
+            apply(growIfNeeded: false)
+        }
+
+        func apply(growIfNeeded: Bool) {
             guard let window else { return }
-            window.contentMinSize = minSize
-            // Ist das Fenster gerade kleiner (z. B. Vorschau-Spalte eingeblendet), auf die Mindestgröße vergrößern.
+            let sideWidth = fixSidePanes(in: window)
+            var minSize = baseMinSize
+            if let sideWidth {
+                // Genau so klein, dass Seitenleiste/Vorschau in ihrer jetzigen Breite stehen bleiben
+                minSize.width = sideWidth + Self.contentMinWidth
+            }
+            if window.contentMinSize != minSize { window.contentMinSize = minSize }
+            guard growIfNeeded else { return }
             var frame = window.frame
             let content = window.contentRect(forFrameRect: frame)
             let missingWidth = minSize.width - content.width
@@ -312,6 +339,40 @@ private struct WindowMinSize: NSViewRepresentable {
             frame.size.height += max(missingHeight, 0)
             frame.origin.y -= max(missingHeight, 0)
             window.setFrame(frame, display: true, animate: false)
+        }
+
+        /// Gibt Seitenleiste und Vorschau-Spalte eine höhere Halte-Priorität als dem Inhalt: NSSplitView verkleinert
+        /// beim Ziehen am Fensterrand zuerst das Element mit der niedrigsten Priorität. Liefert die Breite aller
+        /// sichtbaren Seiten-Elemente samt Trennlinien (nil, wenn keine Split-View gefunden wurde).
+        private func fixSidePanes(in window: NSWindow) -> CGFloat? {
+            guard let root = window.contentView else { return nil }
+            var found = false
+            var width: CGFloat = 0
+            for split in Self.splitViews(in: root) {
+                guard let controller = split.delegate as? NSSplitViewController else { continue }
+                for item in controller.splitViewItems {
+                    switch item.behavior {
+                    case .sidebar, .inspector:
+                        found = true
+                        let holding = NSLayoutConstraint.Priority(rawValue: 290)
+                        if item.holdingPriority != holding { item.holdingPriority = holding }
+                        if !item.isCollapsed {
+                            width += item.viewController.view.frame.width + split.dividerThickness
+                        }
+                    default:
+                        let holding = NSLayoutConstraint.Priority.defaultLow
+                        if item.holdingPriority != holding { item.holdingPriority = holding }
+                    }
+                }
+            }
+            return found ? width : nil
+        }
+
+        private static func splitViews(in view: NSView) -> [NSSplitView] {
+            var result: [NSSplitView] = []
+            if let split = view as? NSSplitView { result.append(split) }
+            for sub in view.subviews { result += splitViews(in: sub) }
+            return result
         }
     }
 }

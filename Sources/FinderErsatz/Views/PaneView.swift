@@ -534,20 +534,27 @@ struct PaneHeader: View {
             }
             Button("Suchen", systemImage: "magnifyingglass") { pane.isSearchBarVisible.toggle() }
                 .help("Suchen (⌘F)")
-            Picker("Ansicht", selection: Bindable(pane).viewMode) {
-                ForEach(ViewMode.allCases) { mode in
-                    Label(mode.title, systemImage: mode.symbol).tag(mode)
-                }
+            // Bei schmalem Fenster wird aus den fünf Segmenten ein Menü – so bleibt der Kopf zusammendrückbar
+            // und beim Verkleinern des Fensters wird nicht die Seitenleiste schmaler.
+            ViewThatFits(in: .horizontal) {
+                viewPicker.pickerStyle(.segmented).fixedSize()
+                viewPicker.pickerStyle(.menu).fixedSize()
             }
-            .pickerStyle(.segmented)
             .labelsHidden()
-            .fixedSize()
             .help("Ansicht: Liste (⌘1), Kurz (⌘2), Miniaturen (⌘3), Spalten (⌘4), Galerie (⌘5)")
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.borderless)
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
+    }
+
+    private var viewPicker: some View {
+        Picker("Ansicht", selection: Bindable(pane).viewMode) {
+            ForEach(ViewMode.allCases) { mode in
+                Label(mode.title, systemImage: mode.symbol).tag(mode)
+            }
+        }
     }
 }
 
@@ -580,7 +587,9 @@ struct PathBar: View {
                     .layoutPriority(isCurrent ? 2 : (index == 0 ? 1 : 0))
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        // Darf beliebig schmal werden (Rest wird abgeschnitten) – sonst hält der Pfad das Fenster breit
+        .frame(minWidth: 30, maxWidth: .infinity, alignment: .leading)
+        .clipped()
     }
 }
 
