@@ -22,11 +22,13 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/FinderErsatz"
 cp Support/Info.plist "$PLIST"
 cp Support/FinderErsatz.sdef "$APP/Contents/Resources/"   # AppleScript-Schnittstelle (Hookmark)
+cp Support/AppIcon.icns "$APP/Contents/Resources/"        # App-Icon (Quelle: Support/Icon/AppIcon.svg)
 
 pb() { /usr/libexec/PlistBuddy -c "$1" "$PLIST" >/dev/null 2>&1 || true; }
 pb "Add :CFBundleExecutable string FinderErsatz"
 pb "Add :CFBundlePackageType string APPL"
 pb "Add :CFBundleDisplayName string Finder-Ersatz"
+pb "Add :CFBundleIconFile string AppIcon"
 pb "Add :CFBundleShortVersionString string 0.5"
 pb "Add :CFBundleVersion string $(git rev-list --count HEAD 2>/dev/null || echo 1)"
 pb "Add :LSMinimumSystemVersion string 26.0"
@@ -101,6 +103,7 @@ if [[ $INSTALL == 1 ]]; then
   LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
   "$LSREGISTER" -u "$PWD/$APP" >/dev/null 2>&1 || true
   "$LSREGISTER" -f "$TARGET" >/dev/null 2>&1 || true
+  touch "$TARGET"   # Dock/Finder zeigen das neue Icon sofort
   echo "✓ Installiert: $TARGET"
 fi
 echo "✓ Fertig"

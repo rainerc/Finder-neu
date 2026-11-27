@@ -12,6 +12,8 @@ targets:
       - Sources/FinderErsatz
       - path: Support/FinderErsatz.sdef
         buildPhase: resources
+      - path: Support/AppIcon.icns
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.FinderErsatz
