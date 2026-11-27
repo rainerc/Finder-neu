@@ -96,6 +96,12 @@ struct BrowserCommands: Commands {
             Button("Tab schließen (⌘W)") { _ = browser.closeTab() }
             Divider()
             item(.newFolder) { browser.newFolder() }
+            item(.newFile) { browser.newFile(.text) }
+            Menu("Neue Datei") {
+                ForEach(NewFileType.allCases) { type in
+                    Button(type.title) { browser.newFile(type) }
+                }
+            }
         }
         // Bearbeiten-Menü: in Textfeldern normales Text-Verhalten, sonst Dateien (wie im Finder).
         CommandGroup(replacing: .undoRedo) {

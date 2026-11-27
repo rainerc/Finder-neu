@@ -61,6 +61,15 @@ enum FileService {
         return url
     }
 
+    /// Neue (meist leere) Datei mit eindeutigem Namen anlegen.
+    static func createFile(_ type: NewFileType, in directory: URL) throws -> URL {
+        let url = uniqueURL(for: type.fileName, in: directory)
+        guard FileManager.default.createFile(atPath: url.path, contents: type.contents) else {
+            throw CocoaError(.fileWriteUnknown, userInfo: [NSFilePathErrorKey: url.path])
+        }
+        return url
+    }
+
     static func rename(_ url: URL, to newName: String) throws -> URL {
         let target = url.deletingLastPathComponent().appending(path: newName)
         try FileManager.default.moveItem(at: url, to: target)
@@ -88,5 +97,46 @@ enum FileService {
             counter += 1
         } while fm.fileExists(atPath: candidate.path)
         return candidate
+    }
+}
+
+/// Dateitypen für „Neue Datei“ (Ablage-Menü, Kontextmenü)
+enum NewFileType: String, CaseIterable, Identifiable {
+    case text, markdown, rtf, html, csv, json, empty
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .text: "Textdatei (.txt)"
+        case .markdown: "Markdown (.md)"
+        case .rtf: "RTF-Dokument (.rtf)"
+        case .html: "HTML-Datei (.html)"
+        case .csv: "CSV-Tabelle (.csv)"
+        case .json: "JSON-Datei (.json)"
+        case .empty: "Leere Datei ohne Endung"
+        }
+    }
+
+    var fileName: String {
+        switch self {
+        case .text: "Neue Textdatei.txt"
+        case .markdown: "Neue Datei.md"
+        case .rtf: "Neues Dokument.rtf"
+        case .html: "Neue Seite.html"
+        case .csv: "Neue Tabelle.csv"
+        case .json: "Neue Datei.json"
+        case .empty: "Neue Datei"
+        }
+    }
+
+    /// Minimaler gültiger Inhalt (RTF/HTML/JSON öffnen sonst je nach App mit Fehler)
+    var contents: Data {
+        switch self {
+        case .rtf: Data("{\\rtf1\\ansi\\deff0 }".utf8)
+        case .html: Data("<!DOCTYPE html>\n<html lang=\"de\">\n<head><meta charset=\"utf-8\"><title></title></head>\n<body>\n</body>\n</html>\n".utf8)
+        case .json: Data("{}\n".utf8)
+        default: Data()
+        }
     }
 }

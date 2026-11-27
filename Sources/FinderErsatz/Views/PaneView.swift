@@ -248,6 +248,12 @@ struct PaneView: View {
                     browser.activeSide = side
                     browser.newFolder()
                 },
+                .submenu("Neue Datei", NewFileType.allCases.map { type in
+                    .action(type.title) {
+                        browser.activeSide = side
+                        browser.newFile(type)
+                    }
+                }),
                 .action("Einsetzen") {
                     browser.activeSide = side
                     browser.pasteFromPasteboard(move: false)

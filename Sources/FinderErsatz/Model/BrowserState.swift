@@ -556,6 +556,18 @@ final class BrowserState {
         }
     }
 
+    /// Neue Datei im aktiven Fenster anlegen, auswählen und gleich zum Umbenennen anbieten.
+    func newFile(_ type: NewFileType = .text) {
+        let pane = activePane
+        run {
+            let url = try FileService.createFile(type, in: pane.currentURL)
+            recordUndo(.created([url]))
+            pane.reload()
+            pane.selection = [url.normalizedFileURL]
+        }
+        if activePane.selectedItems.count == 1 { beginRename() }
+    }
+
     func beginRename() {
         let selected = activePane.selectedItems
         if selected.count > 1 {
