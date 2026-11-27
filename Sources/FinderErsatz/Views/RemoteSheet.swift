@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
 /// FTP/SFTP-Verbindungen (⇧⌘K): gespeicherte Server links, rechts der entfernte Ordner.
 /// Herunterladen geht ins aktive Fenster, Hochladen nimmt dessen Auswahl.
