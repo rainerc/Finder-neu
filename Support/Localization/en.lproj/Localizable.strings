@@ -115,3 +115,15 @@
 "Such-Diagnose in der Zwischenablage" = "Search diagnostics copied to clipboard";
 "Kopier-Diagnose in der Zwischenablage" = "Copy diagnostics copied to clipboard";
 "Layout-Diagnose in der Zwischenablage" = "Layout diagnostics copied to clipboard";
+
+/* Runde 2 (Anfang): Spalten der Liste und gemeinsame Bezeichnungen */
+"Name" = "Name";
+"Änderungsdatum" = "Date Modified";
+"Größe" = "Size";
+"Art" = "Kind";
+"Erstellt" = "Date Created";
+"Zuletzt geöffnet" = "Date Last Opened";
+"Erweiterung" = "Extension";
+"Tags" = "Tags";
+"Rechte" = "Permissions";
+"Eigentümer" = "Owner";

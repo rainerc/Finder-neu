@@ -560,16 +560,16 @@ struct FileColumn {
     }
 
     static let all: [FileColumn] = [
-        FileColumn(id: "name", title: "Name", minWidth: 160, width: 260, keyPath: \FileItem.name) { $0.name },
-        FileColumn(id: "modified", title: "Änderungsdatum", minWidth: 110, width: 140, keyPath: \FileItem.modified) { FileColumn.date($0.modified) },
-        FileColumn(id: "size", title: "Größe", minWidth: 60, width: 80, alignRight: true, keyPath: \FileItem.size) { $0.sizeText },
-        FileColumn(id: "kind", title: "Art", minWidth: 80, width: 120, keyPath: \FileItem.kind) { $0.kind },
-        FileColumn(id: "created", title: "Erstellt", minWidth: 110, width: 140, hiddenByDefault: true, keyPath: \FileItem.created) { FileColumn.date($0.created) },
-        FileColumn(id: "accessed", title: "Zuletzt geöffnet", minWidth: 110, width: 140, hiddenByDefault: true, keyPath: \FileItem.accessed) { FileColumn.date($0.accessed) },
-        FileColumn(id: "extension", title: "Erweiterung", minWidth: 50, width: 70, hiddenByDefault: true, keyPath: \FileItem.fileExtension) { $0.fileExtension },
-        FileColumn(id: "tags", title: "Tags", minWidth: 60, width: 100, hiddenByDefault: true, keyPath: \FileItem.tags) { $0.tags },
-        FileColumn(id: "permissions", title: "Rechte", minWidth: 110, width: 130, hiddenByDefault: true, keyPath: \FileItem.permissions) { $0.permissions },
-        FileColumn(id: "owner", title: "Eigentümer", minWidth: 70, width: 90, hiddenByDefault: true, keyPath: \FileItem.owner) { $0.owner },
+        FileColumn(id: "name", title: String(localized: "Name"), minWidth: 160, width: 260, keyPath: \FileItem.name) { $0.name },
+        FileColumn(id: "modified", title: String(localized: "Änderungsdatum"), minWidth: 110, width: 140, keyPath: \FileItem.modified) { FileColumn.date($0.modified) },
+        FileColumn(id: "size", title: String(localized: "Größe"), minWidth: 60, width: 80, alignRight: true, keyPath: \FileItem.size) { $0.sizeText },
+        FileColumn(id: "kind", title: String(localized: "Art"), minWidth: 80, width: 120, keyPath: \FileItem.kind) { $0.kind },
+        FileColumn(id: "created", title: String(localized: "Erstellt"), minWidth: 110, width: 140, hiddenByDefault: true, keyPath: \FileItem.created) { FileColumn.date($0.created) },
+        FileColumn(id: "accessed", title: String(localized: "Zuletzt geöffnet"), minWidth: 110, width: 140, hiddenByDefault: true, keyPath: \FileItem.accessed) { FileColumn.date($0.accessed) },
+        FileColumn(id: "extension", title: String(localized: "Erweiterung"), minWidth: 50, width: 70, hiddenByDefault: true, keyPath: \FileItem.fileExtension) { $0.fileExtension },
+        FileColumn(id: "tags", title: String(localized: "Tags"), minWidth: 60, width: 100, hiddenByDefault: true, keyPath: \FileItem.tags) { $0.tags },
+        FileColumn(id: "permissions", title: String(localized: "Rechte"), minWidth: 110, width: 130, hiddenByDefault: true, keyPath: \FileItem.permissions) { $0.permissions },
+        FileColumn(id: "owner", title: String(localized: "Eigentümer"), minWidth: 70, width: 90, hiddenByDefault: true, keyPath: \FileItem.owner) { $0.owner },
     ]
 
     static let byID: [String: FileColumn] = Dictionary(uniqueKeysWithValues: all.map { ($0.id, $0) })
